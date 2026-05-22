@@ -1,0 +1,404 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{5573ee82-60cc-451e-bc33-5b940721a672}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\W32">
+      <UniqueIdentifier>{47b8032d-f3c1-4ecd-8f16-818651a6fbf5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{d80ed8f5-f7c6-4e5e-9af5-5da6c3bb532a}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Win32">
+      <UniqueIdentifier>{df9c95b0-1dcc-415c-911c-496e16755055}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oldfiles">
+      <UniqueIdentifier>{bd4ecece-2392-43b6-8d1f-98db18706660}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oldfiles\win32">
+      <UniqueIdentifier>{018a086a-7413-4174-83d2-dc55a8a8ce45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\archiver">
+      <UniqueIdentifier>{f0e1a4a3-c2f3-4fda-8c0b-33687df7ec4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\wwwcgi">
+      <UniqueIdentifier>{5d2e3be1-827d-4d5b-9b57-6e00ef817fd8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wwwcgi">
+      <UniqueIdentifier>{e918599b-3e4b-4a59-990f-5eb817371fa5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Comm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Console.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Errors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="File2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FileTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MaaXml.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="md4c.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="md5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mthrlib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="perm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Refs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sk2add.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="socket2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StringEx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StringLib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\Drv.cpp">
+      <Filter>Source Files\W32</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\Maareg.cpp">
+      <Filter>Source Files\W32</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\Socket.cpp">
+      <Filter>Source Files\W32</Filter>
+    </ClCompile>
+    <ClCompile Include="Date.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="DateTime.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="File_com.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Findfile.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Folder.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="GetStr.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Instance.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="int64.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="String.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Time.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Univhash.cpp">
+      <Filter>oldfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\Advstr.cpp">
+      <Filter>oldfiles\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\Conn.cpp">
+      <Filter>oldfiles\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\File.cpp">
+      <Filter>oldfiles\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\FileStrm.cpp">
+      <Filter>oldfiles\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\srv.cpp">
+      <Filter>oldfiles\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="CalcFunc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="archiver\acoder.cpp">
+      <Filter>Source Files\archiver</Filter>
+    </ClCompile>
+    <ClCompile Include="archiver\haffman.cpp">
+      <Filter>Source Files\archiver</Filter>
+    </ClCompile>
+    <ClCompile Include="archiver\haio.cpp">
+      <Filter>Source Files\archiver</Filter>
+    </ClCompile>
+    <ClCompile Include="archiver\hsc.cpp">
+      <Filter>Source Files\archiver</Filter>
+    </ClCompile>
+    <ClCompile Include="wwwcgi\cgi_helper.cpp">
+      <Filter>Source Files\wwwcgi</Filter>
+    </ClCompile>
+    <ClCompile Include="WIN32\Maareg2.cpp">
+      <Filter>Source Files\W32</Filter>
+    </ClCompile>
+    <ClCompile Include="a_trie.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MaaEvents.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="resize_lim.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="wwwcgi\gd_helper.cpp">
+      <Filter>Source Files\wwwcgi</Filter>
+    </ClCompile>
+    <ClCompile Include="SysInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StringEx64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Maps.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MySqlHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="BTree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Comm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Errors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="File2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MaaTL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MaaXml.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="md4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="md5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mthrlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mthrlib2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="perm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Refs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sk2add.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="socket2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StringEx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StringLib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="temp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="templates.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ToolsLib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\Drv.h">
+      <Filter>Header Files\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\Maareg.h">
+      <Filter>Header Files\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\Socket.h">
+      <Filter>Header Files\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Date.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="DateTime.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Dlink.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="errcodes.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="File.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="FindFile.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Folder.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Instance.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="int64.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="SmartPtr.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="String.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Time.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Univhash.h">
+      <Filter>oldfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\Advstr.h">
+      <Filter>oldfiles\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\Conn.h">
+      <Filter>oldfiles\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\FileStrm.h">
+      <Filter>oldfiles\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\srv.h">
+      <Filter>oldfiles\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="CalcFunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cheap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="archiver\acoder.h">
+      <Filter>Source Files\archiver</Filter>
+    </ClInclude>
+    <ClInclude Include="archiver\haffman.h">
+      <Filter>Source Files\archiver</Filter>
+    </ClInclude>
+    <ClInclude Include="archiver\haio.h">
+      <Filter>Source Files\archiver</Filter>
+    </ClInclude>
+    <ClInclude Include="archiver\hsc.h">
+      <Filter>Source Files\archiver</Filter>
+    </ClInclude>
+    <ClInclude Include="wwwcgi\cgi_helper.h">
+      <Filter>Header Files\wwwcgi</Filter>
+    </ClInclude>
+    <ClInclude Include="rbtree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WIN32\Maareg2.h">
+      <Filter>Header Files\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="a_trie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MaaEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resize_lim.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="avl_tree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="avl_tree2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="avl_tree3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="wwwcgi\gd_helper.h">
+      <Filter>Header Files\wwwcgi</Filter>
+    </ClInclude>
+    <ClInclude Include="SysInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Hash_New2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StringEx1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StringEx64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MaaHT.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="smartpt_.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Maps.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MySqlHelper.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MaaTL_2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RecvMulticast.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="tl_64.nasm" />
+  </ItemGroup>
+</Project>
