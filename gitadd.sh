@@ -11,7 +11,7 @@ git add ToolsLib.vcxproj ToolsLib.vcxproj.filters ToolsLib.pro Makefile Makefile
 if [ x"$1" = "x" ]; then
     #echo 'git commit -m "Comment"'
     #echo 'git push origin master'
-    git commit -m '~' && git push origin main
+    git commit -m '~' ; git push origin main
 else
-    git commit -m "$1" && git push origin main
+    git commit -m "$1" ; git push origin main
 fi
