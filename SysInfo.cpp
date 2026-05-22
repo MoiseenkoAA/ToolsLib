@@ -897,5 +897,3 @@ int StringToBits(const CMaaString &s, unsigned char* m) noexcept
     }
     return N;
 }
-
-

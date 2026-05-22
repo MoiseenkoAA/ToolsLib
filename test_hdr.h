@@ -9,5 +9,3 @@ static void f_test1111()
         stat_print();
     }
 }
-
-
