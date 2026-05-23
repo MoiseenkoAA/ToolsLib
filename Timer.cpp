@@ -370,7 +370,7 @@ CMaaTime::CMaaTime() noexcept
     {
         //+ 128 because thats where the vdso_data starts
         vdso_data *vd = (vdso_data *)(vvar_addr + 128);
-//printf("seq=%lld, clock_mode=%lld, cycle_last=%lld, mask=%lld, mult=%lld, shift=%lld\n", (_qword)vd->seq, (_qword)vd->clock_mode, (_qword)vd->cycle_last, (_qword)vd->mask, (_qword)vd->mult, (_qword)vd->shift);
+//printf("seq=%lld, clock_mode=%lld, cycle_last=%lld, mask=%lld, mult=%lld, shift=%lld\n", (long long)vd->seq, (long long)vd->clock_mode, (long long)vd->cycle_last, (long long)vd->mask, (long long)vd->mult, (long long)vd->shift);
 //printf("vd->shift=%d, vd->mult=%ld, gbHypervisor=%d, gCpuMHz=%d\n", (int)vd->shift, (long)vd->mult, gbHypervisor, (int)gCpuMHz);
         if (vd->shift < 64 && vd->mult != 0
 #ifdef TL_KVM
@@ -382,7 +382,7 @@ CMaaTime::CMaaTime() noexcept
         {
 //printf("gCpuMHz = %d\n", gCpuMHz);
 //printf("seq=%lld, clock_mode=%lld, cycle_last=%lld, mask=%lld, mult=%lld, shift=%lld\n",
-// (_qword)vd->seq, (_qword)vd->clock_mode, (_qword)vd->cycle_last, (_qword)vd->mask, (_qword)vd->mult, (_qword)vd->shift);
+// (long long)vd->seq, (long long)vd->clock_mode, (long long)vd->cycle_last, (long long)vd->mask, (long long)vd->mult, (long long)vd->shift);
             //m_Freq = (uint64_t)(((__uint128_t)1000000000ull << vdso_data->shift) / vdso_data->mult);
             m_Freq = MaaMulDiv64(1000000000ull, 1ull << vd->shift, vd->mult);
 
@@ -403,8 +403,8 @@ CMaaTime::CMaaTime() noexcept
         {
             m_Freq = 0;
         }
-        //printf("1st method m_Freq=%lld\n", m_Freq);
-//else printf("1st method m_Freq=%lld\n", m_Freq);
+        //printf("1st method m_Freq=%lld\n", (long long)m_Freq);
+//else printf("1st method m_Freq=%lld\n", (long long)m_Freq);
     }
 #endif // need divide by cpu frequency in GHz: 2,600,309 result of 1 sec on 2.6 GHz cpu
 
@@ -429,7 +429,7 @@ CMaaTime::CMaaTime() noexcept
             {
                 // success
     //printf("pc->version=%d, pc->compat_version=%d, pc->cap_user_time=%d\n", (int)pc->version, (int)pc->compat_version, (int)pc->cap_user_time);
-    //printf("%lld * (1ull << (%lld - 1)) / %lld\n", 2000000000ull, pc->time_shift, (_uqword)pc->time_mult);
+    //printf("%lld * (1ull << (%lld - 1)) / %lld\n", (long long)2000000000ull, (long long)pc->time_shift, (unsigned long long)pc->time_mult);
                 if (pc->cap_user_time == 1)
                 {
                     // docs say nanoseconds = (tsc * time_mult) >> time_shift
@@ -439,7 +439,7 @@ CMaaTime::CMaaTime() noexcept
                     // If your build configuration supports 128 bit arithmetic, do this:
                     // tsc_freq = ((__uint128_t)1000000000ull << (__uint128_t)pc->time_shift) / pc->time_mult;
 
-                    //printf("5 %lld * %lld / %lld\n", 2000000000ull, 1ull << (pc->time_shift - 1), (_uqword)pc->time_mult);
+                    //printf("5 %lld * %lld / %lld\n", (long long)2000000000ull, (long long)(1ull << (pc->time_shift - 1)), (unsigned long long)pc->time_mult);
                     m_Freq = MaaMulDiv64(2000000000ull, 1ull << (pc->time_shift - 1), pc->time_mult);
                 }
                 munmap(pc, 4096);
@@ -478,11 +478,11 @@ CMaaTime::CMaaTime() noexcept
         // Do the math to extrapolate the RDTSC ticks elapsed in 1 second
         //tsc_freq = (tsc_end - tsc_begin) * 1000000000 / (nsc_end - nsc_begin);
 
-        //printf("12 %lld * %lld / %lld\n", tsc_end - tsc_begin, 1000000000, nsc_end - nsc_begin);
+        //printf("12 %lld * %lld / %lld\n", (long long)(tsc_end - tsc_begin), (long long)1000000000, (long long)(nsc_end - nsc_begin));
         m_Freq = MaaMulDiv64(tsc_end - tsc_begin, 1000000000, nsc_end - nsc_begin);
     }
 
-    //printf("13 %lld\n", m_Freq);
+    //printf("13 %lld\n", (long long)m_Freq);
     //__utf8_printf("13 %,D\n", m_Freq);
     m_StartTime__rdtsc = m_LastTime__rdtsc = __rdtsc();
     m_LastUsTime = 0;

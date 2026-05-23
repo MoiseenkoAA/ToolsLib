@@ -4261,7 +4261,7 @@ void CMaaAccessMemoryCheckFailed(const void * ptr, int_ len, const char * funcNa
         {
             memset(&t0, 0, sizeof(t0));
         }
-        fprintf(f, "%2d.%02d.%d %02d:%02d:%02d: %s: memory access error at ptr=%p, len=%lld, SrcFile=%s, SrcLine=%d\n", t0.tm_mday, t0.tm_mon + 1, t0.tm_year + 1900, t0.tm_hour, t0.tm_min, t0.tm_sec, funcName, ptr, (_qword)len, SrcFile, SrcLine);
+        fprintf(f, "%2d.%02d.%d %02d:%02d:%02d: %s: memory access error at ptr=%p, len=%lld, SrcFile=%s, SrcLine=%d\n", t0.tm_mday, t0.tm_mon + 1, t0.tm_year + 1900, t0.tm_hour, t0.tm_min, t0.tm_sec, funcName, ptr, (long long)len, SrcFile, SrcLine);
         fclose(f);
     }
 #endif
@@ -4361,7 +4361,7 @@ void CMaaAccessMemoryCheckFailed(const void* ptr, size_t len, const char* funcNa
         {
             memset(&t0, 0, sizeof(t0));
         }
-        fprintf(f, "%2d.%02d.%d %02d:%02d:%02d: %s: memory access error at ptr=%p, len=%lld, SrcFile=%s, SrcLine=%d\n", t0.tm_mday, t0.tm_mon + 1, t0.tm_year + 1900, t0.tm_hour, t0.tm_min, t0.tm_sec, funcName, ptr, (_qword)len, SrcFile, SrcLine);
+        fprintf(f, "%2d.%02d.%d %02d:%02d:%02d: %s: memory access error at ptr=%p, len=%lld, SrcFile=%s, SrcLine=%d\n", t0.tm_mday, t0.tm_mon + 1, t0.tm_year + 1900, t0.tm_hour, t0.tm_min, t0.tm_sec, funcName, ptr, (long long)len, SrcFile, SrcLine);
         fclose(f);
     }
 #endif
@@ -4670,7 +4670,7 @@ void CMaaAccessMemoryCheckFailed(const void * ptr, int len, const char * funcNam
         {
             memset(&t0, 0, sizeof(t0));
         }
-        fprintf(f, "%2d.%02d.%d %02d:%02d:%02d: %s: memory access error at ptr=%p, len=%lld, SrcFile=%s, SrcLine=%d\n", t0.tm_mday, t0.tm_mon + 1, t0.tm_year + 1900, t0.tm_hour, t0.tm_min, t0.tm_sec, funcName, ptr, (_qword)len, SrcFile, SrcLine);
+        fprintf(f, "%2d.%02d.%d %02d:%02d:%02d: %s: memory access error at ptr=%p, len=%lld, SrcFile=%s, SrcLine=%d\n", t0.tm_mday, t0.tm_mon + 1, t0.tm_year + 1900, t0.tm_hour, t0.tm_min, t0.tm_sec, funcName, ptr, (long long)len, SrcFile, SrcLine);
         fclose(f);
     }
 #endif
