@@ -8337,7 +8337,7 @@ int CMaaString::ReplaceNN(char What, char By, int StartPos, int EndPos) noexcept
     }
     if  (!m_pImp->IsRWSingleOwner())
     {
-        *this = std::move(NewCopy());
+        *this = std::move(NewCopyEx());
     }
     char * p = GetBuffer();
     char * e = p + Length();
@@ -9907,7 +9907,7 @@ CMaaString CMaaString::ToLower(int_ cp) const noexcept(noexcept_new)// acts for 
     {
         if (*p != m[*p])
         {
-            CMaaString Buffer = std::move(NewCopy());
+            CMaaString Buffer = std::move(NewCopyEx());
             if (Buffer.Length() == Length())
             {
                 unsigned char* pp = (unsigned char*)(char *)Buffer.GetBuffer();
@@ -10047,7 +10047,7 @@ CMaaString CMaaString::ToUpper(int_ cp) const noexcept(noexcept_new) // acts for
     {
         if (*p != m[*p])
         {
-            CMaaString Buffer = std::move(NewCopy());
+            CMaaString Buffer = std::move(NewCopyEx());
             if (Buffer.Length() == Length())
             {
                 unsigned char* pp = (unsigned char*)(char*)Buffer.GetBuffer();
@@ -10365,7 +10365,7 @@ CMaaString CMaaString::GetWord0(const CMaa256Bits &Bits) noexcept(noexcept_new)
 {
     if (IsROString())
     {
-        *this = std::move(NewCopy());
+        *this = std::move(NewCopyEx());
     }
     //CMaa256Bits Bits(Spaces, Spaces.Length());
 
@@ -10414,7 +10414,7 @@ CMaaString CMaaString::GetWord0(char c) noexcept(noexcept_new)
 {
     if (IsROString())
     {
-        *this = std::move(NewCopy());
+        *this = std::move(NewCopyEx());
     }
 
     CMaaString Ret;
@@ -10570,7 +10570,7 @@ CMaaString CMaaString::GetLine0(CMaaString * pCrLf) noexcept(noexcept_new)
 {
     if (IsROString())
     {
-        *this = std::move(NewCopy());
+        *this = std::move(NewCopyEx());
     }
     CMaaString Line;
     int len = 0;
@@ -13082,7 +13082,7 @@ int CMaaString::Fill(int StartPos, int Len, char c) noexcept(noexcept_new)
     }
     if  (!m_pImp->IsRWSingleOwner())
     {
-        CMaaString temp = Len == L ? CMaaString(nullptr, L, (_e1_)(GetUtf1632Flags())) : NewCopy();
+        CMaaString temp = Len == L ? CMaaString(nullptr, L, (_e1_)(GetUtf1632Flags())) : NewCopyEx();
         if  (temp.IsNotEmpty())
         {
             *this = std::move(temp);
@@ -13816,7 +13816,7 @@ int CMaaString::Copy(int pos, const void * ptr, int size) noexcept(noexcept_new)
     }
     if  (!m_pImp->IsRWSingleOwner())
     {
-        CMaaString temp = NewCopy();
+        CMaaString temp = NewCopyEx();
         /*
           if   (temp.m_pImp)
           {

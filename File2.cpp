@@ -6749,7 +6749,7 @@ bool CMaaFile::CopyDirRecursively(CMaaString SrcPath, CMaaString DstPath, int De
 //---------------------------------------------------------------------------
 CMaaFile * g_log = nullptr;
 //---------------------------------------------------------------------------
-CMaaFindFile2::CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDepth)
+CMaaFindFile2::CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDepth) noexcept(noexcept_new)
 {
     m_Dir = Dir;
     if  (iRecursiveDepth > 1 || iRecursiveDepth < 0)
@@ -6810,7 +6810,7 @@ CMaaFindFile2::CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDept
 #endif
 }
 //---------------------------------------------------------------------------
-CMaaFindFile2::CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth)
+CMaaFindFile2::CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth) noexcept(noexcept_new)
 {
     m_iRecursiveDepth = iRecursiveDepth;
     CMaaString Dir = CMaaFile::MkCompatible(DirWithMask);
@@ -6864,16 +6864,26 @@ CMaaFindFile2::~CMaaFindFile2()
 {
 #ifdef _WIN32
     delete m_pCurr;
-    if  (m_h != -1)
+    if (m_h != -1)
     {
         _findclose(m_h);
     }
 #endif
 #ifdef __unix__
-    if  (m_fts)
+    if (m_fts)
     {
         fts_close(m_fts);
     }
+#endif
+}
+//---------------------------------------------------------------------------
+bool CMaaFindFile2::IsOpen() const noexcept
+{
+#ifdef _WIN32
+    return m_h != -1;
+#endif
+#ifdef __unix__
+    return m_fts;
 #endif
 }
 //---------------------------------------------------------------------------
@@ -6901,7 +6911,7 @@ int CMaaFindFile2::SetFileTypeMasks(int Masks) noexcept
     return m_FileTypeMask = Masks;
 }
 //---------------------------------------------------------------------------
-bool CMaaFindFile2::InternalGet(sFind &f)
+bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
 {
 #ifdef _WIN32
     if  (m_iRecursiveDepth > 1 || m_iRecursiveDepth < 0)
@@ -7134,7 +7144,7 @@ bool CMaaFindFile2::InternalGet(sFind &f)
     return true;
 }
 //---------------------------------------------------------------------------
-bool CMaaFindFile2::Get(sFind &f)
+bool CMaaFindFile2::Get(sFind &f) noexcept(noexcept_new)
 {
     while(1)
     {
@@ -7193,7 +7203,7 @@ CMaaString CMaaFindFile2::sFind::GetDirName() const // with out if ending slash
     }
 }
 //---------------------------------------------------------------------------
-CMaaString CMaaFindFile2::sFind::GetDirName0() const // with out if ending slash, 0-terminating CMaaString
+CMaaString CMaaFindFile2::sFind::GetDirName0() const noexcept(noexcept_new) // with out if ending slash, 0-terminating CMaaString
 {
     const int n = (warning_int)m_FileName.ReverseFind(FILESYSTEM_SLASH);
     return (n >= 0) ? m_FileName.Left(n > 0 ? n : 1).Str0Copy() : CMaaStringZ;

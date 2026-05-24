@@ -1203,13 +1203,14 @@ public:
             noexcept
 #endif
             ;
-        CMaaString GetDirName0() const; // with out if ending slash, 0-terminating CMaaString
+        CMaaString GetDirName0() const noexcept(noexcept_new); // with out if ending slash, 0-terminating CMaaString
         CMaaString GetDirName2() const noexcept; // with out if ending slash, optimized NZT RefLeft CMaaString
     };
-    CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDepth = 1);
-    CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth = 1);
+    CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
+    CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth = 1) noexcept(noexcept_new);
     ~CMaaFindFile2();
-    bool Get(sFind &f);
+    bool IsOpen() const noexcept; // optional. is dir opened
+    bool Get(sFind &f) noexcept(noexcept_new);
     enum eFlags
     {
         eFt = 0x01,
@@ -1234,7 +1235,7 @@ protected:
     //CMaaAutoInitObject<int, -1> m_FileTypeMask;
     int m_Flags = eFt;
     int m_FileTypeMask = -1;
-    bool InternalGet(sFind &f);
+    bool InternalGet(sFind &f) noexcept(noexcept_new);
 };
 
 #ifdef __unix__
