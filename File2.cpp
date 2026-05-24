@@ -6877,7 +6877,7 @@ CMaaFindFile2::~CMaaFindFile2()
 #endif
 }
 //---------------------------------------------------------------------------
-bool CMaaFindFile2::IsOpen() const noexcept
+bool CMaaFindFile2::IsDirOpened() const noexcept
 {
 #ifdef _WIN32
     return m_h != -1;

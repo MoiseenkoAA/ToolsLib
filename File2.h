@@ -1209,7 +1209,7 @@ public:
     CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
     CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth = 1) noexcept(noexcept_new);
     ~CMaaFindFile2();
-    bool IsOpen() const noexcept; // optional. is dir opened
+    bool IsDirOpened() const noexcept; // optional. is dir opened
     bool Get(sFind &f) noexcept(noexcept_new);
     enum eFlags
     {
