@@ -481,7 +481,7 @@ protected:
     CMaaFile(int fd, bool bThrow, sfp * psfp);
 #endif
 
-    void SetClosingType(int ClosingType);
+    void SetClosingType(int ClosingType) noexcept;
 
 public:
 

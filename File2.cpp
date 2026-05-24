@@ -2521,7 +2521,7 @@ CMaaFile::CMaaFile(int h, bool bThrow, sfp *)
     f_glog.fprintf("current error: %s\n", GetMsg());
 }
 //------------------------------------------------------------------------------
-void CMaaFile::SetClosingType(int ClosingType)
+void CMaaFile::SetClosingType(int ClosingType) noexcept
 {
     if  (m_pImp)
     {
@@ -8162,3 +8162,20 @@ DEF_ALLOCATOR_CMaaUnivHash(ino_t, int)
 DEF_ALLOCATOR_CMaaUnivHash(CMaaString, int)
 #endif
 //-----------------------------------------------------------------------------
+
+/*
+void md_truncfile(int fh, U32B len)
+{
+#ifdef _WIN32
+    HANDLE h = (HANDLE)_get_osfhandle(fh);
+    CMaaFile f = CMaaFile::FromHandle(h, false, -1);
+    const _qword q = f.GetCurPos();
+    f.Seek(len);
+    f.Truncate();
+    f.Seek(q);
+    f.Close();
+#else
+    ftruncate(fh,len);
+#endif
+}
+*/
