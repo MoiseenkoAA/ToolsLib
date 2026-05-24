@@ -3486,7 +3486,7 @@ public:
         }
         const char& operator=(char c) noexcept(noexcept_new)
         {
-            if  (PIMP(s.m_pImp) && s.Length() > idx && idx >= 0 && !bConst)
+            if  (PIMP(s.m_pImp) && s.m_pImp->m_iLength > idx && idx >= 0 && !bConst)
             {
                 if  (!s.m_pImp->IsRWSingleOwner())
                 {
@@ -3496,7 +3496,7 @@ public:
                         s = std::move(temp);
                     }
                 }
-                if  (PIMP(s.m_pImp) && s.Length() > idx && s.m_pImp->IsRWSingleOwner())
+                if  (PIMP(s.m_pImp) && s.m_pImp->m_iLength > idx && s.m_pImp->IsRWSingleOwner())
                 {
                     return *(idx + s.GetBuffer()) = c;
                 }
