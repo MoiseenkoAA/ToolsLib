@@ -1078,6 +1078,10 @@ public:
 #endif
         }
         void ClearHash() noexcept; // call after direct string modifications
+        CMaaString NewCopy() const noexcept(noexcept_new)
+        {
+            return CMaaString(m_pszStr, m_iLength, GetUtf1632Flags()); // alloc copy of string
+        }
         bool Is0Behind() const noexcept
         {
             return !(TOOLSLIB_LOAD_ATOMIC(f2.a12.m_Flags1) & (eLengthLimit1 >> 8)) && m_pszStr[m_iLength] == '\0';
@@ -1708,22 +1712,13 @@ public:
     //bool IsWC0Behind() const noexcept;
     //bool IsWChar0Behind() const noexcept;
     //bool IsWC32_0Behind() const noexcept;
-
-protected:
-    // alloc copy of string, m_pImp is unchecked (valid)
-    CMaaString NewCopyEx() const noexcept(noexcept_new)
-    {
-        return CMaaString(m_pImp->m_pszStr, m_pImp->m_iLength, m_pImp->GetUtf1632Flags());
-    }
-public:
-    // alloc copy of string
     CMaaString NewCopy() const noexcept(noexcept_new)
     {
-        return CMaaString((const char*)*this, Length(), GetUtf1632Flags());
+        return CMaaString((const char*)*this, Length(), GetUtf1632Flags()); // alloc copy of string
     }
     CMaaString Str0Copy() const noexcept(noexcept_new)
     {
-        return Is0Behind() ? *this : NewCopyEx();
+        return Is0Behind() ? *this : m_pImp->NewCopy();
     }
     template<bool z = false> CMaaString z_str() const noexcept(!z || noexcept_new)
     {
@@ -3495,7 +3490,7 @@ public:
             {
                 if  (!s.m_pImp->IsRWSingleOwner())
                 {
-                    CMaaString temp = s.NewCopyEx();
+                    CMaaString temp = s.m_pImp->NewCopy();
                     if (temp.m_pImp != sp_NullImp)
                     {
                         s = std::move(temp);
