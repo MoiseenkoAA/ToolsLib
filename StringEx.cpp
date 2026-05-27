@@ -4177,9 +4177,7 @@ CMaaString::Helper CMaaString::operator + (const char * szString) const noexcept
 CMaaString::Helper CMaaString::operator - (int n) const noexcept(noexcept_new)
 {
     TOOLSLIB_STR_HELPER_printf("H S::op-(n)\n")
-    CMaaString tmp(*this);
-    tmp -= n;
-    return tmp;
+    return RemoveFromRight(n);
 }
 //---------------------------------------------------------------------------
 #ifndef __unix__
