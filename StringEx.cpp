@@ -3187,7 +3187,7 @@ CMaaString& CMaaString::operator=(const CMaaString32& That) noexcept
 //---------------------------------------------------------------------------
 CMaaString & CMaaString::operator= (const CMaaString & That) noexcept
 {
-    TOOLSLIB_STR_HELPER_printf("C::op=(c S&)\n")
+    TOOLSLIB_STR_HELPER_printf("C::op=(c S&)\n");
 #ifdef CHK_ERR_NULL_PIMP
     if (!That.m_pImp)
     {
@@ -3201,7 +3201,7 @@ CMaaString & CMaaString::operator= (const CMaaString & That) noexcept
 //---------------------------------------------------------------------------
 CMaaString & CMaaString::operator= (CMaaString &&That) noexcept
 {
-    TOOLSLIB_STR_HELPER_printf("S::op=(S&&)\n")
+    TOOLSLIB_STR_HELPER_printf("S::op=(S&&)\n");
     if  (m_pImp != That.m_pImp)
     {
         AssignImpFast(m_pImp, (CMaaStringImp*&)That.m_pImp, false, MANUAL_STRINGS_REFS);
@@ -4155,7 +4155,7 @@ CMaaString & CMaaString::operator += (const char * szString) noexcept(noexcept_n
 //---------------------------------------------------------------------------
 CMaaString::Helper CMaaString::operator + (const CMaaString & That) const noexcept(noexcept_new)
 {
-    TOOLSLIB_STR_HELPER_printf("H S::op+(c S&)\n")
+    TOOLSLIB_STR_HELPER_printf("H S::op+(c S&)\n");
     CMaaString tmp(*this);
     tmp += That;
     return tmp;
@@ -4167,16 +4167,16 @@ CMaaString::Helper CMaaString::operator + (const char * szString) const noexcept
     {
         CMaaString tmp(*this);
         tmp += szString;
-        TOOLSLIB_STR_HELPER_printf("H S::op+(c c*)\n")
+        TOOLSLIB_STR_HELPER_printf("H S::op+(c c*)\n");
         return tmp;
     }
-    TOOLSLIB_STR_HELPER_printf("H S::op+(c c* nullptr)\n")
+    TOOLSLIB_STR_HELPER_printf("H S::op+(c c* nullptr)\n");
     return *this;
 }
 //---------------------------------------------------------------------------
 CMaaString::Helper CMaaString::operator - (int n) const noexcept(noexcept_new)
 {
-    TOOLSLIB_STR_HELPER_printf("H S::op-(n)\n")
+    TOOLSLIB_STR_HELPER_printf("H S::op-(n)\n");
     return RemoveFromRight(n);
 }
 //---------------------------------------------------------------------------

@@ -59,7 +59,7 @@
  */
 
 #define TOOLSLIB_STR_HELPER_printf(x) 
-//#define TOOLSLIB_STR_HELPER_printf(x) printf(x);
+//#define TOOLSLIB_STR_HELPER_printf(x) printf(x)
 
 // Notes 04.01.2024:
 // 1. (const char *)"A1" is forced casts to (char *), not to (const void *): e.AddAttribute("a2", (const char*)"A2");
@@ -1679,7 +1679,7 @@ public:
     }
     constexpr operator const char* () const noexcept
     {
-        TOOLSLIB_STR_HELPER_printf("S::op const ch*() const\n")
+        TOOLSLIB_STR_HELPER_printf("S::op const ch*() const\n");
         return PIMP(m_pImp) ? m_pImp->m_pszStr : ceCMaaStringImp::sChar0_1;
     }
     //operator const char8_t* () const noexcept;
@@ -1946,7 +1946,7 @@ public:
     public:
         Helper(const CMaaString& x) noexcept
         {
-            TOOLSLIB_STR_HELPER_printf("H(c S&)\n")
+            TOOLSLIB_STR_HELPER_printf("H(c S&)\n");
             if ((m_pImp = x.m_pImp) != sp_NullImp)
             {
                 m_pImp->AddRef(); INC_TOOLSLIB_STAT_STRING_IMP_REFS(true);
@@ -1954,7 +1954,7 @@ public:
         }
         ~Helper()
         {
-            TOOLSLIB_STR_HELPER_printf("~H()\n")
+            TOOLSLIB_STR_HELPER_printf("~H()\n");
             if (m_pImp != sp_NullImp)
             //if (PIMP(m_pImp))
             {
@@ -1969,7 +1969,7 @@ public:
         }
         Helper(const Helper& That) noexcept
         {
-            TOOLSLIB_STR_HELPER_printf("H(c H&)\n")
+            TOOLSLIB_STR_HELPER_printf("H(c H&)\n");
             if ((m_pImp = That.m_pImp) != sp_NullImp)
             {
                 m_pImp->AddRef(); INC_TOOLSLIB_STAT_STRING_IMP_REFS(true);
@@ -1977,7 +1977,7 @@ public:
         }
         Helper(Helper&& That) noexcept
         {
-            TOOLSLIB_STR_HELPER_printf("H(H &&)\n")
+            TOOLSLIB_STR_HELPER_printf("H(H &&)\n");
             m_pImp = That.m_pImp;
             That.m_pImp = sp_NullImp;
         }
@@ -1993,68 +1993,68 @@ public:
         */
         template<class S> Helper& operator +=(const S& txt) noexcept(noexcept_new)
         {
-            TOOLSLIB_STR_HELPER_printf("H& op+=(T)\n")
+            TOOLSLIB_STR_HELPER_printf("H& op+=(T)\n");
             (*(CMaaString*)this) += txt;
             return *this;
         }
         template<class S> Helper& operator +(const S& txt) noexcept(noexcept_new)
         {
-            TOOLSLIB_STR_HELPER_printf("H& op+(T)\n")
+            TOOLSLIB_STR_HELPER_printf("H& op+(T)\n");
             (*(CMaaString*)this) += txt;
             return *this;
         }
         Helper& operator -=(int n) noexcept(noexcept_new)
         {
-            TOOLSLIB_STR_HELPER_printf("H& op-=(n)\n")
+            TOOLSLIB_STR_HELPER_printf("H& op-=(n)\n");
             (*(CMaaString*)this) -= n;
             return *this;
         }
         Helper& operator -(int n) noexcept(noexcept_new)
         {
-            TOOLSLIB_STR_HELPER_printf("H& op-(n)\n")
+            TOOLSLIB_STR_HELPER_printf("H& op-(n)\n");
             (*(CMaaString*)this) -= n;
             return *this;
         }
         operator const CMaaString& () const noexcept
         {
-            TOOLSLIB_STR_HELPER_printf("H::op c S&() const\n")
+            TOOLSLIB_STR_HELPER_printf("H::op c S&() const\n");
             return *(const CMaaString*)this;
         }
         operator CMaaString& () noexcept
         {
-            TOOLSLIB_STR_HELPER_printf("H::op S&()\n")
+            TOOLSLIB_STR_HELPER_printf("H::op S&()\n");
             return *(CMaaString*)this;
         }
         //operator const char* () const noexcept { return *(const CMaaString*)this; }
         const CMaaString& s() const noexcept
         {
-            TOOLSLIB_STR_HELPER_printf("const S& H::s() const\n")
+            TOOLSLIB_STR_HELPER_printf("const S& H::s() const\n");
             return *(const CMaaString*)this;
         }
         CMaaString& s() noexcept
         {
-            TOOLSLIB_STR_HELPER_printf("S& H::s()\n")
+            TOOLSLIB_STR_HELPER_printf("S& H::s()\n");
             return *(CMaaString*)this;
         }
         const char* c() const noexcept
         {
-            TOOLSLIB_STR_HELPER_printf("c ch* H::c() const\n")
+            TOOLSLIB_STR_HELPER_printf("c ch* H::c() const\n");
             return *(const CMaaString*)this;
         }
     };
     const CMaaString& s() const noexcept
     {
-        TOOLSLIB_STR_HELPER_printf("const S& S::s() const\n")
+        TOOLSLIB_STR_HELPER_printf("const S& S::s() const\n");
         return *this;
     }
     CMaaString& s() noexcept
     {
-        TOOLSLIB_STR_HELPER_printf("S& S::s()\n")
+        TOOLSLIB_STR_HELPER_printf("S& S::s()\n");
         return *this;
     }
     const char* c() const noexcept
     {
-        TOOLSLIB_STR_HELPER_printf("const ch* S::c() const\n")
+        TOOLSLIB_STR_HELPER_printf("const ch* S::c() const\n");
         return *this;
     }
     Helper operator + (const char * szString) const noexcept(noexcept_new);
@@ -3841,36 +3841,36 @@ public:
         Helper(const Helper& That) noexcept
         :   m(That.m)
         {
-            TOOLSLIB_STR_HELPER_printf("CH(c CH &)\n")
+            TOOLSLIB_STR_HELPER_printf("CH(c CH &)\n");
         }
         Helper(Helper&& That) noexcept
         :   m(That.m)
         {
-            TOOLSLIB_STR_HELPER_printf("CH(CH &&)\n")
+            TOOLSLIB_STR_HELPER_printf("CH(CH &&)\n");
         }
         Helper& operator=(const Helper& That) noexcept = delete;
         Helper& operator=(Helper&& That) noexcept = delete;
         template<class S> Helper& operator +=(const S& txt) noexcept(xThrow <= 0 || bCountMode)
         {
-            TOOLSLIB_STR_HELPER_printf("CH::op +=(c S&)\n")
+            TOOLSLIB_STR_HELPER_printf("CH::op +=(c S&)\n");
             m += txt;
             return *this;
         }
         template<class S> Helper& operator +(const S& txt) noexcept(xThrow <= 0 || bCountMode)
         {
-            TOOLSLIB_STR_HELPER_printf("CH::op +(c S&)\n")
+            TOOLSLIB_STR_HELPER_printf("CH::op +(c S&)\n");
             m += txt;
             return *this;
         }
         Helper& operator -=(int n) noexcept
         {
-            TOOLSLIB_STR_HELPER_printf("CH::op -=(n)\n")
+            TOOLSLIB_STR_HELPER_printf("CH::op -=(n)\n");
             m -= n;
             return *this;
         }
         Helper& operator -(int n) noexcept
         {
-            TOOLSLIB_STR_HELPER_printf("CH::op -(n)\n")
+            TOOLSLIB_STR_HELPER_printf("CH::op -(n)\n");
             m -= n;
             return *this;
         }
@@ -4077,13 +4077,13 @@ public:
 #endif
     void operator -= (int n) noexcept
     {
-        TOOLSLIB_STR_HELPER_printf("C::op-=(n)\n")
+        TOOLSLIB_STR_HELPER_printf("C::op-=(n)\n");
         n = n >= 0 ? n : -n;
         m_StringLength = m_StringLength >= n ? m_StringLength - n : 0;
     }
     void operator += (const CMaaString& str) noexcept(xThrow <= 0 || bCountMode)
     {
-        TOOLSLIB_STR_HELPER_printf("C::op+=(c S&)\n")
+        TOOLSLIB_STR_HELPER_printf("C::op+=(c S&)\n");
         Add(str, str.Length());
     }
 #if TOOLSLIB_USE_CMAASTRING64 == 2
