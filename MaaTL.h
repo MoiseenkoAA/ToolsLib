@@ -216,8 +216,8 @@ extern bool gbCMaaPtrThrow;
 #define Max(a,b) ((a)>(b)?(a):(b))
 template<class T> int CMaaXSign(T x) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
 //---------------------------------------------------------------------------
-//template < class T > void CMaaSwap ( T & a, T & b ) noexcept(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value)
-template < class T > void CMaaSwap ( T & a, T & b )  noexcept( noexcept(T(a)) && noexcept(a=b) )
+template < class T > void CMaaSwap ( T & a, T & b ) noexcept(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value)
+//template < class T > void CMaaSwap ( T & a, T & b ) noexcept( noexcept(T(a)) && noexcept(a=b) )
 {
     T tmp ( a );
     a = b;
@@ -1830,7 +1830,7 @@ public:
 
     // This constructor creates MaxIndex numbers of elements of class T.
     // Makes exeption if no free memory available.
-    CMaaPtr_(size_t MaxIndex) noexcept(xThrow < 0 || (!xThrow && noexcept(T())))
+    CMaaPtr_(size_t MaxIndex) noexcept(xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value))
     :   m_Ptr(nullptr),
         m_MaxIndex((int3264)MaxIndex),
         m_TotalItems((int3264)MaxIndex)
@@ -1861,7 +1861,7 @@ public:
                 }
                 catch (...)
                 {
-                    if constexpr (xThrow >= 0 && !noexcept(T()))
+                    if constexpr (xThrow >= 0 && !std::is_nothrow_move_constructible<T>::value)
                     {
                         throw;
                     }
@@ -1888,7 +1888,7 @@ public:
     {
     }
 
-    CMaaPtr_(const CMaaPtr_<T, xThrow>& x) noexcept((xThrow < 0 || (!xThrow && noexcept(T()))) && noexcept(m_Ptr[0] = m_Ptr[0]))
+    CMaaPtr_(const CMaaPtr_<T, xThrow>& x) noexcept((xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value)) && std::is_nothrow_move_assignable<T>::value)
     :   m_Ptr(nullptr),
         m_MaxIndex(0),
         m_TotalItems(0)
@@ -1912,7 +1912,7 @@ public:
         }
     }
 
-    void operator += (const CMaaPtr_<T, xThrow> &x) noexcept((xThrow < 0 || (!xThrow && noexcept(T()))) && noexcept(m_Ptr[0] = m_Ptr[0]))
+    void operator += (const CMaaPtr_<T, xThrow> &x) noexcept((xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value)) && std::is_nothrow_move_assignable<T>::value)
     {
         if (x.IsValid())
         {
@@ -1937,7 +1937,7 @@ public:
         }
     }
 
-    void operator += (const T& x) noexcept((xThrow < 0 || (!xThrow && noexcept(T()))) && noexcept(CheckExpand(m_MaxIndex + 1)) && noexcept(m_Ptr[0] = x))
+    void operator += (const T& x) noexcept((xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value)) && noexcept(CheckExpand(m_MaxIndex + 1)) && noexcept(m_Ptr[0] = x))
     {
         const int3264 m = m_MaxIndex;
         if (CheckExpand(m + 1))
@@ -1958,7 +1958,7 @@ public:
         //return false;
     }
 
-    void operator += (T& x) noexcept((xThrow < 0 || (!xThrow && noexcept(T()))) && noexcept(CheckExpand(m_MaxIndex + 1)) && noexcept(m_Ptr[0] = x))
+    void operator += (T& x) noexcept((xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value)) && noexcept(CheckExpand(m_MaxIndex + 1)) && noexcept(m_Ptr[0] = x))
     {
         const int3264 m = m_MaxIndex;
         if (CheckExpand(m + 1))
@@ -1979,7 +1979,7 @@ public:
         //return false;
     }
 
-    CMaaPtr_<T, xThrow>& operator = (const CMaaPtr_<T, xThrow>& That) noexcept((xThrow < 0 || (!xThrow && noexcept(T()))) && noexcept(m_Ptr[0] = m_Ptr[0]))
+    CMaaPtr_<T, xThrow>& operator = (const CMaaPtr_<T, xThrow>& That) noexcept((xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value)) && std::is_nothrow_move_assignable<T>::value)
     {
         const int3264 m = That.m_MaxIndex;
         CMaaPtr_<T, xThrow> tmp(m);
@@ -1994,7 +1994,7 @@ public:
         return *this;
     }
 
-    void append(T x) noexcept((xThrow < 0 || (!xThrow && noexcept(T()))) && noexcept(CheckExpand(m_MaxIndex + 1)) && noexcept(m_Ptr[0] = x))
+    void append(T x) noexcept((xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value)) && noexcept(CheckExpand(m_MaxIndex + 1)) && noexcept(m_Ptr[0] = x))
     {
         const int3264 m = m_MaxIndex;
         if (CheckExpand(m + 1))
@@ -2015,7 +2015,7 @@ public:
         //return false;
     }
 
-    /*virtual*/ bool CheckResize(size_t MaxN) noexcept(xThrow < 0 || (!xThrow && noexcept(T())))
+    /*virtual*/ bool CheckResize(size_t MaxN) noexcept(xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value))
     {
         if (IsValid() && MaxN <= (size_t)m_TotalItems)
         {
@@ -2036,7 +2036,7 @@ public:
         return true;
     }
 
-    /*virtual*/ bool CheckExpand(size_t MaxN) noexcept((xThrow < 0 || (!xThrow && noexcept(T()))) && noexcept(m_Ptr[0] = m_Ptr[0]))
+    /*virtual*/ bool CheckExpand(size_t MaxN) noexcept((xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value)) && std::is_nothrow_move_assignable<T>::value)
     {
         if (IsValid() && MaxN <= (size_t)m_TotalItems)
         {
@@ -2168,7 +2168,7 @@ public:
             }
         }
     }
-    /*virtual*/ bool Resize(int3264 n) noexcept((xThrow < 0 || (!xThrow && noexcept(T()))) && noexcept(m_Ptr[0] = m_Ptr[0]))
+    /*virtual*/ bool Resize(int3264 n) noexcept((xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value)) && std::is_nothrow_move_assignable<T>::value)
     {
         CMaaPtr_ < T, xThrow > tmp(n);
         if (!tmp.IsValid())
@@ -2188,7 +2188,7 @@ public:
     {
         return xThrow;
     }
-    bool resize(int3264 n) noexcept(xThrow < 0 || (!xThrow && noexcept(T())))
+    bool resize(int3264 n) noexcept(xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value))
     {
         CMaaPtr_ < T, xThrow > tmp(n);
         if (!tmp.IsValid())
@@ -2223,7 +2223,7 @@ public:
 template < class T, int xThrow > class CMaaPtrAE_ : public CMaaPtr_<T, xThrow>
 {
 public:
-    CMaaPtrAE_(size_t MaxIndex) noexcept(xThrow < 0 || (!xThrow && noexcept(T())))
+    CMaaPtrAE_(size_t MaxIndex) noexcept(xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value))
         : CMaaPtr_<T, xThrow>(MaxIndex)
     {
     }
@@ -2231,7 +2231,7 @@ public:
     //:   CMaaPtr_<T, xThrow>()
     {
     }
-    CMaaPtrAE_(CMaaPtrAE_<T, xThrow>& That) noexcept((xThrow < 0 || (!xThrow && noexcept(T()))) && noexcept(this->m_Ptr[0] = this->m_Ptr[0]))
+    CMaaPtrAE_(CMaaPtrAE_<T, xThrow>& That) noexcept((xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value)) && std::is_nothrow_move_assignable<T>::value)
     :   CMaaPtr_<T, xThrow>(That.m_MaxIndex)
     {
         if (CMaaPtr_<T, xThrow>::IsValid() && That.IsValid())
@@ -2245,7 +2245,7 @@ public:
             }
         }
     }
-    T& operator [] (int3264 Index) noexcept((xThrow < 0 || (!xThrow && noexcept(T()))) && noexcept(this->m_Ptr[0] = this->m_Ptr[0]) && noexcept(CMaaPtr_<T, xThrow>::CheckExpand(Index + 1)))
+    T& operator [] (int3264 Index) noexcept((xThrow < 0 || (!xThrow && std::is_nothrow_move_constructible<T>::value)) && std::is_nothrow_move_assignable<T>::value && noexcept(CMaaPtr_<T, xThrow>::CheckExpand(Index + 1)))
     {
         if (Index < 0 || Index + 1 < 0 || !CMaaPtr_<T, xThrow>::CheckExpand(Index + 1))
         {
@@ -2254,7 +2254,7 @@ public:
         }
         return CMaaPtr_<T, xThrow>::m_Ptr[Index];
     }
-    const T& operator [] (int3264 Index) const noexcept(noexcept(T()))
+    const T& operator [] (int3264 Index) const noexcept(std::is_nothrow_move_constructible<T>::value)
     {
         const int3264 m = (int3264)CMaaPtr_<T, xThrow>::MaxIndex();
         if (Index < 0 || Index >= m)
