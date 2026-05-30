@@ -2015,6 +2015,11 @@ public:
             (*(CMaaString*)this) -= n;
             return *this;
         }
+        //Helper& operator -(const CMaaString&) const noexcept = delete;
+        Helper& operator -(const char *) const noexcept = delete;
+#ifdef TOOLSLIB_CHAR8T_SUPPORT
+        Helper& operator -(const char8_t*) const noexcept = delete;
+#endif
         operator const CMaaString& () const noexcept
         {
             TOOLSLIB_STR_HELPER_printf("H::op c S&() const\n");
@@ -2063,6 +2068,11 @@ public:
 #endif
     Helper operator + (const CMaaString& That) const noexcept(noexcept_new);
     Helper operator - (int n) const noexcept(noexcept_new);
+    //Helper operator - (const CMaaString&) const noexcept = delete;
+    Helper operator - (const char *) const noexcept = delete;
+#ifdef TOOLSLIB_CHAR8T_SUPPORT
+    Helper operator - (const char8_t *) const noexcept = delete;
+#endif
 
     char at(int idx) {return (char)(*this)[idx];} // temp fn, not use it
     int length() const noexcept {return Length(); } // temp fn, not use it
