@@ -12428,6 +12428,41 @@ int CMaaString::CMaaStringImp::Find(int StartPos, char c, int EndPos) const noex
     return -1;
 }
 //--------------------------------------------------------------------------
+int CMaaString::CMaaStringImp::Find(int StartPos, char c) const noexcept
+{
+    if (StartPos >= 0)
+    {
+        const char* b = *this;
+        const char* e = b + Length();
+        const char* p = b + StartPos;
+        while (p < e)
+        {
+            if (*p == c)
+            {
+                return (int)(p - b);
+            }
+            p++;
+        }
+    }
+    return -1;
+}
+//--------------------------------------------------------------------------
+int CMaaString::CMaaStringImp::Find(char c) const noexcept
+{
+    const char* b = *this;
+    const char* p;
+    const char* e = (p = b) + Length();
+    while (p < e)
+    {
+        if (*p == c)
+        {
+            return (int)(p - b);
+        }
+        p++;
+    }
+    return -1;
+}
+//--------------------------------------------------------------------------
 int CMaaString::CMaaStringImp::Find2(int StartPos, char c1, char c2, int EndPos) const noexcept
 {
     if (StartPos < 0)
@@ -12572,6 +12607,11 @@ int CMaaString::CMaaStringImp::CountNum() const noexcept
 int CMaaString::Find(int StartPos, char c, int EndPos) const noexcept
 {
     return PIMP(m_pImp) ? m_pImp->Find(StartPos, c, EndPos) : -1;
+}
+//--------------------------------------------------------------------------
+int CMaaString::Find(int StartPos, char c) const noexcept
+{
+    return PIMP(m_pImp) ? m_pImp->Find(StartPos, c) : -1;
 }
 //--------------------------------------------------------------------------
 int CMaaString::Find2(int StartPos, char c1, char c2, int EndPos) const noexcept
@@ -12742,7 +12782,7 @@ int CMaaString::FindCi(const CMaaString &substr, int_ cp) const noexcept
 //--------------------------------------------------------------------------
 int CMaaString::Find(char c) const noexcept
 {
-    return Find(0, c);
+    return PIMP(m_pImp) ? m_pImp->Find(c) : -1;
 }
 int CMaaString::Find(const CMaa256Bits& Bits) const noexcept
 {

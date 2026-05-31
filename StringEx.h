@@ -1269,7 +1269,9 @@ public:
         int FindCi(int StartPos, const void* SubStr, int SubStrLen = -1, int EndPos = -1, int_ cp = 0) const noexcept; // cp: -1, 0, 1251
         int Find2Ci(int StartPos, const char* SubStr1, const char* SubStr2, int SubStr1Len = -1, int SubStr2Len = -1, int_* pIndex = nullptr, int EndPos = -1, int_ cp = 0) const noexcept; // Typically EndPos is Length() - the position after the end of source string
         int Find3Ci(int StartPos, const char* SubStr1, const char* SubStr2, const char* SubStr3, int SubStr1Len = -1, int SubStr2Len = -1, int SubStr3Len = -1, int_* pIndex = nullptr, int EndPos = -1, int_ cp = 0) const noexcept; // Typically EndPos is Length() - the position after the end of source string
-        int Find(int StartPos, char c, int EndPos = -1) const noexcept;
+        int Find(int StartPos, char c, int EndPos) const noexcept;
+        int Find(int StartPos, char c) const noexcept;
+        int Find(char c) const noexcept;
         // Find c1 or c2
         int Find2(int StartPos, char c1, char c2, int EndPos = -1) const noexcept;
         // Find c1 or c2 or c3
@@ -2921,7 +2923,8 @@ public:
     int FindN_old(int StartPos, int_ N, const char** SubStr, int* SubStrLen = nullptr, int* pPos = nullptr, int EndPos = -1, int_ Flags = eFindN_StrOk) const noexcept; // N <= 10 Typically EndPos is Length() - the position after the end of source string // FindN_old(,3,...) is 2.5% lower then FindN<3>(...)
     int FindNEx(int StartPos, int_ N, const char **SubStr, int *SubStrLen = nullptr, int *pPos = nullptr, int EndPos = -1, int_ Flags = eFindN_Unknown) const; // Typically EndPos is Length() - the position after the end of source string
 #endif
-    int Find(int StartPos, char c, int EndPos = -1) const noexcept;
+    int Find(int StartPos, char c, int EndPos) const noexcept;
+    int Find(int StartPos, char c) const noexcept;
     // Find c1 or c2
     int Find2(int StartPos, char c1, char c2, int EndPos = -1) const noexcept;
     // Find c1 or c2 or c3
