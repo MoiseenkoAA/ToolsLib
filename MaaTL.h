@@ -304,7 +304,7 @@ template < class T > class CMaaDList
 {
     CMaaDLink Head;
 public:
-    bool m_AutoDeleteItems;
+    bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
     constexpr CMaaDList(bool AutoDeleteItems = false) noexcept
     :   Head(eNotInit)
@@ -754,7 +754,7 @@ template < class T > class CMaaSList
 {
     CMaaSLink Head;
 public:
-    bool m_AutoDeleteItems;
+    bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
     constexpr CMaaSList(bool AutoDeleteItems = false) noexcept
     :   m_AutoDeleteItems(AutoDeleteItems)
@@ -882,7 +882,7 @@ template < class T > class CMaaSList2
 {
     CMaaSLink Head, Tail;
 public:
-    bool m_AutoDeleteItems;
+    bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
     constexpr CMaaSList2(bool AutoDeleteItems = false) noexcept
     :   m_AutoDeleteItems(AutoDeleteItems)
@@ -1110,7 +1110,7 @@ template < class T > class CMaaSList1
 {
     CMaaSLink Tail;
 public:
-    bool m_AutoDeleteItems;
+    bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
     constexpr CMaaSList1(bool AutoDeleteItems = false) noexcept
     :   m_AutoDeleteItems(AutoDeleteItems)

@@ -96,13 +96,12 @@ struct ToolsExport XTOOBaseMsg
 //------------------------------------------------------------------------------
 class ToolsExport XTOOMsg : public XTOOBaseMsg
 {
-protected:
-    bool m_bIsThrow;
 private:
     // new version of error handling
     CMaaString message;
     //int        error;
-
+protected:
+    bool m_bIsThrow, m_Padding[3];
 public:
     XTOOMsg(bool bIsThrow = true) noexcept;
     virtual ~XTOOMsg();

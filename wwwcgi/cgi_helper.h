@@ -87,7 +87,7 @@ protected:
 public:
     CMaaString m_PostData;
     int m_cl, m_rl;
-    int m_IsHttp100ContinueHeaderPreceeded;
+    //int m_IsHttp100ContinueHeaderPreceeded;
 
     struct AttrVal : public CMaaSLink
     {
@@ -119,19 +119,21 @@ protected:
     // application/x-www-form-urlencoded and ""
     int m_AttrCount;
     CMaaSList2AD<AttrVal> m_srcAttrList, m_AttrList;
+    int m_IsHttp100ContinueHeaderPreceeded;
     CMaaUnivHash<CMaaString, CMaaString> m_hsrcAttr, m_hAttr;
     CMaaUnivHash<int, AttrVal*> m_hNum2AttrMap;
 
     int m_ReplySentStatus;
     bool m_EndFileSent;
     bool m_Send500 = false;
-    int m_n100Count = 0;
+    //int m_n100Count = 0;
     time_t m_Last100Cont = 0;
 
 public:
     // multipart/form-data
     CMaaSList2AD<Attr2Val> m_Attr2List;
 protected:
+    int m_n100Count = 0;
     // attributes from m_ContentDisposition
     // m_hAttr2 === m_hsrcAttr2 at the current version
     CMaaUnivHash<CMaaString, CMaaString> m_hsrcAttr2, m_hAttr2;

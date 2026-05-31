@@ -351,12 +351,11 @@ class ToolsExport CMaaDrvApi
 {
     int           m_IsLoadSuccessfully;
 #ifndef __unix__
+public:
+    int          m_IsWinNT; // bool          m_IsWinNT;
+private:
     HANDLE        m_hVxD;
     OVERLAPPED    m_ovlp; // = {0,0,0,0,0};
-
-public:
-    bool          m_IsWinNT;
-private:
 #endif //!__unix__
 
 public:

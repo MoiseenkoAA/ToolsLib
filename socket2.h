@@ -699,7 +699,6 @@ class CMaaSockStartup
 #ifndef __unix__
     WSADATA m_WsaData;
 #endif
-    bool m_IsOk;
 #ifdef __SOCK_NEW_TIMERS
 public:
     //CMaaMutex m_TimerMutex;
@@ -727,6 +726,8 @@ public:
 #ifdef __SOCK_NEW_TIMERS
     //_qword GetTime() noexcept;
 #endif
+private:
+    bool m_IsOk;
 };
 //---------------------------------------------------------------------------
 class CMaaEnum //: public CMaaDLink
@@ -812,6 +813,7 @@ public:
 #endif
     bool m_AcceptFlag = false;
     bool m_TcpSocketFlag = false;
+    bool m_Padding6[6];
 #if 0
     bool m_bDebug = false;
 #endif
@@ -863,7 +865,7 @@ public:
 #endif
 
 private:
-    bool m_bActive = false;
+    bool m_bActive = false, m_Padding[7];
 public:
 #ifndef __SOCK_NEW_TIMERS
     bool m_TmpFlg;
@@ -1327,7 +1329,7 @@ class CMaaFdSockets : public CMaaEnum
 
 private:
 
-    bool m_bForceMode;
+    //bool m_bForceMode;
 
     //CMaaUnivHash < CMaaSocket*, int > m_SockHash;
     CMaaUnivHash < CMaaSocket*, char > m_SockHash;
@@ -1414,8 +1416,9 @@ protected:
 public:
     //CMaaAutoInitObject<int, 0> m_temp_SelectFlag;
 
-    CMaaSockThread * m_pThread;
     CMaaAtomicFastMutex0 m_TimerMutex;
+    CMaaSockThread * m_pThread;
+
 #ifdef __SOCK_NEW_TIMERS
     CMaaTime m_Time;
     _qword GetTime() noexcept;
@@ -1486,7 +1489,9 @@ public:
     //void FXX_epollfd(); // close m_epollfd on fork()
     void close_epoll_fd() noexcept;// { FXX_epollfd(); }
     void SetCloseOnExec_epool_fd(bool bSet = true, bool bThrow = true);
-
+private:
+    bool m_bForceMode;
+public:
     bool m_bLook;
     void LookEp(bool bLook = true) noexcept;
 

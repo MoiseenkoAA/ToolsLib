@@ -3836,7 +3836,7 @@ template <int xThrow = 0, bool bCountMode = false> class CMaaConcatString_
     char * m_ptr;
     CMaaPtr_<char, xThrow> m_Buffer;
     size_t m_StringLength, m_BufferSize;
-    bool m_bIsValid;
+    bool m_bIsValid, m_Padding[3];
 public:
     class Helper
     {

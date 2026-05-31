@@ -162,12 +162,12 @@ protected:
         //friend int main(int argn, char * args[]);
 #ifdef _WIN32
         HANDLE pFile;
-        bool m_bStdHandle;
+        bool m_bStdHandle, m_Padding[3];
         CMaaFileImp(HANDLE hFile, bool bStdHandle = false) noexcept;
 #endif
 #ifdef __unix__
         int fd;
-        bool m_bStdHandle;
+        bool m_bStdHandle, m_Padding[3];
         CMaaFileImp(int d, bool bStdHandle = false) noexcept;
 #endif
         //CMaaAutoInitObject<int, 0> m_SrcFormat, m_DstFormat;
@@ -179,7 +179,7 @@ protected:
     };
 
     CMaaFileImp* m_pImp;
-    bool m_bIsThrow;
+    bool m_bIsThrow, m_Padding[3];
 
 protected:
     static bool CreateDir_Internal(CMaaString& path, int Len, const CMaaString& DirMode = gsCMaaStringZ);
@@ -1145,13 +1145,13 @@ protected:
     CMaaString m_Dir, m_Mask;
     int m_iRecursiveDepth;
 #ifdef _WIN32
+    bool m_b1st, m_Padding[3];
 #ifdef _UNICODE
     struct _wfinddata64_t m_ff;
 #else
     struct __finddata64_t m_ff;
 #endif
     intptr_t m_h;
-    bool m_b1st;
     CMaaFindFile2 * m_pCurr;
 #endif
 
@@ -1178,8 +1178,8 @@ public:
         const char* GetTypeName(int Align = -2) const noexcept; // -1 - left, -2 - file/dir type len based, 0 - name with out of spaces, 1 - right, 2 - file/dir type len based
         const CMaaString & GetTypeNameStr(int Align = -2) const noexcept; // -1 - left, -2 - file/dir type len based, 0 - name with out of spaces, 1 - right, 2 - file/dir type len based
         static int GetMaxTypeNameLength(int FileOrDirOnly = 1) noexcept;
-        int m_Type;
         CMaaString m_FileName;
+        int m_Type;
         _qword m_Size;
         time_t m_mTime;
 #ifdef _WIN32

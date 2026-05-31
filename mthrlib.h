@@ -1204,14 +1204,15 @@ public:
 #ifdef _WIN32
     HANDLE m_hThread;
     DWORD m_ThreadId;
+    int m_Point;
     HANDLE m_hExit;
 #else
     // __unix__
     pthread_attr_t m_attr;
     pthread_t m_Handle;
+    int m_Point;
     bool m_bExit;
 #endif
-    int m_Point;
 
     CMaaThread() noexcept;
     virtual ~CMaaThread() = 0;
