@@ -151,8 +151,6 @@ _qword GetCurrentTime_us(time_t * pt = nullptr, int * pusec = nullptr) noexcept;
 class ToolsExport CMaaFile : public XTOOFile2Error
 {
     //friend int main(int argn, char * args[]);
-    bool m_bIsThrow;
-
 protected:
     struct CMaaFileImp :
 #if MANUAL_CMaaFileImp_REFS
@@ -181,6 +179,7 @@ protected:
     };
 
     CMaaFileImp* m_pImp;
+    bool m_bIsThrow;
 
 protected:
     static bool CreateDir_Internal(CMaaString& path, int Len, const CMaaString& DirMode = gsCMaaStringZ);

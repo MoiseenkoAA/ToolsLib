@@ -2483,8 +2483,8 @@ CMaaFile::CMaaFile(HANDLE h, bool bThrow, sfp *)
 CMaaFile::CMaaFile(int h, bool bThrow, sfp *)
 #endif
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(bThrow),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(bThrow)
 {
     //Clear();
     f_glog.fprintf("CMaaFile::CMaaFile(%D, %s)\n", (_qword)h, bThrow ? "true" : "false");
@@ -2764,8 +2764,8 @@ int CMaaFile::GetModeMask(const CMaaString &Mode) noexcept
 #if 0
 CMaaFile::CMaaFile(const char* pszName, eMode Mode, bool fMakeExeption)
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(fMakeExeption),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(fMakeExeption)
 {
     if (!pszName)
     {
@@ -2781,15 +2781,15 @@ CMaaFile::CMaaFile(const char* pszName, eMode Mode, bool fMakeExeption)
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile() noexcept // closed, no exceptions
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(false),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(false)
 {
 }
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(const CMaaString& Name, eMode Mode, eNoExcept_) noexcept
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(false),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(false)
 {
     try
     {
@@ -2803,8 +2803,8 @@ CMaaFile::CMaaFile(const CMaaString& Name, eMode Mode, eNoExcept_) noexcept
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(const CMaaString& Name, eMode Mode, bool fMakeExeption)
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(fMakeExeption),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(fMakeExeption)
 {
     /*
     if (Name.IsEmpty())
@@ -2825,8 +2825,8 @@ CMaaFile::CMaaFile(const CMaaString& Name, eMode Mode, bool fMakeExeption)
 #if 0
 CMaaFile::CMaaFile(const char* pszName, const char* pszMode, bool fMakeExeption)
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(fMakeExeption),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(fMakeExeption)
 {
     if (!pszName || !pszMode)
     {
@@ -2839,8 +2839,8 @@ CMaaFile::CMaaFile(const char* pszName, const char* pszMode, bool fMakeExeption)
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(const CMaaString& Name, const char* pszMode, eNoExcept_) noexcept
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(false),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(false)
 {
     if (!pszMode)
     {
@@ -2858,8 +2858,8 @@ CMaaFile::CMaaFile(const CMaaString& Name, const char* pszMode, eNoExcept_) noex
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(const CMaaString& Name, const CMaaString& Mode, eNoExcept_) noexcept
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(false),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(false)
 {
     try
     {
@@ -2873,8 +2873,8 @@ CMaaFile::CMaaFile(const CMaaString& Name, const CMaaString& Mode, eNoExcept_) n
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(const CMaaString &Name, const char* pszMode, bool fMakeExeption)
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(fMakeExeption),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(fMakeExeption)
 {
     if (!pszMode)
     {
@@ -2885,8 +2885,8 @@ CMaaFile::CMaaFile(const CMaaString &Name, const char* pszMode, bool fMakeExepti
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(const CMaaString &Name, const CMaaString &Mode, bool fMakeExeption)
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(fMakeExeption),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(fMakeExeption)
 {
     Open(Name, eNoMode, Mode);
 }
@@ -2894,8 +2894,8 @@ CMaaFile::CMaaFile(const CMaaString &Name, const CMaaString &Mode, bool fMakeExe
 #if 0
 CMaaFile::CMaaFile(const char* pszName, eMode fMode, const char* pszMode, bool fMakeExeption)
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(fMakeExeption),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(fMakeExeption)
 {
     if (!pszName)
     {
@@ -2906,8 +2906,8 @@ CMaaFile::CMaaFile(const char* pszName, eMode fMode, const char* pszMode, bool f
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(const CMaaString &Name, eMode fMode, const char* pszMode, bool fMakeExeption)
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(fMakeExeption),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(fMakeExeption)
 {
     Open(Name, fMode, pszMode ? CMaaString(pszMode, CMaaString::eROStrlenMemString) : CMaaStringZ);
 }
@@ -2915,8 +2915,8 @@ CMaaFile::CMaaFile(const CMaaString &Name, eMode fMode, const char* pszMode, boo
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(const CMaaString& Name, eMode fMode, const CMaaString& strMode, eNoExcept_) noexcept
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(false),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(false)
 {
     try
     {
@@ -2930,8 +2930,8 @@ CMaaFile::CMaaFile(const CMaaString& Name, eMode fMode, const CMaaString& strMod
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(const CMaaString& Name, eMode fMode, const CMaaString& strMode, bool fMakeExeption)
 :   XTOOFile2Error(eXTOONoError), // cleared err
-    m_bIsThrow(fMakeExeption),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(fMakeExeption)
 {
     Open(Name, fMode, strMode);
 }
@@ -5138,16 +5138,16 @@ bool unix_fork_and_StartProcess(int Flags, int * pExitCode, const char * ExecFil
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(const CMaaFile & That) noexcept
 :   XTOOFile2Error((const XTOOFile2Error&)That),
-    m_bIsThrow(That.m_bIsThrow),
-    m_pImp(nullptr)
+    m_pImp(nullptr),
+    m_bIsThrow(That.m_bIsThrow)
 {
     *this = That;
 }
 //------------------------------------------------------------------------------
 CMaaFile::CMaaFile(CMaaFile && That) noexcept
 :   XTOOFile2Error((const XTOOFile2Error&)That),
-    m_bIsThrow(That.m_bIsThrow),
-    m_pImp(That.m_pImp)
+    m_pImp(That.m_pImp),
+    m_bIsThrow(That.m_bIsThrow)
 {
     That.m_pImp = nullptr;
 }

@@ -4089,7 +4089,7 @@ public:
     {
         TOOLSLIB_STR_HELPER_printf("C::op-=(n)\n");
         n = n >= 0 ? n : -n;
-        m_StringLength = m_StringLength >= n ? m_StringLength - n : 0;
+        m_StringLength = m_StringLength >= (size_t)n ? m_StringLength - n : 0;
     }
     void operator += (const CMaaString& str) noexcept(xThrow <= 0 || bCountMode)
     {
