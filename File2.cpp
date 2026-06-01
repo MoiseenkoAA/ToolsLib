@@ -6906,7 +6906,11 @@ int CMaaFindFile2::SetFileTypeMasks(int Masks) noexcept
     return m_FileTypeMask = Masks;
 }
 //---------------------------------------------------------------------------
-bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
+#ifdef _WIN32
+bool CMaaFindFile2::InternalGet(sFind& f, CMaaFindFile2& Main) noexcept(noexcept_new)
+#else
+bool CMaaFindFile2::InternalGet(sFind& f) noexcept(noexcept_new)
+#endif
 {
 #ifdef _WIN32
     if  (m_h == -1)
@@ -6960,8 +6964,7 @@ bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
         CMaaFindFile2 * pNext = TL_NEW CMaaFindFile2(f.m_FileName, m_Mask, m_iRecursiveDepth - 1);
         if (pNext)
         {
-            pNext->m_pRoot = m_pRoot ? m_pRoot : this;
-            pNext->m_pRoot->m_Stack.AddAtFront(pNext);
+            Main.m_Stack.AddAtFront(pNext);
         }
     }
 #endif
@@ -7093,7 +7096,7 @@ bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
     if  (m_Flags & (eFt|eForcedFt))
     {
         int usec = 0;
-        time_t t = CMaaFile::GetDateTime(f.m_FileName, &usec, false);
+        const time_t t = CMaaFile::GetDateTime(f.m_FileName, &usec, false);
         f.m_mft = t != (time_t)-1 ? TimetAndUsecTo_FileTime64(t, usec) : -1;
         if  (t != (time_t)-1)
         {
@@ -7110,7 +7113,7 @@ bool CMaaFindFile2::Get(sFind &f) noexcept(noexcept_new)
 #ifdef _WIN32
         CMaaFindFile2* p_curr = m_Stack.LookAtFront();
         p_curr = p_curr ? p_curr : this;
-        if  (!p_curr->InternalGet(f))
+        if  (!p_curr->InternalGet(f, *this))
         {
             if (p_curr != this)
             {

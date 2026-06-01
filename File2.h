@@ -1212,7 +1212,6 @@ protected:
 #ifdef _WIN32
     bool m_b1st = true, m_Padding[3];
     CMaaSListAD<CMaaFindFile2> m_Stack;
-    CMaaFindFile2* m_pRoot = nullptr;
     intptr_t m_h;
 #ifdef _UNICODE
     struct _wfinddata64_t m_ff;
@@ -1238,7 +1237,11 @@ public:
     int SetOptFlags(int Flags = eFt|eForcedFt) noexcept; // |eGetKeepDev
     int SetFileTypeMasks(int Masks = eDirMask|eFileMask) noexcept;
 protected:
+#ifdef _WIN32
+    bool InternalGet(sFind& f, CMaaFindFile2& Main) noexcept(noexcept_new);
+#else
     bool InternalGet(sFind& f) noexcept(noexcept_new);
+#endif
 };
 
 #ifdef __unix__
