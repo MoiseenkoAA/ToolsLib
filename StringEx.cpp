@@ -12412,7 +12412,7 @@ int CMaaString::CMaaStringImp::Find(int StartPos, char c, int EndPos) const noex
         const char* b = *this;
         const char* p = b + StartPos;
         int l = Length();
-        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        l = (EndPos >= 0 && EndPos <= l ? EndPos : l) - StartPos;
         if (l > 0)
         {
             do
@@ -12476,7 +12476,7 @@ int CMaaString::CMaaStringImp::Find2(int StartPos, char c1, char c2, int EndPos)
         const char* b = *this;
         const char* p = b + StartPos;
         int l = Length();
-        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        l = (EndPos >= 0 && EndPos <= l ? EndPos : l) - StartPos;
         if (l > 0)
         {
             do
@@ -12499,7 +12499,7 @@ int CMaaString::CMaaStringImp::Find3(int StartPos, char c1, char c2, char c3, in
         const char* b = *this;
         const char* p = b + StartPos;
         int l = Length();
-        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        l = (EndPos >= 0 && EndPos <= l ? EndPos : l) - StartPos;
         if (l > 0)
         {
             do
@@ -12523,7 +12523,7 @@ int CMaaString::CMaaStringImp::Find(int StartPos, const CMaa256Bits& Bits, int E
         const char* b = *this;
         const char* p = b + StartPos;
         int l = Length();
-        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        l = (EndPos >= 0 && EndPos <= l ? EndPos : l) - StartPos;
         if (l > 0)
         {
             do
@@ -12547,7 +12547,7 @@ int CMaaString::CMaaStringImp::Count(int StartPos, char c0, char c1, int EndPos)
         const char* b = *this;
         const char* p = b + StartPos;
         int l = Length();
-        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        l = (EndPos >= 0 && EndPos <= l ? EndPos : l) - StartPos;
         if (l > 0)
         {
             do
@@ -12572,7 +12572,7 @@ int CMaaString::CMaaStringImp::Count(int StartPos, unsigned char c0, unsigned ch
         const char* b = *this;
         const char* p = b + StartPos;
         int l = Length();
-        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        l = (EndPos >= 0 && EndPos <= l ? EndPos : l) - StartPos;
         if (l > 0)
         {
             do
@@ -12597,7 +12597,7 @@ int CMaaString::CMaaStringImp::Count(int StartPos, const CMaa256Bits& Bits, int 
         const char* b = *this;
         const char* p = b + StartPos;
         int l = Length();
-        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        l = (EndPos >= 0 && EndPos <= l ? EndPos : l) - StartPos;
         if (l > 0)
         {
             do
