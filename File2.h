@@ -1144,30 +1144,6 @@ class CMaaFindFile2
     : public CMaaSLink
 #endif
 {
-protected:
-    CMaaString m_Dir, m_Mask;
-    int m_iRecursiveDepth;
-#ifdef _WIN32
-    CMaaSListAD<CMaaFindFile2> m_Stack;
-    CMaaFindFile2* m_pRoot = nullptr;
-    bool m_b1st = true, m_Padding[3];
-#ifdef _UNICODE
-    struct _wfinddata64_t m_ff;
-#else
-    struct __finddata64_t m_ff;
-#endif
-    intptr_t m_h;
-    //CMaaFindFile2 * m_pCurr;
-#endif
-
-#ifdef __unix__
-    FTS * m_fts;
-    FTSENT * m_entry;
-    dev_t m_dev;
-    int m_iGetKeepDev;
-    CMaaUnivHash<ino_t, int> m_hDirInodes;
-#endif
-
 public:
     struct sFind : public CMaaDLink // just for user lists
     {
@@ -1181,7 +1157,7 @@ public:
             eUnknown = 0xff
         };
         const char* GetTypeName(int Align = -2) const noexcept; // -1 - left, -2 - file/dir type len based, 0 - name with out of spaces, 1 - right, 2 - file/dir type len based
-        const CMaaString & GetTypeNameStr(int Align = -2) const noexcept; // -1 - left, -2 - file/dir type len based, 0 - name with out of spaces, 1 - right, 2 - file/dir type len based
+        const CMaaString& GetTypeNameStr(int Align = -2) const noexcept; // -1 - left, -2 - file/dir type len based, 0 - name with out of spaces, 1 - right, 2 - file/dir type len based
         static int GetMaxTypeNameLength(int FileOrDirOnly = 1) noexcept;
         CMaaString m_FileName;
         int m_Type;
@@ -1196,7 +1172,7 @@ public:
         * m_px;
 #endif
 #ifdef __unix__
-        FTSENT * m_px;
+        FTSENT* m_px;
 #endif
         _qword m_mft;
 
@@ -1210,11 +1186,7 @@ public:
         CMaaString GetDirName0() const noexcept(noexcept_new); // with out if ending slash, 0-terminating CMaaString
         CMaaString GetDirName2() const noexcept; // with out if ending slash, optimized NZT RefLeft CMaaString
     };
-    CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
-    CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth = 1) noexcept(noexcept_new);
-    ~CMaaFindFile2();
-    bool IsDirOpened() const noexcept; // optional. is dir opened
-    bool Get(sFind &f) noexcept(noexcept_new);
+
     enum eFlags
     {
         eFt = 0x01,
@@ -1226,20 +1198,47 @@ public:
     {
         eDotMask = (1 << CMaaFindFile2::sFind::eDot),
         eDotDotMask = (1 << CMaaFindFile2::sFind::eDotDot),
-        eDots = eDotMask|eDotDotMask,
+        eDots = eDotMask | eDotDotMask,
         eDirMask = (1 << CMaaFindFile2::sFind::eDir),
         eFileMask = (1 << CMaaFindFile2::sFind::eFile),
         eSl = (1 << CMaaFindFile2::sFind::eSl),
         eSpecialMask = (1 << 31)
     };
+protected:
+    CMaaString m_Dir, m_Mask;
+    int m_iRecursiveDepth;
+    int m_Flags = eFt;
+    int m_FileTypeMask = -1;
+#ifdef _WIN32
+    bool m_b1st = true, m_Padding[3];
+    CMaaSListAD<CMaaFindFile2> m_Stack;
+    CMaaFindFile2* m_pRoot = nullptr;
+    intptr_t m_h;
+#ifdef _UNICODE
+    struct _wfinddata64_t m_ff;
+#else
+    struct __finddata64_t m_ff;
+#endif
+#endif
+
+#ifdef __unix__
+    FTS * m_fts;
+    FTSENT * m_entry;
+    dev_t m_dev;
+    int m_iGetKeepDev;
+    CMaaUnivHash<ino_t, int> m_hDirInodes;
+#endif
+
+public:
+    CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
+    CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth = 1) noexcept(noexcept_new);
+    ~CMaaFindFile2();
+    bool IsDirOpened() const noexcept; // optional. is dir opened
+    bool Get(sFind &f) noexcept(noexcept_new);
     int SetOptFlags(int Flags = eFt|eForcedFt) noexcept; // |eGetKeepDev
     int SetFileTypeMasks(int Masks = eDirMask|eFileMask) noexcept;
 protected:
-    //CMaaAutoInitObject<int, eFt> m_Flags;
-    //CMaaAutoInitObject<int, -1> m_FileTypeMask;
-    int m_Flags = eFt;
-    int m_FileTypeMask = -1;
-    bool InternalGet(sFind &f) noexcept(noexcept_new);
+    bool InternalGet(sFind& f) noexcept(noexcept_new);
 };
 
 #ifdef __unix__
