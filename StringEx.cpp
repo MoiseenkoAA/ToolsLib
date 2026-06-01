@@ -17170,23 +17170,33 @@ CMaaString CMaaString::ToHttpHtmlDisplayedText(bool bWeak, const CMaaString &str
 //-----------------------------------------------------------------------------------------------
 CMaaString CMaaString::Str2HtmlVal(const CMaaString &strEsc) const noexcept(noexcept_new)
 {
+    char RepBuffer[256];
     const int_ EL = (int_)strEsc.Length();
-    CMaaPtrAE_<char, 1> Rep(EL * 10 + 20);
-    int_ Map[256];
+    CMaaPtr_<char, 1> More;
+    char * Rep;
+    if (EL * 8 + 8 <= (int_)sizeof(RepBuffer))
+    {
+        Rep = RepBuffer;
+    }
+    else
+    {
+        More.CheckResize(EL * 8 + 8);
+        Rep = More;
+    }
+    _word Map[256];
     memset(Map, 0, sizeof(Map));
-    int_ i, pos = 1;
 
-    strcpy(pos + (char *)Rep, "&amp;");
-    Map[(int_)'&'] = pos;
-    pos += 1 + (int_)strlen(pos + (char *)Rep);
+    Map[(int_)'&'] = 1;
+    memcpy(Rep + 1, "&amp;", 6);
+    _word pos = 7;
 
-    for (i = 0; i < EL; i++)
+    for (int_ i = 0; i < EL; i++)
     {
         unsigned char c = (unsigned char)(char)strEsc[i];
         if  (!Map[c])
         {
             Map[c] = pos;
-            pos += 1 + my_sprintf_html_dec_char_code(pos + (char*)Rep, c);
+            pos += 1 + my_sprintf_html_dec_char_code(Rep + pos, c);
         }
     }
     char Buffer[TOOLSLIB_CS_32K];
@@ -17215,7 +17225,7 @@ CMaaString CMaaString::Str2HtmlVal(const CMaaString &strEsc) const noexcept(noex
             if  (Map[c])
             {
                 r.Add(s0, (int)(s - s0));
-                r += (Map[c] + (char *)Rep);
+                r += (Rep + Map[c]);
                 s0 = ++s;
             }
             else
