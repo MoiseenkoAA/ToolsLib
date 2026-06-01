@@ -6784,8 +6784,6 @@ CMaaFindFile2::CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDept
     m_Mask = m_Mask.Str0Copy();
     m_iRecursiveDepth = iRecursiveDepth;
 #ifdef _WIN32
-    m_pCurr = nullptr;
-    m_b1st = true;
     //m_h = _findfirst64(CMaaFile::_uc_MkCompatible(Dir + szFILESYSTEM_SLASH + Mask), &m_ff);
     CMaaString MyPath = MkFsNativeCompatible(Dir + szFILESYSTEM_SLASH + CMaaString((iRecursiveDepth > 1 || iRecursiveDepth < 0) ? CMaaString("*.*") : Mask));
 #ifdef _UNICODE
@@ -6832,8 +6830,6 @@ CMaaFindFile2::CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth) noexce
     m_Dir = m_Dir.Str0Copy();
     m_Mask = m_Mask.Str0Copy();
 #ifdef _WIN32
-    m_pCurr = nullptr;
-    m_b1st = true;
     CMaaString tmp = (iRecursiveDepth > 1 || iRecursiveDepth < 0) ? MkFsNativeCompatible((m_Dir + szFILESYSTEM_SLASH + "*.*")) : MkFsNativeCompatible(Dir);
 #ifdef _UNICODE
     m_h = _wfindfirst64(MkFs_cast(tmp), &m_ff);
@@ -6854,7 +6850,7 @@ CMaaFindFile2::CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth) noexce
     // FTS_PHYSICAL - return sl type instead of target fs entry
     m_fts = fts_open(Paths, ftsoptions, nullptr);
     //printf("fts_open(%s): ret %d\n", (const char *)DirEx, m_fts);
-    g_log && g_log->fprintf("fts_open(%s): ret %d\n", (const char *)DirEx, m_fts);
+    //g_log && g_log->fprintf("fts_open(%s): ret %d\n", (const char *)DirEx, m_fts);
     //printf("m_Dir=%s, m_Mask=%s, depth=%d\n", (const char *)m_Dir, (const char *)m_Mask, m_iRecursiveDepth);
     m_entry = nullptr;
 #endif
@@ -6863,7 +6859,6 @@ CMaaFindFile2::CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth) noexce
 CMaaFindFile2::~CMaaFindFile2()
 {
 #ifdef _WIN32
-    delete m_pCurr;
     if (m_h != -1)
     {
         _findclose(m_h);
@@ -6914,20 +6909,6 @@ int CMaaFindFile2::SetFileTypeMasks(int Masks) noexcept
 bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
 {
 #ifdef _WIN32
-    if  (m_iRecursiveDepth > 1 || m_iRecursiveDepth < 0)
-    {
-        if  (m_pCurr)
-        {
-            if  (m_pCurr->InternalGet(f))
-            {
-                //char sl[2] = {FILESYSTEM_SLASH, 0};
-                //f.m_FileName = m_pCurr->m_Dir + sl + f.m_FileName;
-                return true;
-            }
-            delete m_pCurr;
-            m_pCurr = nullptr;
-        }
-    }
     if  (m_h == -1)
     {
         return false;
@@ -6976,11 +6957,15 @@ bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
     f.m_px = &m_ff;
     if  (f.m_Type == CMaaFindFile2::sFind::eDir && (m_iRecursiveDepth > 1 || m_iRecursiveDepth < 0))
     {
-        m_pCurr = TL_NEW CMaaFindFile2(f.m_FileName, m_Mask, m_iRecursiveDepth - 1);
+        CMaaFindFile2 * pNext = TL_NEW CMaaFindFile2(f.m_FileName, m_Mask, m_iRecursiveDepth - 1);
+        if (pNext)
+        {
+            pNext->m_pRoot = m_pRoot ? m_pRoot : this;
+            pNext->m_pRoot->m_Stack.AddAtFront(pNext);
+        }
     }
 #endif
 #ifdef __unix__
-    //printf("--- %p\n", (void *)m_fts);
     if  (!m_fts)
     {
         return false;
@@ -6989,27 +6974,14 @@ bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
     while(Type == CMaaFindFile2::sFind::eUnknown)
     {
         m_entry = fts_read(m_fts);
-        //printf("--- m_entry %p\n", (void *)m_entry);
         if  (!m_entry)
         {
             return false;
         }
-        //printf("m_entry->fts_path = %s\n", m_entry->fts_path);
-        //__utf8_printf("m_entry->fts_info = %D\n", (_qword)m_entry->fts_info);
-
-        g_log && g_log->fprintf("m_entry->fts_path = %s, m_entry->fts_info = %d\n", m_entry->fts_path, (int)m_entry->fts_info);
+        //g_log && g_log->fprintf("m_entry->fts_path = %s, m_entry->fts_info = %d\n", m_entry->fts_path, (int)m_entry->fts_info);
 
         CMaaString fn;
         fn.Format("%s", m_entry->fts_path);
-        //__utf8_printf("%S:", &fn);
-        //_qword ___info = m_entry->fts_info;
-        //	if (m_entry->fts_info == 0 && CMaaFile::IsAFile(fn))
-        //	{
-        //	    ___info = FTS_F;
-        //	}
-        //m_entry->fts_info = FTS_F;
-        //CMaaFile f("/var/ram/FindFile2.txt", CMaaFile::eACD_SrSw, eNoExcept);
-        //f.fprintf("\n%s ", m_entry->fts_path);
         switch(m_entry->fts_info)
         {
         case FTS_F:
@@ -7024,8 +6996,6 @@ bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
             }
             break;
         case FTS_D:
-            //printf ( "%s - preorder directory\n", entry->fts_path );
-            //printf("--- m_entry->fts_level %d\n", m_entry->fts_level);
             if  (gToolsLib_FileFlags & TOOLSLIB_SKIP_LN_PROC)
             {
                 CMaaString p = m_entry->fts_path;
@@ -7058,7 +7028,6 @@ bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
             struct stat buf;
             memset(&buf, 0, sizeof(buf));
             lstat(m_entry->fts_path, &buf);
-            //f.fprintf(" DIR st_mode=%o ", (int)buf.st_mode);
             if  (m_Flags & eDoNotFollowLinks)
             {
                 //f.fprintf(" (m_Flags & eDoNotFollowLinks), S_IFLNK=%o ", S_IFLNK);
@@ -7085,10 +7054,8 @@ bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
             Type = CMaaFindFile2::sFind::eDot;
             break;
         case FTS_SL:
-            //f.fprintf(" SL ");
             if  (m_Flags & eDoNotFollowLinks)
             {
-                //f.fprintf(" (m_Flags & eDoNotFollowLinks) ");
                 fts_set(m_fts, m_entry, FTS_SKIP);
                 m_hDirInodes.Remove(m_entry->fts_statp->st_ino);
             }
@@ -7106,17 +7073,11 @@ bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
             break;
         }
     }
-    //printf("--- ___1\n");
     f.m_FileName = m_entry->fts_path;
-    //printf("1.--- ___1\n");
     f.m_Size = m_entry->fts_statp ? m_entry->fts_statp->st_size : 0;
-    //printf("2.--- ___1\n");
     f.m_mTime = m_entry->fts_statp ? m_entry->fts_statp->st_mtime : 0;
-    //printf("3.--- ___1\n");
     f.m_Type = Type;
-    //printf("4.--- ___1\n");
     f.m_mft = 0;
-    //printf("--- ___2\n");
     if  (Type == CMaaFindFile2::sFind::eDot)
     {
         if  (f.m_FileName.IsRight("..", 2))
@@ -7124,12 +7085,11 @@ bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
             f.m_Type = CMaaFindFile2::sFind::eDotDot;
         }
     }
-    g_log && g_log->fprintf("f.m_Type = %d (%d)\n", f.m_Type, CMaaFindFile2::sFind::eFile);
+    //g_log && g_log->fprintf("f.m_Type = %d (%d)\n", f.m_Type, CMaaFindFile2::sFind::eFile);
     f.m_px = m_entry;
     //f.m_px->fts_statp->st_dev
     //f.m_px->fts_statp->st_ino
 #endif
-    //printf("--- ___3\n");
     if  (m_Flags & (eFt|eForcedFt))
     {
         int usec = 0;
@@ -7140,7 +7100,6 @@ bool CMaaFindFile2::InternalGet(sFind &f) noexcept(noexcept_new)
             f.m_mTime = t;
         }
     }
-    //printf("--- ___4\n");
     return true;
 }
 //---------------------------------------------------------------------------
@@ -7148,24 +7107,35 @@ bool CMaaFindFile2::Get(sFind &f) noexcept(noexcept_new)
 {
     while(1)
     {
-        if  (!InternalGet(f))
+#ifdef _WIN32
+        CMaaFindFile2* p_curr = m_Stack.LookAtFront();
+        p_curr = p_curr ? p_curr : this;
+        if  (!p_curr->InternalGet(f))
         {
-            //printf("return false;\n");
+            if (p_curr != this)
+            {
+                delete m_Stack.GetFromFront();
+                continue;
+            }
             return false;
         }
-        g_log && g_log->fprintf("m_FileTypeMask = %08x, f.m_Type=%d\n", (int)m_FileTypeMask, f.m_Type);
+#else
+        if (!InternalGet(f))
+        {
+            return false;
+        }
+#endif
+        //g_log && g_log->fprintf("m_FileTypeMask = %08x, f.m_Type=%d\n", (int)m_FileTypeMask, f.m_Type);
         int Type = f.m_Type;
         Type = Type > eSl ? 31 : Type;
-        g_log && g_log->fprintf("m_FileTypeMask = %08x, Type=%d\n", (int)m_FileTypeMask, Type);
+        //g_log && g_log->fprintf("m_FileTypeMask = %08x, Type=%d\n", (int)m_FileTypeMask, Type);
         if  (!(((int)m_FileTypeMask) & (1 << Type)))
         {
             continue;
         }
         CMaaString txt = f.m_FileName;
         CMaaString reg = m_Mask;
-        //printf("%s --- %s\n", (const char *)f.m_FileName, (const char *)m_Mask);
-        //printf("%s --- %s\n", (const char *)f.m_FileName, (const char *)m_Mask);
-        g_log && g_log->fprintf("%s --- %s\n", (const char *)f.m_FileName, (const char *)m_Mask);
+        //g_log && g_log->fprintf("%s --- %s\n", (const char *)f.m_FileName, (const char *)m_Mask);
 #ifdef __unix__
         if  (txt.IsMatchFileMask(reg))
 #endif
@@ -7176,8 +7146,7 @@ bool CMaaFindFile2::Get(sFind &f) noexcept(noexcept_new)
             break;
         }
     }
-    //printf("return true;\n");
-    g_log && g_log->fprintf("return true;\n");
+    //g_log && g_log->fprintf("return true;\n");
     return true;
 }
 //---------------------------------------------------------------------------

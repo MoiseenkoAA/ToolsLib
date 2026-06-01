@@ -1140,19 +1140,24 @@ CMaaFile * ToolsLib_OpenLog(bool bForcedInit = false);
 //------------------------------------------------------------------------------
 
 class CMaaFindFile2
+#ifdef _WIN32
+    : public CMaaSLink
+#endif
 {
 protected:
     CMaaString m_Dir, m_Mask;
     int m_iRecursiveDepth;
 #ifdef _WIN32
-    bool m_b1st, m_Padding[3];
+    CMaaSListAD<CMaaFindFile2> m_Stack;
+    CMaaFindFile2* m_pRoot = nullptr;
+    bool m_b1st = true, m_Padding[3];
 #ifdef _UNICODE
     struct _wfinddata64_t m_ff;
 #else
     struct __finddata64_t m_ff;
 #endif
     intptr_t m_h;
-    CMaaFindFile2 * m_pCurr;
+    //CMaaFindFile2 * m_pCurr;
 #endif
 
 #ifdef __unix__
