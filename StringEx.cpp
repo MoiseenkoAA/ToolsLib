@@ -11542,49 +11542,47 @@ int CMaaString::CMaaStringImp::Find3Ci(int StartPos, const char* SubStr1, const 
 }
 int CMaaString::CMaaStringImp::Find(int StartPos, const void * SubStr, int SubStrLen, int EndPos) const noexcept
 {
-    if  (StartPos < 0)
+    if  (StartPos >= 0)
     {
-        return -1;
-    }
-    if  (SubStrLen == -1)
-    {
-        SubStrLen = int_strlen((const char *)SubStr);
-    }
+        SubStrLen = SubStrLen == -1 ? int_strlen((const char*)SubStr) : SubStrLen;
 #ifdef TOOLSLIB_STAT_FIND
-    {
-        int xx = 0;
-        ghToolsLbStatFind.Find(CMaaString((const char*)SubStr, SubStrLen), &xx);
-        xx++;
-        ghToolsLbStatFind.AddOver(CMaaString((const char*)SubStr, SubStrLen), xx);
-    }
+        {
+            int xx = 0;
+            ghToolsLbStatFind.Find(CMaaString((const char*)SubStr, SubStrLen), &xx);
+            xx++;
+            ghToolsLbStatFind.AddOver(CMaaString((const char*)SubStr, SubStrLen), xx);
+        }
 #endif
-    const int Len = EndPos != -1 && EndPos <= Length() ? EndPos : Length();
-    if  (StartPos + SubStrLen > Len || SubStrLen <= 0)
-    {
-        return -1;
-    }
-    const char * w = (const char *)SubStr;
-    const char * s = StartPos + (const char *)*this;
-    const char ch0 = w[0];
-    int_ Hw = 0, Hs = 0;
-    for (int i = 0; i < SubStrLen; i++)
-    {
-        Hw += (unsigned char)w[i];
-        Hs += (unsigned char)s[i];
-    }
-    const char ch1 = w[SubStrLen - 1];
-    for (int pos = StartPos; ;)
-    {
-        if  (Hw == Hs && *s == ch0 && s[SubStrLen - 1] == ch1 && CMaaIsMemEq(s, SubStr, SubStrLen - 1))
+        int Len = Length();
+        Len = EndPos >= 0 && EndPos <= Len ? EndPos : Len;
+        if (StartPos + SubStrLen <= Len && SubStrLen > 0)
         {
-            return pos;
+            const char* w = (const char*)SubStr;
+            const char* s = StartPos + (const char*)*this;
+            const char ch0 = w[0];
+            int_ Hw = 0, Hs = 0;
+            for (int i = 0; i < SubStrLen; i++)
+            {
+                Hw += (unsigned char)w[i];
+                Hs += (unsigned char)s[i];
+            }
+            const char ch1 = w[SubStrLen - 1];
+            const int end = Len - SubStrLen;
+            int pos = StartPos;
+            while (1)
+            {
+                if (Hw == Hs && *s == ch0 && s[SubStrLen - 1] == ch1 && CMaaIsMemEq(s, SubStr, SubStrLen - 1))
+                {
+                    return pos;
+                }
+                if (++pos > end)
+                {
+                    break;
+                }
+                Hs += (unsigned char)s[SubStrLen] - (unsigned char)*s;
+                s++;
+            }
         }
-        if  (++pos > Len - SubStrLen)
-        {
-            break;
-        }
-        Hs += (unsigned char)s[SubStrLen] - (unsigned char)*s;
-        s++;
     }
     return -1;
 }
@@ -12409,21 +12407,23 @@ int CMaaString::FindNEx(int StartPos, int_ N, const char **SubStr, int *SubStrLe
 //--------------------------------------------------------------------------
 int CMaaString::CMaaStringImp::Find(int StartPos, char c, int EndPos) const noexcept
 {
-    if (StartPos < 0)
+    if (StartPos >= 0)
     {
-        return -1;
-    }
-    const char* b = *this;
-    const char* e = b + Length();
-    e = EndPos < 0 ? e : b + EndPos < e ? b + EndPos : e;
-    const char* p = b + StartPos;
-    while (p < e)
-    {
-        if (*p == c)
+        const char* b = *this;
+        const char* p = b + StartPos;
+        int l = Length();
+        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        if (l > 0)
         {
-            return (int)(p - b);
+            do
+            {
+                if (*p == c)
+                {
+                    return (int)(p - b);
+                }
+                p++;
+            } while (--l);
         }
-        p++;
     }
     return -1;
 }
@@ -12433,15 +12433,18 @@ int CMaaString::CMaaStringImp::Find(int StartPos, char c) const noexcept
     if (StartPos >= 0)
     {
         const char* b = *this;
-        const char* e = b + Length();
         const char* p = b + StartPos;
-        while (p < e)
+        int l = Length() - StartPos;
+        if (l > 0)
         {
-            if (*p == c)
+            do
             {
-                return (int)(p - b);
-            }
-            p++;
+                if (*p == c)
+                {
+                    return (int)(p - b);
+                }
+                p++;
+            } while (--l);
         }
     }
     return -1;
@@ -12450,78 +12453,88 @@ int CMaaString::CMaaStringImp::Find(int StartPos, char c) const noexcept
 int CMaaString::CMaaStringImp::Find(char c) const noexcept
 {
     const char* b = *this;
-    const char* p;
-    const char* e = (p = b) + Length();
-    while (p < e)
+    const char* p = b;
+    int l = Length();
+    if (l)
     {
-        if (*p == c)
+        do
         {
-            return (int)(p - b);
-        }
-        p++;
+            if (*p == c)
+            {
+                return (int)(p - b);
+            }
+            p++;
+        } while (--l);
     }
     return -1;
 }
 //--------------------------------------------------------------------------
 int CMaaString::CMaaStringImp::Find2(int StartPos, char c1, char c2, int EndPos) const noexcept
 {
-    if (StartPos < 0)
+    if (StartPos >= 0)
     {
-        return -1;
-    }
-    const char* b = *this;
-    const char* e = b + Length();
-    e = EndPos < 0 ? e : b + EndPos < e ? b + EndPos : e;
-    const char* p = b + StartPos;
-    while (p < e)
-    {
-        if (*p == c1 || *p == c2)
+        const char* b = *this;
+        const char* p = b + StartPos;
+        int l = Length();
+        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        if (l > 0)
         {
-            return (int)(p - b);
+            do
+            {
+                if (*p == c1 || *p == c2)
+                {
+                    return (int)(p - b);
+                }
+                p++;
+            } while (--l);
         }
-        p++;
     }
     return -1;
 }
 //--------------------------------------------------------------------------
 int CMaaString::CMaaStringImp::Find3(int StartPos, char c1, char c2, char c3, int EndPos) const noexcept
 {
-    if (StartPos < 0)
+    if (StartPos >= 0)
     {
-        return -1;
-    }
-    const char* b = *this;
-    const char* e = b + Length();
-    e = EndPos < 0 ? e : b + EndPos < e ? b + EndPos : e;
-    const char* p = b + StartPos;
-    while (p < e)
-    {
-        if (*p == c1 || *p == c2 || *p == c3)
+        const char* b = *this;
+        const char* p = b + StartPos;
+        int l = Length();
+        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        if (l > 0)
         {
-            return (int)(p - b);
+            do
+            {
+                const char c = *p;
+                if (c == c1 || c == c2 || c == c3)
+                {
+                    return (int)(p - b);
+                }
+                p++;
+            } while (--l);
         }
-        p++;
     }
     return -1;
 }
 //--------------------------------------------------------------------------
 int CMaaString::CMaaStringImp::Find(int StartPos, const CMaa256Bits& Bits, int EndPos) const noexcept
 {
-    if (StartPos < 0)
+    if (StartPos >= 0)
     {
-        return -1;
-    }
-    const char* b = *this;
-    const char* e = b + Length();
-    e = EndPos < 0 ? e : b + EndPos < e ? b + EndPos : e;
-    const char* p = b + StartPos;
-    while (p < e)
-    {
-        if (Bits.Test(*p))
+        const char* b = *this;
+        const char* p = b + StartPos;
+        int l = Length();
+        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        if (l > 0)
         {
-            return (int)(p - b);
+            do
+            {
+                if (Bits.Test(*p))
+                {
+                    return (int)(p - b);
+                }
+                p++;
+            } while (--l);
         }
-        p++;
     }
     return -1;
 }
@@ -12531,17 +12544,21 @@ int CMaaString::CMaaStringImp::Count(int StartPos, char c0, char c1, int EndPos)
     int N = 0;
     if (StartPos >= 0)
     {
-        const char* p = *this;
-        const char* e = p + Length();
-        e = EndPos < 0 ? e : p + EndPos < e ? p + EndPos : e;
-        p += StartPos;
-        while (p < e)
+        const char* b = *this;
+        const char* p = b + StartPos;
+        int l = Length();
+        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        if (l > 0)
         {
-            const char c = *p++;
-            if (c0 <= c && c <= c1)
+            do
             {
-                N++;
-            }
+                const char c = *p;
+                if (c0 <= c && c <= c1)
+                {
+                    N++;
+                }
+                p++;
+            } while (--l);
         }
     }
     return N;
@@ -12552,17 +12569,21 @@ int CMaaString::CMaaStringImp::Count(int StartPos, unsigned char c0, unsigned ch
     int N = 0;
     if (StartPos >= 0)
     {
-        const char* p = *this;
-        const char* e = p + Length();
-        e = EndPos < 0 ? e : p + EndPos < e ? p + EndPos : e;
-        p += StartPos;
-        while (p < e)
+        const char* b = *this;
+        const char* p = b + StartPos;
+        int l = Length();
+        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        if (l > 0)
         {
-            const unsigned char c = (unsigned char)*p++;
-            if (c0 <= c && c <= c1)
+            do
             {
-                N++;
-            }
+                const unsigned char c = (unsigned char)*p;
+                if (c0 <= c && c <= c1)
+                {
+                    N++;
+                }
+                p++;
+            } while (--l);
         }
     }
     return N;
@@ -12573,16 +12594,20 @@ int CMaaString::CMaaStringImp::Count(int StartPos, const CMaa256Bits& Bits, int 
     int N = 0;
     if (StartPos >= 0)
     {
-        const char* p = *this;
-        const char* e = p + Length();
-        e = EndPos < 0 ? e : p + EndPos < e ? p + EndPos : e;
-        p += StartPos;
-        while (p < e)
+        const char* b = *this;
+        const char* p = b + StartPos;
+        int l = Length();
+        l = (EndPos < 0 ? l : EndPos <= l ? EndPos : l) - StartPos;
+        if (l > 0)
         {
-            if (Bits.Test(*p++))
+            do
             {
-                N++;
-            }
+                if (Bits.Test(*p))
+                {
+                    N++;
+                }
+                p++;
+            } while (--l);
         }
     }
     return N;
@@ -12591,15 +12616,19 @@ int CMaaString::CMaaStringImp::Count(int StartPos, const CMaa256Bits& Bits, int 
 int CMaaString::CMaaStringImp::CountNum() const noexcept
 {
     int N = 0;
-    const char* p = *this;
-    const char* e = p + Length();
-    while (p < e)
+    const char* b = *this;
+    const char* p = b;
+    int l = Length();
+    if (l)
     {
-        const char c = *p++;
-        if (c >= '0' && c <= '9')
+        do
         {
-            N++;
-        }
+            if (*p >= '0' && *p <= '9')
+            {
+                N++;
+            }
+            p++;
+        } while (--l);
     }
     return N;
 }
