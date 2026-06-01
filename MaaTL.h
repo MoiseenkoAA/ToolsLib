@@ -320,6 +320,7 @@ public:
     {
         Init();
         m_AutoDeleteItems = AutoDeleteItems;
+        m_Padding[2] = m_Padding[1] = m_Padding[0] = false;
     }
     //----------------------------------------------------------------------
     // Cut from that, move to empty this
@@ -766,7 +767,8 @@ public:
     bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
     constexpr CMaaSList(bool AutoDeleteItems = false) noexcept
-    :   m_AutoDeleteItems(AutoDeleteItems)
+    :   m_AutoDeleteItems{ AutoDeleteItems },
+        m_Padding{}
     {
     }
     //----------------------------------------------------------------------
@@ -894,7 +896,8 @@ public:
     bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
     constexpr CMaaSList2(bool AutoDeleteItems = false) noexcept
-    :   m_AutoDeleteItems(AutoDeleteItems)
+    :   m_AutoDeleteItems{ AutoDeleteItems },
+        m_Padding{}
     {
     }
     //----------------------------------------------------------------------
@@ -1122,7 +1125,8 @@ public:
     bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
     constexpr CMaaSList1(bool AutoDeleteItems = false) noexcept
-    :   m_AutoDeleteItems(AutoDeleteItems)
+    :   m_AutoDeleteItems{ AutoDeleteItems },
+        m_Padding{}
     {
     }
     //----------------------------------------------------------------------
