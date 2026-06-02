@@ -316,11 +316,13 @@ public:
     bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
     constexpr CMaaDList(bool AutoDeleteItems = false) noexcept
-    :   Head(eNotInit)
+    :   Head(eNotInit),
+        m_AutoDeleteItems{ AutoDeleteItems },
+        m_Padding{}
     {
         Init();
-        m_AutoDeleteItems = AutoDeleteItems;
-        m_Padding[2] = m_Padding[1] = m_Padding[0] = false;
+        //m_AutoDeleteItems = AutoDeleteItems;
+        //m_Padding[2] = m_Padding[1] = m_Padding[0] = false;
     }
     //----------------------------------------------------------------------
     // Cut from that, move to empty this
