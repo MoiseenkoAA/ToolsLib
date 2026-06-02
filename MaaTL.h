@@ -315,13 +315,12 @@ template < class T > class CMaaDList
 public:
     bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
-    constexpr CMaaDList(bool AutoDeleteItems = false) noexcept
-    :   Head(eNotInit),
-        m_AutoDeleteItems{ AutoDeleteItems },
-        m_Padding{}
+    CMaaDList(bool AutoDeleteItems = false) noexcept
+    :   Head(eNotInit)//,
+        //m_AutoDeleteItems{ AutoDeleteItems }
     {
         Init();
-        //m_AutoDeleteItems = AutoDeleteItems;
+        m_AutoDeleteItems = AutoDeleteItems;
         //m_Padding[2] = m_Padding[1] = m_Padding[0] = false;
     }
     //----------------------------------------------------------------------
@@ -344,7 +343,7 @@ public:
         m_AutoDeleteItems = AutoDeleteItems;
     }
     //----------------------------------------------------------------------
-    /*virtual*/ constexpr ~CMaaDList() noexcept
+    /*virtual*/ ~CMaaDList() noexcept
     {
         if (m_AutoDeleteItems)
         {
@@ -352,15 +351,15 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr void Init() noexcept
+    void Init() noexcept
     {
         Head.Prev = Head.Next = &Head;
     }
-    constexpr bool IsEmpty() const noexcept
+    bool IsEmpty() const noexcept
     {
         return Head.Next == &Head;
     }
-    constexpr bool IsNotEmpty() const noexcept
+    bool IsNotEmpty() const noexcept
     {
         return Head.Next != &Head;
     }
@@ -387,7 +386,7 @@ public:
     }
     */
     //----------------------------------------------------------------------
-    constexpr void RemoveAll() noexcept
+    void RemoveAll() noexcept
     {
         T* p;
         while ((p = GetFromFront()))
@@ -396,7 +395,7 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr void AddAtBack(T* That) noexcept
+    void AddAtBack(T* That) noexcept
     {
         That->CMaaDLink__ Prev = Head.Prev;
         That->CMaaDLink__ Next = &Head;
@@ -404,7 +403,7 @@ public:
         That->CMaaDLink__ Prev->CMaaDLink__ Next = That;
     }
     //----------------------------------------------------------------------
-    constexpr void AddAtFront(T* That) noexcept
+    void AddAtFront(T* That) noexcept
     {
         That->CMaaDLink__ Next = Head.Next;
         That->CMaaDLink__ Prev = &Head;
@@ -412,19 +411,19 @@ public:
         That->CMaaDLink__ Next->Prev = That;
     }
     //----------------------------------------------------------------------
-    constexpr void PopToFront(T* That) noexcept
+    void PopToFront(T* That) noexcept
     {
         Release(That);
         AddAtFront(That);
     }
     //----------------------------------------------------------------------
-    constexpr void PopToBack(T* That) noexcept
+    void PopToBack(T* That) noexcept
     {
         Release(That);
         AddAtBack(That);
     }
     //----------------------------------------------------------------------
-    constexpr T* GetFromFront() noexcept
+    T* GetFromFront() noexcept
     {
         CMaaDLink* That;
         if ((That = Head.Next) == &Head)
@@ -440,7 +439,7 @@ public:
         return (T*)That;
     }
     //----------------------------------------------------------------------
-    constexpr T* GetFromBack() noexcept
+    T* GetFromBack() noexcept
     {
         CMaaDLink* That;
         if ((That = Head.Prev) == &Head)
@@ -456,40 +455,40 @@ public:
         return (T*)That;
     }
     //----------------------------------------------------------------------
-    constexpr T* LookAtFront() const noexcept
+    T* LookAtFront() const noexcept
     {
         return (Head.Next == &Head) ? nullptr : (T*)Head.Next;
     }
     //----------------------------------------------------------------------
-    constexpr T* LookAtBack() const noexcept
+    T* LookAtBack() const noexcept
     {
         return (Head.Prev == &Head) ? nullptr : (T*)Head.Prev;
     }
-    constexpr bool IsCount1or0() const noexcept
+    bool IsCount1or0() const noexcept
     {
         return (Head.Next == Head.Prev);
     }
-    constexpr bool IsCount1() const noexcept
+    bool IsCount1() const noexcept
     {
         return (Head.Next == Head.Prev && Head.Next != &Head);
     }
     //----------------------------------------------------------------------
-    constexpr T* Next(T* That) const noexcept
+    T* Next(T* That) const noexcept
     {
         return That->Next == &Head ? nullptr : (T*)That->Next;
     }
     //----------------------------------------------------------------------
-    constexpr const T* Next(const T* That) const noexcept
+    const T* Next(const T* That) const noexcept
     {
         return That->Next == &Head ? nullptr : (const T*)That->Next;
     }
     //----------------------------------------------------------------------
-    constexpr T* Prev(T* That) const noexcept
+    T* Prev(T* That) const noexcept
     {
         return That->Prev == &Head ? nullptr : (T*)That->Prev;
     }
     //----------------------------------------------------------------------
-    constexpr const T* Prev(const T* That) const noexcept
+    const T* Prev(const T* That) const noexcept
     {
         return That->Prev == &Head ? nullptr : (const T*)That->Prev;
     }
@@ -514,7 +513,7 @@ public:
         return Ret;
     }
     //----------------------------------------------------------------------
-    static constexpr void Release(T* That) noexcept
+    static void Release(T* That) noexcept
     {
         if (That->CMaaDLink__ Prev)
         {
@@ -535,7 +534,7 @@ public:
         That->CMaaDLink__ Next = That->CMaaDLink__ Prev = nullptr; // but it is not nessesary to perform initializations
     }
     //----------------------------------------------------------------------
-    static constexpr void ReleaseSafe(T* That) noexcept
+    static void ReleaseSafe(T* That) noexcept
     {
         if (That->CMaaDLink__ Prev)
         {
@@ -581,7 +580,7 @@ public:
         return c;
     }
     int GetItemCount() const noexcept { return GetCount(); }
-    constexpr void MoveThatToTheEnd(CMaaDList < T >& That) noexcept
+    void MoveThatToTheEnd(CMaaDList < T >& That) noexcept
     {
         if (!That.IsEmpty())
         {
@@ -595,7 +594,7 @@ public:
             That.Init();
         }
     }
-    constexpr void MoveThatToTheFront(CMaaDList < T >& That) noexcept
+    void MoveThatToTheFront(CMaaDList < T >& That) noexcept
     {
         if (!That.IsEmpty())
         {
@@ -609,7 +608,7 @@ public:
             That.Init();
         }
     }
-    constexpr void MoveAfter(T* pItem, T* pFirst, T* pLast) noexcept
+    void MoveAfter(T* pItem, T* pFirst, T* pLast) noexcept
     {
         if (!pItem)
         {
@@ -626,7 +625,7 @@ public:
             pItem->Next = pFirst;
         }
     }
-    constexpr void MoveBefore(T* pItem, T* pFirst, T* pLast) noexcept
+    void MoveBefore(T* pItem, T* pFirst, T* pLast) noexcept
     {
         if (!pItem)
         {
@@ -643,7 +642,7 @@ public:
             pItem->Prev = pLast;
         }
     }
-    constexpr bool MoveUp(T* That) noexcept
+    bool MoveUp(T* That) noexcept
     {
         T* Neighbor = Prev(That);
         if (!Neighbor)
@@ -654,7 +653,7 @@ public:
         That->InsertBefore(Neighbor);
         return true;
     }
-    constexpr bool MoveDown(T* That) noexcept
+    bool MoveDown(T* That) noexcept
     {
         T* Neighbor = Next(That);
         if (!Neighbor)
@@ -665,7 +664,7 @@ public:
         That->InsertAfter(Neighbor);
         return true;
     }
-    constexpr void Swap(CMaaDList < T >& That, bool bAdSwap = false) noexcept
+    void Swap(CMaaDList < T >& That, bool bAdSwap = false) noexcept
     {
         CMaaDList < T > tmp;
         tmp.MoveThatToTheFront(That);
@@ -682,7 +681,7 @@ public:
 template < class T > class CMaaDListAD : public CMaaDList < T >
 {
 public:
-    constexpr CMaaDListAD() noexcept
+    CMaaDListAD() noexcept
     :   CMaaDList < T >(true) // Auto deleting list items from destructor by default
     {
     }
@@ -768,9 +767,9 @@ template < class T > class CMaaSList
 public:
     bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
-    constexpr CMaaSList(bool AutoDeleteItems = false) noexcept
-    :   m_AutoDeleteItems{ AutoDeleteItems },
-        m_Padding{}
+    CMaaSList(bool AutoDeleteItems = false) noexcept
+    :   m_AutoDeleteItems{ AutoDeleteItems }//,
+        //m_Padding{}
     {
     }
     //----------------------------------------------------------------------
@@ -782,15 +781,15 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr void Init() noexcept
+    void Init() noexcept
     {
         Head.Next = nullptr;
     }
-    constexpr bool IsEmpty() const noexcept
+    bool IsEmpty() const noexcept
     {
         return !Head.Next;
     }
-    constexpr bool IsNotEmpty() const noexcept
+    bool IsNotEmpty() const noexcept
     {
         return Head.Next;
     }
@@ -802,7 +801,7 @@ public:
 #define CMaaSLink__
 #endif
     //----------------------------------------------------------------------
-    constexpr void RemoveAll() noexcept
+    void RemoveAll() noexcept
     {
         T* p;
         while ((p = GetFromFront()))
@@ -811,20 +810,20 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr void AddAtFront(T* That) noexcept
+    void AddAtFront(T* That) noexcept
     {
         That->CMaaSLink__ Next = Head.Next;
         Head.Next = That;
     }
     //----------------------------------------------------------------------
     // That is free, After is in list
-    static constexpr void InsertAfter(CMaaSLink* That, CMaaSLink* After) noexcept  // .... this, That, ....
+    static void InsertAfter(CMaaSLink* That, CMaaSLink* After) noexcept  // .... this, That, ....
     {
         That->CMaaSLink__ Next = After->CMaaSLink__ Next;
         After->CMaaSLink__ Next = That;
     }
     //----------------------------------------------------------------------
-    constexpr T* GetFromFront() noexcept
+    T* GetFromFront() noexcept
     {
         CMaaSLink* That = Head.Next;
         if (That)
@@ -835,22 +834,22 @@ public:
         return (T*)That;
     }
     //----------------------------------------------------------------------
-    constexpr T* LookAtFront() const noexcept
+    T* LookAtFront() const noexcept
     {
         return (T*)Head.Next;
     }
     //----------------------------------------------------------------------
-    static constexpr T* Next(T* That) noexcept
+    static T* Next(T* That) noexcept
     {
         return (T*)That->CMaaSLink__ Next;
     }
     //----------------------------------------------------------------------
-    static constexpr const T* Next(const T* That) noexcept
+    static const T* Next(const T* That) noexcept
     {
         return (const T*)That->CMaaSLink__ Next;
     }
     //----------------------------------------------------------------------
-    constexpr T* ExtractChain() noexcept
+    T* ExtractChain() noexcept
     {
         T* Ret = LookAtFront();
         Init();
@@ -868,7 +867,7 @@ public:
         return c;
     }
     int GetItemCount() const noexcept { return GetCount(); }
-    constexpr void Swap(CMaaSList < T >& That, bool bAdSwap = false) noexcept
+    void Swap(CMaaSList < T >& That, bool bAdSwap = false) noexcept
     {
         CMaaSwap(Head.Next, That.Head.Next);
         if (bAdSwap)
@@ -882,7 +881,7 @@ public:
 template < class T > class CMaaSListAD : public CMaaSList < T >
 {
 public:
-    constexpr CMaaSListAD() noexcept
+    CMaaSListAD() noexcept
     :   CMaaSList < T >(true) // Auto deleting list items from destructor by default
     {
     }
@@ -897,13 +896,13 @@ template < class T > class CMaaSList2
 public:
     bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
-    constexpr CMaaSList2(bool AutoDeleteItems = false) noexcept
-    :   m_AutoDeleteItems{ AutoDeleteItems },
-        m_Padding{}
+    CMaaSList2(bool AutoDeleteItems = false) noexcept
+    :   m_AutoDeleteItems{ AutoDeleteItems }//,
+        //m_Padding{}
     {
     }
     //----------------------------------------------------------------------
-    /*virtual*/ constexpr ~CMaaSList2() noexcept
+    /*virtual*/ ~CMaaSList2() noexcept
     {
         if (m_AutoDeleteItems)
         {
@@ -911,15 +910,15 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr void Init() noexcept
+    void Init() noexcept
     {
         Tail.Next = Head.Next = nullptr;
     }
-    constexpr bool IsEmpty() const noexcept
+    bool IsEmpty() const noexcept
     {
         return !Head.Next;
     }
-    constexpr bool IsNotEmpty() const noexcept
+    bool IsNotEmpty() const noexcept
     {
         return Head.Next;
     }
@@ -931,7 +930,7 @@ public:
 #define CMaaSLink__
 #endif
     //----------------------------------------------------------------------
-    constexpr void RemoveAll() noexcept
+    void RemoveAll() noexcept
     {
         T* p;
         while ((p = GetFromFront()))
@@ -940,7 +939,7 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr void AddAtBack(T* That) noexcept
+    void AddAtBack(T* That) noexcept
     {
         if (Tail.Next)
         {
@@ -956,7 +955,7 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr void AddAtFront(T* That) noexcept
+    void AddAtFront(T* That) noexcept
     {
         if (Head.Next)
         {
@@ -972,7 +971,7 @@ public:
     }
     //----------------------------------------------------------------------
     // That is free, After is in list
-    constexpr void InsertAfter(CMaaSLink* That, CMaaSLink* After) noexcept  // .... this, That, ....
+    void InsertAfter(CMaaSLink* That, CMaaSLink* After) noexcept  // .... this, That, ....
     {
         That->CMaaSLink__ Next = After->CMaaSLink__ Next;
         After->CMaaSLink__ Next = That;
@@ -982,7 +981,7 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr T* GetFromFront() noexcept
+    T* GetFromFront() noexcept
     {
         CMaaSLink* That = Head.Next;
         if (That)
@@ -996,27 +995,27 @@ public:
         return (T*)That;
     }
     //----------------------------------------------------------------------
-    constexpr T* LookAtFront() const noexcept
+    T* LookAtFront() const noexcept
     {
         return (T*)Head.Next;
     }
     //----------------------------------------------------------------------
-    constexpr T* LookAtBack() const noexcept
+    T* LookAtBack() const noexcept
     {
         return (T*)Tail.Next;
     }
     //----------------------------------------------------------------------
-    static constexpr T* Next(T* That) noexcept
+    static T* Next(T* That) noexcept
     {
         return (T*)That->CMaaSLink__ Next;
     }
     //----------------------------------------------------------------------
-    static constexpr const T* Next(const T* That) noexcept
+    static const T* Next(const T* That) noexcept
     {
         return (const T*)That->CMaaSLink__ Next;
     }
     //----------------------------------------------------------------------
-    constexpr T* ExtractChain() noexcept
+    T* ExtractChain() noexcept
     {
         T* Ret = LookAtFront();
         Init();
@@ -1060,7 +1059,7 @@ public:
         return c;
     }
     int GetItemCount() const noexcept { return GetCount(); }
-    constexpr void MoveThatToTheEnd(CMaaSList2 < T >& That) noexcept
+    void MoveThatToTheEnd(CMaaSList2 < T >& That) noexcept
     {
         if (!That.IsEmpty())
         {
@@ -1077,7 +1076,7 @@ public:
             That.Init();
         }
     }
-    constexpr void MoveThatToTheFront(CMaaSList2 < T >& That) noexcept
+    void MoveThatToTheFront(CMaaSList2 < T >& That) noexcept
     {
         if (!That.IsEmpty())
         {
@@ -1094,7 +1093,7 @@ public:
             That.Init();
         }
     }
-    constexpr void Swap(CMaaSList2 < T >& That, bool bAdSwap = false) noexcept
+    void Swap(CMaaSList2 < T >& That, bool bAdSwap = false) noexcept
     {
         CMaaSList2 < T > tmp;
         tmp.MoveThatToTheFront(That);
@@ -1111,7 +1110,7 @@ public:
 template < class T > class CMaaSList2AD : public CMaaSList2 < T >
 {
 public:
-    constexpr CMaaSList2AD() noexcept
+    CMaaSList2AD() noexcept
     :   CMaaSList2 < T >(true) // Auto deleting list items from destructor by default
     {
     }
@@ -1126,13 +1125,13 @@ template < class T > class CMaaSList1
 public:
     bool m_AutoDeleteItems, m_Padding[3];
     //----------------------------------------------------------------------
-    constexpr CMaaSList1(bool AutoDeleteItems = false) noexcept
-    :   m_AutoDeleteItems{ AutoDeleteItems },
-        m_Padding{}
+    CMaaSList1(bool AutoDeleteItems = false) noexcept
+    :   m_AutoDeleteItems{ AutoDeleteItems }//,
+        //m_Padding{}
     {
     }
     //----------------------------------------------------------------------
-    /*virtual*/ constexpr ~CMaaSList1() noexcept
+    /*virtual*/ ~CMaaSList1() noexcept
     {
         if (m_AutoDeleteItems)
         {
@@ -1140,15 +1139,15 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr void Init() noexcept
+    void Init() noexcept
     {
         Tail.Next = nullptr;
     }
-    constexpr bool IsEmpty() const noexcept
+    bool IsEmpty() const noexcept
     {
         return !Tail.Next;
     }
-    constexpr bool IsNotEmpty() const noexcept
+    bool IsNotEmpty() const noexcept
     {
         return Tail.Next;
     }
@@ -1169,7 +1168,7 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr void AddAtBack(T* That) noexcept
+    void AddAtBack(T* That) noexcept
     {
         if (Tail.Next)
         {
@@ -1185,7 +1184,7 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr void AddAtFront(T* That) noexcept
+    void AddAtFront(T* That) noexcept
     {
         if (Tail.Next)
         {
@@ -1201,7 +1200,7 @@ public:
     }
     //----------------------------------------------------------------------
     // That is free, After is in list
-    constexpr void InsertAfter(CMaaSLink* That, CMaaSLink* After) noexcept  // .... this, That, ....
+    void InsertAfter(CMaaSLink* That, CMaaSLink* After) noexcept  // .... this, That, ....
     {
         That->CMaaSLink__ Next = After->CMaaSLink__ Next;
         After->CMaaSLink__ Next = That;
@@ -1211,7 +1210,7 @@ public:
         }
     }
     //----------------------------------------------------------------------
-    constexpr T* GetFromFront() noexcept
+    T* GetFromFront() noexcept
     {
         if (Tail.Next)
         {
@@ -1230,27 +1229,27 @@ public:
         return (T*)nullptr;
     }
     //----------------------------------------------------------------------
-    constexpr T* LookAtFront() const noexcept
+    T* LookAtFront() const noexcept
     {
         return Tail.Next ? (T*)Tail.Next->Next : nullptr;
     }
     //----------------------------------------------------------------------
-    constexpr T* LookAtBack() const noexcept
+    T* LookAtBack() const noexcept
     {
         return (T*)Tail.Next;
     }
     //----------------------------------------------------------------------
-    constexpr T* Next(T* That) const noexcept
+    T* Next(T* That) const noexcept
     {
         return That->CMaaSLink__ Next != Tail.Next->Next ? (T*)That->CMaaSLink__ Next : nullptr;
     }
     //----------------------------------------------------------------------
-    constexpr const T* Next(const T* That) const noexcept
+    const T* Next(const T* That) const noexcept
     {
         return That->CMaaSLink__ Next != Tail.Next->Next ? (const T*)That->CMaaSLink__ Next : nullptr;
     }
     //----------------------------------------------------------------------
-    constexpr T* ExtractChain() noexcept
+    T* ExtractChain() noexcept
     {
         T* Ret = LookAtFront();
         if (Ret)
@@ -1298,7 +1297,7 @@ public:
         return c;
     }
     int GetItemCount() const noexcept { return GetCount(); }
-    constexpr void MoveThatToTheEnd(CMaaSList1 < T >& That) noexcept
+    void MoveThatToTheEnd(CMaaSList1 < T >& That) noexcept
     {
         if (!That.IsEmpty())
         {
@@ -1316,7 +1315,7 @@ public:
             That.Init();
         }
     }
-    constexpr void MoveThatToTheFront(CMaaSList1 < T >& That) noexcept
+    void MoveThatToTheFront(CMaaSList1 < T >& That) noexcept
     {
         if (!That.IsEmpty())
         {
@@ -1333,7 +1332,7 @@ public:
             That.Init();
         }
     }
-    constexpr void Swap(CMaaSList1 < T >& That, bool bAdSwap = false) noexcept
+    void Swap(CMaaSList1 < T >& That, bool bAdSwap = false) noexcept
     {
         CMaaSList1 < T > tmp;
         tmp.MoveThatToTheFront(That);
@@ -1350,7 +1349,7 @@ public:
 template < class T > class CMaaSList1AD : public CMaaSList1 < T >
 {
 public:
-    constexpr CMaaSList1AD() noexcept
+    CMaaSList1AD() noexcept
     :   CMaaSList1 < T >(true) // Auto deleting list items from destructor by default
     {
     }
@@ -1431,7 +1430,7 @@ public:
         if (CheckExpand(m + 1))
         {
             // m_MaxIndex === m + 1;
-            if constexpr (noexcept(m_Ptr[m] = x))
+            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
             {
                 m_Ptr[m] = x;
             }
@@ -1452,7 +1451,7 @@ public:
         if (CheckExpand(m + 1))
         {
             // m_MaxIndex === m + 1;
-            if constexpr (noexcept(m_Ptr[m] = x))
+            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
             {
                 m_Ptr[m] = x;
             }
@@ -1488,7 +1487,7 @@ public:
         if (CheckExpand(m + 1))
         {
             // m_MaxIndex === m + 1;
-            if constexpr (noexcept(m_Ptr[m] = x))
+            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
             {
                 m_Ptr[m] = x;
             }
@@ -1958,7 +1957,7 @@ public:
         if (CheckExpand(m + 1))
         {
             // m_MaxIndex === m + 1;
-            if constexpr (noexcept(m_Ptr[m] = x))
+            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
             {
                 m_Ptr[m] = x;
             }
@@ -1979,7 +1978,7 @@ public:
         if (CheckExpand(m + 1))
         {
             // m_MaxIndex === m + 1;
-            if constexpr (noexcept(m_Ptr[m] = x))
+            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
             {
                 m_Ptr[m] = x;
             }
@@ -2015,7 +2014,7 @@ public:
         if (CheckExpand(m + 1))
         {
             // m_MaxIndex === m + 1;
-            if constexpr (noexcept(m_Ptr[m] = x))
+            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
             {
                 m_Ptr[m] = x;
             }
