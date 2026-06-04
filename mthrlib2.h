@@ -161,10 +161,10 @@ class CMaaEvent
 #ifdef __unix__
     CMaaMutex1 m_Mutex;
     pthread_cond_t m_cond;
-    bool m_bManualReset, m_bState;
+    bool m_bManualReset, m_bState, m_Padding[2];
 #else
     CMaaMutex m_Mutex;
-    bool m_bManualReset;
+    bool m_bManualReset, m_Padding[3];
     HANDLE m_hEvent;
     //CMaaAutoInitObject<int, 0> m_ExternalEvent;
     int m_ExternalEvent = 0;

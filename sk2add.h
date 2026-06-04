@@ -241,13 +241,17 @@ class CMaaTcpFile
     friend class CMaaTcpFileConnection;
     friend class CMaaTcpFileServer;
 
-    CMaaEvent m_ev, *m_pInterruptEvent;
-    //CMaaAutoInitObject<_dword, 0> m_InterruptCheckingTime;
+    CMaaEvent m_ev;
+    _Port m_LocalPort, m_RemotePort;
+    CMaaEvent * m_pInterruptEvent;
     _dword m_InterruptCheckingTime = 0;
-    XTOOSockErr * m_err;
     bool m_bThrowExcept;
     //bool m_bIsOpened;
+    bool m_bBindReuse;
+    _Port m_BindPort;
+    XTOOSockErr * m_err;
     int m_EvType, m_len, m_wlen;
+    int m_DefPort;
 
     CMaaTcpFileConnection * m_pConn;
     CMaaTcpFileServer * m_pServer;
@@ -268,13 +272,13 @@ class CMaaTcpFile
     };
 
     CMaaString m_Url;
-    int m_DefPort;
+    //int m_DefPort;
     SOCKET m_Socket;
-    int m_domain;
+    //int m_domain;
 
-    _Port m_BindPort;
+    //_Port m_BindPort;
     _IP6 m_BindIp;
-    bool m_bBindReuse;
+    //bool m_bBindReuse;
 
     static void fnCreateNewThread(void * param, CMaaSockThread * MainThr);
     static void fnCreateNewThread2(void * param, CMaaSockThread * MainThr);
@@ -287,6 +291,7 @@ class CMaaTcpFile
 
     CMaaString m_ReadData, m_DelayedReadData;
 
+    int m_domain;
     int m_DelayedReadDataLen;
 
 private:
@@ -294,8 +299,8 @@ private:
     CMaaTcpFile & operator=(const CMaaTcpFile &);
 public:
     _IP m_LocalIp, m_RemoteIp;
-    _Port m_LocalPort, m_RemotePort;
     _IP6 m_LocalIp6, m_RemoteIp6;
+    //_Port m_LocalPort, m_RemotePort;
 
     CMaaTcpFile(bool bThrowExcept = true);
     CMaaTcpFile(SOCKET s, int domain, bool bThrowExcept = true);

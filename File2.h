@@ -160,14 +160,13 @@ protected:
 #endif
     {
         //friend int main(int argn, char * args[]);
+        bool m_bStdHandle, m_Padding[3];
 #ifdef _WIN32
         HANDLE pFile;
-        bool m_bStdHandle, m_Padding[3];
         CMaaFileImp(HANDLE hFile, bool bStdHandle = false) noexcept;
 #endif
 #ifdef __unix__
         int fd;
-        bool m_bStdHandle, m_Padding[3];
         CMaaFileImp(int d, bool bStdHandle = false) noexcept;
 #endif
         //CMaaAutoInitObject<int, 0> m_SrcFormat, m_DstFormat;
