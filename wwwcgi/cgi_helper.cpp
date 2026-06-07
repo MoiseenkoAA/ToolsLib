@@ -170,6 +170,16 @@ int CCGIHelper::SendIndependentReply(CMaaFile f, CMaaString Header = "");//, _qw
 char * CCGIHelper::getenv(const char * name)
 {
 #ifdef FAST_CGI_SUPP
+    CMaaString *pval;
+    //if (m_phCgiParamOverride)
+    //{
+    //    printf("find(%s) of %d items\n", name, (int)m_phCgiParamOverride->GetItemCount());
+    //}
+    if (m_phCgiParamOverride && (pval = (*m_phCgiParamOverride)[name]))
+    {
+        //printf("found: %s\n", (const char *)*pval);
+        return (char *)(const char *)*pval;
+    }
     if (m_pFastCgiRequest)
     {
         return FCGX_GetParam(name, m_pFastCgiRequest->envp);
@@ -184,12 +194,13 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
 #else
     void *
 #endif
-        pFastCgiRequest, const CMaaString &ProgressFn, const CMaaString &ProgressFmt)
+        pFastCgiRequest, CMaaUnivHash<CMaaString, CMaaString> *phCgiParamOverride, const CMaaString &ProgressFn, const CMaaString &ProgressFmt)
 //:   m_fProgress((const char *)nullptr, CMaaFile::eNoMode, false)
 {
     m_Send500 = false;
 #ifdef FAST_CGI_SUPP
     m_pFastCgiRequest = pFastCgiRequest;
+    m_phCgiParamOverride = phCgiParamOverride;
 #endif
     if (!pFastCgiRequest)
     {
@@ -212,7 +223,7 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
     else
 #endif
     {
-        Initialize(MaxContentLength, pFastCgiRequest, ProgressFn, ProgressFmt);
+        Initialize(MaxContentLength, /*phCgiParamOverride,*/ pFastCgiRequest, ProgressFn, ProgressFmt);
     }
     if  (!g_imp)
     {
@@ -231,6 +242,7 @@ void CCGIHelper::ReinitializeGetQS()
         Initialize(-1
 #ifdef FAST_CGI_SUPP
             , m_pFastCgiRequest
+            //, m_phCgiParamOverride
 #endif
         ); // for 404 subst pages. still no cleanups before (warning)
     }
@@ -242,10 +254,11 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
 #else
     void *
 #endif
-        pFastCgiRequest, const CMaaString &ProgressFn, CMaaString ProgressFmt)
+        pFastCgiRequest, /*CMaaUnivHash<CMaaString, CMaaString> *phCgiParamOverride,*/ const CMaaString &ProgressFn, CMaaString ProgressFmt)
 {
 #ifdef FAST_CGI_SUPP
     m_pFastCgiRequest = pFastCgiRequest;
+    //m_phCgiParamOverride = phCgiParamOverride;
 #endif
 
     //{CMaaFile f("attr.txt", CMaaFile::eWC_SrSw, eNoExcept);}
@@ -924,6 +937,53 @@ const char * szHTTP_ADD_HEADER =
 ;
 */
 
+#ifdef FAST_CGI_SUPP
+int CCGIHelper::SendFCgiHeaderEx(CMaaString txt)
+{
+    //FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out); return txt.Length();
+
+    const int l0 = txt.Length();
+    CMaaString ContentType;
+    while(txt.IsNotEmpty())
+    {
+        CMaaString Line = txt.GetLine(CMaaStringCrLf, true, false, true);
+        if (Line.Length() == 2)
+        {
+            if (ContentType.IsNotEmpty())
+            {
+                FCGX_PutStr(ContentType, ContentType.Length(), m_pFastCgiRequest->out);
+            }
+            FCGX_PutStr(Line, Line.Length(), m_pFastCgiRequest->out);
+            break;
+        }
+        if (Line.IsEmpty())
+        {
+            // error
+            //if (ContentType.IsNotEmpty())
+            {
+                //FCGX_PutStr(ContentType, ContentType.Length(), m_pFastCgiRequest->out);
+            }
+            break;
+        }
+        if (Line.IsLeftCi("Content-type: ", 14, 0))
+        {
+            ContentType = Line;
+            continue;
+        }
+        //if (Line.IsLeftCi("Content-Length: ", 16, 0))
+        {
+            //continue;
+        }
+        FCGX_PutStr(Line, Line.Length(), m_pFastCgiRequest->out);
+    }
+    if (txt.IsNotEmpty())
+    {
+        FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
+    }
+    return l0 - txt.Length();
+}
+#endif
+
 int CCGIHelper::SendReply(const CMaaString &Data, const CMaaString &ContentType, const CMaaString &FileName, const CMaaString &Header, const CMaaString &ErrorText, time_t t, CMaaFile fStdOut)
 {
     return SendReply(Data, ContentType, FileName, Header, ErrorText, t, false, fStdOut);
@@ -969,7 +1029,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
 #ifdef FAST_CGI_SUPP
         if (m_pFastCgiRequest)
         {
-            FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
+            SendFCgiHeaderEx(txt); //FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
         }
         else
 #endif
@@ -1156,7 +1216,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
 #ifdef FAST_CGI_SUPP
                 if (m_pFastCgiRequest)
                 {
-                    FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
+                    SendFCgiHeaderEx(txt); //FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
                 }
                 else
 #endif
@@ -1212,7 +1272,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     }
 
     //int m_IsHttp100ContinueHeaderPreceeded = 0;
-    if  (Header.RefLeft(7) == "HTTP/1.")
+    if  (Header.IsLeft("HTTP/1.", 7))
     {
         m_IsHttp100ContinueHeaderPreceeded = 10;
         StrInt n = Header.Find(CMaaStringCrLf);
@@ -1255,7 +1315,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
 #ifdef FAST_CGI_SUPP
                 if (m_pFastCgiRequest)
                 {
-                    FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
+                    SendFCgiHeaderEx(txt); //FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
                 }
                 else
 #endif
@@ -1387,7 +1447,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
 #ifdef FAST_CGI_SUPP
             if (m_pFastCgiRequest)
             {
-                FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
+                SendFCgiHeaderEx(txt); //FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
                 FCGX_PutStr(Data, Data.Length(), m_pFastCgiRequest->out);
             }
             else
@@ -1459,7 +1519,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
 #ifdef FAST_CGI_SUPP
         if (m_pFastCgiRequest)
         {
-            FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
+            SendFCgiHeaderEx(txt); //FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
         }
         else
 #endif
@@ -1614,7 +1674,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
 #ifdef FAST_CGI_SUPP
             if (m_pFastCgiRequest)
             {
-                FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
+                SendFCgiHeaderEx(txt); //FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
             }
             else
 #endif
@@ -1689,7 +1749,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
 #ifdef FAST_CGI_SUPP
             if (m_pFastCgiRequest)
             {
-                FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
+                SendFCgiHeaderEx(txt); //FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
             }
             else
 #endif
@@ -1812,7 +1872,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
 #ifdef FAST_CGI_SUPP
     if (m_pFastCgiRequest)
     {
-        FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
+        SendFCgiHeaderEx(txt); //FCGX_PutStr(txt, txt.Length(), m_pFastCgiRequest->out);
         FCGX_PutStr(Data, Data.Length(), m_pFastCgiRequest->out);
     }
     else

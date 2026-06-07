@@ -77,6 +77,7 @@ public:
 protected:
 #ifdef FAST_CGI_SUPP
     FCGX_Request * m_pFastCgiRequest;
+    CMaaUnivHash<CMaaString, CMaaString> *m_phCgiParamOverride = nullptr;
 #endif
     int m_Error;
     bool m_SubstOut;
@@ -146,7 +147,11 @@ protected:
 #else
     void *
 #endif
-     pFastCgiRequest = nullptr, const CMaaString &ProgressFn = gsCMaaStringZ, CMaaString ProgressFmt = CMaaStringZ);
+     pFastCgiRequest = nullptr, /*CMaaUnivHash<CMaaString, CMaaString> *phCgiParamOverride,*/ const CMaaString &ProgressFn = gsCMaaStringZ, CMaaString ProgressFmt = CMaaStringZ);
+
+#ifdef FAST_CGI_SUPP
+    int SendFCgiHeaderEx(CMaaString txt);
+#endif
 
 public:
     CMaaFile m_fProgress;
@@ -157,7 +162,9 @@ public:
 #else
     void *
 #endif
-         pFastCgiRequest = nullptr, const CMaaString &ProgressFn = gsCMaaStringZ, const CMaaString &ProgressFmt = gsCMaaStringZ);
+         pFastCgiRequest = nullptr,
+     CMaaUnivHash<CMaaString, CMaaString> *phCgiParamOverride = nullptr,
+     const CMaaString &ProgressFn = gsCMaaStringZ, const CMaaString &ProgressFmt = gsCMaaStringZ);
     ~CCGIHelper();
     int GetErrorCode() const noexcept { return m_Error; }
     void ReinitializeGetQS();
