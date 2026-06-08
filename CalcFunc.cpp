@@ -484,7 +484,7 @@ int CArithmeticExpression::GetLexem(CMaaString expr, int &index, int &begin, int
     int FoundOperator = -1;
     for (int opn = 1; /*szOperators[opn].Length()*/ opn < (int)szOperators.MaxIndex() - 2; opn++)
     {
-        if  (szOperators[opn].IsNotEmpty() && pos + szOperators[opn].Length() <= end && expr.RefMid(pos, szOperators[opn].Length()) == szOperators[opn] && (FoundOperator < 0 || szOperators[opn].Length() > szOperators[FoundOperator].Length()))
+        if  (szOperators[opn].IsNotEmpty() && pos + szOperators[opn].Length() <= end && expr.IsMid(szOperators[opn], pos) && (FoundOperator < 0 || szOperators[opn].Length() > szOperators[FoundOperator].Length()))
         {
             FoundOperator = opn;
         }

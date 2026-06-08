@@ -3970,6 +3970,14 @@ public:
     {
         return m_StringLength;
     }
+    constexpr bool IsEmpty() const noexcept
+    {
+        return !m_StringLength;
+    }
+    constexpr bool IsNotEmpty() const noexcept
+    {
+        return m_StringLength;
+    }
     constexpr bool IsValid() const noexcept
     {
         return bCountMode || m_bIsValid;
