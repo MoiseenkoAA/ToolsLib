@@ -1159,7 +1159,7 @@ public:
         const CMaaString& GetTypeNameStr(int Align = -2) const noexcept; // -1 - left, -2 - file/dir type len based, 0 - name with out of spaces, 1 - right, 2 - file/dir type len based
         static int GetMaxTypeNameLength(int FileOrDirOnly = 1) noexcept;
         CMaaString m_FileName; // Dir + szFILESYSTEM_SLASH + Fn
-        CMaaString m_Dir, m_Fn; // dir and filenameonly, both 0-terminating
+        CMaaString m_Dir, m_Fn; // dir with out if ending slash, optimized NZT RefLeft CMaaString; fn is filenameonly, 0-terminating
         int m_Type;
         _qword m_Size;
         time_t m_mTime;
