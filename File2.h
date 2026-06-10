@@ -1189,9 +1189,9 @@ public:
         */
 
         const CMaaString& GetFileName() const noexcept { return m_Fn; }
-        const CMaaString& GetDirName() const noexcept { return m_Dir; } // with out if ending slash
-        const CMaaString& GetDirName0() const noexcept { return m_Dir; } // with out if ending slash
-        const CMaaString& GetDirName2() const noexcept { return m_Dir; } // with out if ending slash
+        const CMaaString& GetDirName() const noexcept { return m_Dir; } // with out if ending slash, optimized NZT RefLeft CMaaString
+        //const CMaaString& GetDirName0() const noexcept { return m_Dir; } // with out if ending slash
+        //const CMaaString& GetDirName2() const noexcept { return m_Dir; } // with out if ending slash
     };
 
     enum eFlags

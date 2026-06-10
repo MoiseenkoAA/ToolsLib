@@ -7092,7 +7092,7 @@ bool CMaaFindFile2::InternalGet(sFind& f) noexcept(noexcept_new)
     else
     {
         f.m_Fn = f.m_FileName.RefMid(n + 1);
-        f.m_Dir = f.m_FileName.Left(n);
+        f.m_Dir = f.m_FileName.RefLeft(n); // optimized NZT RefLeft CMaaString
     }
     f.m_Size = m_entry->fts_statp ? m_entry->fts_statp->st_size : 0;
     f.m_mTime = m_entry->fts_statp ? m_entry->fts_statp->st_mtime : 0;
