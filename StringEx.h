@@ -1663,6 +1663,7 @@ public:
     {
         if (p != sp_NullImp)
         {
+            INC_TOOLSLIB_STAT_STRING_IMP_REFS(true);
             p->AddRef();
         }
     }

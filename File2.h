@@ -1148,17 +1148,18 @@ public:
     {
         enum
         {
-            eDot    = 0x01,
+            eDot = 0x01,
             eDotDot = 0x02,
-            eDir    = 0x03,
-            eFile   = 0x04,
-            eSl     = 0x05,
+            eDir = 0x03,
+            eFile = 0x04,
+            eSl = 0x05,
             eUnknown = 0xff
         };
         const char* GetTypeName(int Align = -2) const noexcept; // -1 - left, -2 - file/dir type len based, 0 - name with out of spaces, 1 - right, 2 - file/dir type len based
         const CMaaString& GetTypeNameStr(int Align = -2) const noexcept; // -1 - left, -2 - file/dir type len based, 0 - name with out of spaces, 1 - right, 2 - file/dir type len based
         static int GetMaxTypeNameLength(int FileOrDirOnly = 1) noexcept;
-        CMaaString m_FileName;
+        CMaaString m_FileName; // Dir + szFILESYSTEM_SLASH + Fn
+        CMaaString m_Dir, m_Fn; // dir and filenameonly, both 0-terminating
         int m_Type;
         _qword m_Size;
         time_t m_mTime;
@@ -1175,6 +1176,7 @@ public:
 #endif
         _qword m_mft;
 
+        /*
         CMaaString GetFileName() const noexcept; // RefMid CMaaString
 
         CMaaString GetDirName() const // with out if ending slash
@@ -1184,6 +1186,12 @@ public:
             ;
         CMaaString GetDirName0() const noexcept(noexcept_new); // with out if ending slash, 0-terminating CMaaString
         CMaaString GetDirName2() const noexcept; // with out if ending slash, optimized NZT RefLeft CMaaString
+        */
+
+        const CMaaString& GetFileName() const noexcept { return m_Fn; }
+        const CMaaString& GetDirName() const noexcept { return m_Dir; } // with out if ending slash
+        const CMaaString& GetDirName0() const noexcept { return m_Dir; } // with out if ending slash
+        const CMaaString& GetDirName2() const noexcept { return m_Dir; } // with out if ending slash
     };
 
     enum eFlags
@@ -1205,6 +1213,7 @@ public:
     };
 protected:
     CMaaString m_Dir, m_Mask;
+    CMaaPtr_<unsigned char, 1> m_pm;
     int m_iRecursiveDepth;
     int m_Flags = eFt;
     int m_FileTypeMask = -1;
