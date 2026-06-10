@@ -85,11 +85,11 @@ int gToolsLib_FileFlags = TOOLSLIB_SKIP_LN_PROC;
 
 constexpr_ CMaaFile::CE::CE() noexcept
 :
-    snStdin{ "stdin" }, snStdout{ "stdout" }, snStderr{ "stderr" }, snNul{ "nul" }, snNull{ "null" }, snDevNull{ "/dev/null" },
+    snStdin{ "stdin" }, snStdout{ "stdout" }, snStderr{ "stderr" }, snNul{ "nul" }, snNull{ "null" }, snDevNull{ "/dev/null" }, snSlash(szFILESYSTEM_SLASH), snOtherSlash(szOTHER_FILESYSTEM_SLASH),
     snPfxUtf8{ "\xEF\xBB\xBF" }, snUnicode{ "\xFF\xFE" }, snUnicodeBigEndian{ "\xFE\xFF" },
 
     sStdin{ &snStdin }, sStdout{ &snStdout }, sStderr{ &snStderr },
-    sNul{ &snNul }, sNull{ &snNull }, sDevNull{ &snDevNull },
+    sNul{ &snNul }, sNull{ &snNull }, sDevNull{ &snDevNull }, sSlash{ &snSlash }, sOtherSlash{ &snOtherSlash },
 
     sPfx
     {
@@ -7087,7 +7087,7 @@ bool CMaaFindFile2::InternalGet(sFind& f) noexcept(noexcept_new)
     else if (!n)
     {
         f.m_Fn = f.m_FileName.RefMid(1);
-        f.m_Dir = szFILESYSTEM_SLASH;
+        f.m_Dir = CMaaFileSystemSlash; // szFILESYSTEM_SLASH;
     }
     else
     {

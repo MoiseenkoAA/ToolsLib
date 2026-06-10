@@ -144,6 +144,8 @@ _qword GetCurrentTime_us(time_t * pt = nullptr, int * pusec = nullptr) noexcept;
 #define CMaaFileNul ((const CMaaString&)CMaaFile::C().sNul)
 #define CMaaFileNull ((const CMaaString&)CMaaFile::C().sNull)
 #define CMaaFileDevNull ((const CMaaString&)CMaaFile::C().sDevNull)
+#define CMaaFileSystemSlash ((const CMaaString&)CMaaFile::C().sSlash)
+#define CMaaFileOtherSystemSlash ((const CMaaString&)CMaaFile::C().sOtherSlash)
 //------------------------------------------------------------------------------
 // class CMaaFile
 //------------------------------------------------------------------------------
@@ -194,11 +196,11 @@ public:
 
     struct CE
     {
-        ceCMaaStringImp snStdin, snStdout, snStderr, snNul, snNull, snDevNull;
+        ceCMaaStringImp snStdin, snStdout, snStderr, snNul, snNull, snDevNull, snSlash, snOtherSlash;
         ceCMaaStringImp snPfxUtf8, snUnicode, snUnicodeBigEndian;
 
         CMaaString::CE::S sStdin, sStdout, sStderr,
-            sNul, sNull, sDevNull;
+            sNul, sNull, sDevNull, sSlash, sOtherSlash;
         CMaaString::CE::S sPfx[4];
 
         constexpr_ CE() noexcept;
