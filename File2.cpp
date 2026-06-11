@@ -6749,6 +6749,10 @@ bool CMaaFile::CopyDirRecursively(CMaaString SrcPath, CMaaString DstPath, int De
 //---------------------------------------------------------------------------
 CMaaFile * g_log = nullptr;
 //---------------------------------------------------------------------------
+#ifdef _WIN32
+DEF_ALLOCATOR(CMaaFindFile2)
+#endif
+//---------------------------------------------------------------------------
 CMaaFindFile2::CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDepth) noexcept(noexcept_new)
 {
     m_Dir = Dir;

@@ -1252,6 +1252,9 @@ protected:
 #else
     bool InternalGet(sFind& f) noexcept(noexcept_new);
 #endif
+#ifdef _WIN32
+    ADD_ALLOCATOR(CMaaFindFile2)
+#endif
 };
 
 #ifdef __unix__
