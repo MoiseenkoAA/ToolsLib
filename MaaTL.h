@@ -195,6 +195,7 @@ extern bool gbCMaaPtrThrow;
 #define std_is_nothrow_move_constructible0(T) std::is_nothrow_move_constructible<T>::value
 #define std_is_nothrow_move_constructible1(T, a) std::is_nothrow_move_constructible<T>::value
 #define std_is_nothrow_move_assignable(T, eq) std::is_nothrow_move_assignable<T>::value
+#define std_is_nothrow_copy_assignable(T, eq) std::is_nothrow_copy_assignable<T>::value
 
 #else
 
@@ -210,6 +211,7 @@ extern bool gbCMaaPtrThrow;
 #define std_is_nothrow_move_constructible0(T) noexcept(T())
 #define std_is_nothrow_move_constructible1(T, a) noexcept(T(a))
 #define std_is_nothrow_move_assignable(T, eq) noexcept(eq)
+#define std_is_nothrow_copy_assignable(T, eq) noexcept(eq)
 
 #endif
 
@@ -226,11 +228,16 @@ template<class T> int CMaaXSign(T x) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
 //---------------------------------------------------------------------------
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value)
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept( noexcept(T(a)) && noexcept(a=b) )
-template < class T > void CMaaSwap(T& a, T& b) noexcept(std_is_nothrow_move_constructible1(T, a) && std_is_nothrow_move_assignable(T, a = b))
+template < class T > void CMaaSwap(T& a, T& b) noexcept(std_is_nothrow_move_constructible1(T, a) && std_is_nothrow_copy_assignable(T, a = b))
 {
-    T tmp ( a );
-    a = b;
-    b = tmp;
+    T tmp(a);
+#ifdef _MaaRF_INTERNAL_BUILD
+    a = std_move(b);
+    b = std_move(tmp);
+#else
+    a = std::move(b);
+    b = std::move(tmp);
+#endif
 }
 // noexcept( noexcept(CMaaSwap(a, a)) )
 //---------------------------------------------------------------------------
@@ -1430,7 +1437,7 @@ public:
         if (CheckExpand(m + 1))
         {
             // m_MaxIndex === m + 1;
-            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
+            if constexpr (std_is_nothrow_copy_assignable(T, m_Ptr[m] = x))
             {
                 m_Ptr[m] = x;
             }
@@ -1451,7 +1458,7 @@ public:
         if (CheckExpand(m + 1))
         {
             // m_MaxIndex === m + 1;
-            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
+            if constexpr (std_is_nothrow_copy_assignable(T, m_Ptr[m] = x))
             {
                 m_Ptr[m] = x;
             }
@@ -1487,7 +1494,7 @@ public:
         if (CheckExpand(m + 1))
         {
             // m_MaxIndex === m + 1;
-            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
+            if constexpr (std_is_nothrow_copy_assignable(T, m_Ptr[m] = x))
             {
                 m_Ptr[m] = x;
             }
@@ -1902,7 +1909,7 @@ public:
     {
     }
 
-    CMaaPtr_(const CMaaPtr_<T, xThrow>& x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_move_assignable(T, m_Ptr[0] = m_Ptr[0]))
+    CMaaPtr_(const CMaaPtr_<T, xThrow>& x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_copy_assignable(T, m_Ptr[0] = m_Ptr[0]))
     :   m_Ptr(nullptr),
         m_MaxIndex(0),
         m_TotalItems(0)
@@ -1916,17 +1923,20 @@ public:
                 if (tmp.IsValid())
                 {
                     //memcpy(tmp, x, m * sizeof(T));
+                    /*
                     for (int3264 i = 0; i < m; i++)
                     {
                         tmp.m_Ptr[i] = x.m_Ptr[i];
                     }
+                    */
+                    Copy(tmp.m_Ptr, x.m_Ptr, m);
                 }
                 tmp.Swap(*this);
             }
         }
     }
 
-    void operator += (const CMaaPtr_<T, xThrow> &x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_move_assignable(T, m_Ptr[0] = m_Ptr[0]))
+    void operator += (const CMaaPtr_<T, xThrow> &x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_copy_assignable(T, m_Ptr[0] = m_Ptr[0]))
     {
         if (x.IsValid())
         {
@@ -1934,24 +1944,72 @@ public:
             if (tmp.IsValid())
             {
                 //          memcpy(tmp, *this, MaxIndex() * sizeof(T));
+                /*
                 int3264 i;
                 const int3264 m = m_MaxIndex;
                 for (i = 0; i < m; i++)
                 {
                     tmp.m_Ptr[i] = m_Ptr[i];
                 }
+                */
+                Copy(tmp.m_Ptr, m_Ptr, m_MaxIndex);
                 //          memcpy(MaxIndex + tmp, x, x.MaxIndex() * sizeof(T));
+                /*
                 const int3264 m2 = x.m_MaxIndex;
                 for (i = 0; i < m2; i++)
                 {
                     tmp.m_Ptr[i + m] = x.m_Ptr[i];
                 }
+                */
+                Copy(tmp.m_Ptr + m_MaxIndex, x.m_Ptr, x.m_MaxIndex);
             }
             tmp.Swap(*this);
         }
     }
 
-    void operator += (const T& x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && noexcept(CheckExpand(m_MaxIndex + 1)) && std_is_nothrow_move_assignable(T, m_Ptr[0] = x))
+    void operator += (const T& x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && noexcept(CheckExpand(m_MaxIndex + 1)) && std_is_nothrow_copy_assignable(T, m_Ptr[0] = x))
+    {
+        const int3264 m = m_MaxIndex;
+        if (CheckExpand(m + 1))
+        {
+            // m_MaxIndex === m + 1;
+            if constexpr (std_is_nothrow_copy_assignable(T, m_Ptr[m] = x))
+            {
+                m_Ptr[m] = x;
+            }
+            else
+            {
+                m_MaxIndex = m;
+                m_Ptr[m] = x; // throwable
+                m_MaxIndex = m + 1;
+            }
+            //return true;
+        }
+        //return false;
+    }
+
+    void operator += (T& x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && noexcept(CheckExpand(m_MaxIndex + 1)) && std_is_nothrow_copy_assignable(T, m_Ptr[0] = x))
+    {
+        const int3264 m = m_MaxIndex;
+        if (CheckExpand(m + 1))
+        {
+            // m_MaxIndex === m + 1;
+            if constexpr (std_is_nothrow_copy_assignable(T, m_Ptr[m] = x))
+            {
+                m_Ptr[m] = x;
+            }
+            else
+            {
+                m_MaxIndex = m;
+                m_Ptr[m] = x; // throwable
+                m_MaxIndex = m + 1;
+            }
+            //return true;
+        }
+        //return false;
+    }
+
+    void operator += (T&& x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && noexcept(CheckExpand(m_MaxIndex + 1)) && std_is_nothrow_move_assignable(T, m_Ptr[0] = x))
     {
         const int3264 m = m_MaxIndex;
         if (CheckExpand(m + 1))
@@ -1972,49 +2030,37 @@ public:
         //return false;
     }
 
-    void operator += (T& x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && noexcept(CheckExpand(m_MaxIndex + 1)) && std_is_nothrow_move_assignable(T, m_Ptr[0] = x))
-    {
-        const int3264 m = m_MaxIndex;
-        if (CheckExpand(m + 1))
-        {
-            // m_MaxIndex === m + 1;
-            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
-            {
-                m_Ptr[m] = x;
-            }
-            else
-            {
-                m_MaxIndex = m;
-                m_Ptr[m] = x; // throwable
-                m_MaxIndex = m + 1;
-            }
-            //return true;
-        }
-        //return false;
-    }
-
-    CMaaPtr_<T, xThrow>& operator = (const CMaaPtr_<T, xThrow>& That) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_move_assignable(T, m_Ptr[0] = m_Ptr[0]))
+    CMaaPtr_<T, xThrow>& operator = (const CMaaPtr_<T, xThrow>& That) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_copy_assignable(T, m_Ptr[0] = m_Ptr[0]))
     {
         const int3264 m = That.m_MaxIndex;
         CMaaPtr_<T, xThrow> tmp(m);
         if (tmp.IsValid())
         {
+            /*
             for (int3264 i = 0; i < m; i++)
             {
                 tmp.m_Ptr[i] = That.m_Ptr[i];
             }
+            */
+            Copy(tmp.m_Ptr, That.m_Ptr, m);
         }
         tmp.Swap(*this);
         return *this;
     }
 
-    void append(T x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && noexcept(CheckExpand(m_MaxIndex + 1)) && std_is_nothrow_move_assignable(T, m_Ptr[0] = x))
+    CMaaPtr_<T, xThrow>& operator = (const CMaaPtr_<T, xThrow>&& That) noexcept
+    {
+        Swap(That);
+        return *this;
+    }
+
+    void append(T x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && noexcept(CheckExpand(m_MaxIndex + 1)) && std_is_nothrow_copy_assignable(T, m_Ptr[0] = x))
     {
         const int3264 m = m_MaxIndex;
         if (CheckExpand(m + 1))
         {
             // m_MaxIndex === m + 1;
-            if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[m] = x))
+            if constexpr (std_is_nothrow_copy_assignable(T, m_Ptr[m] = x))
             {
                 m_Ptr[m] = x;
             }
@@ -2050,7 +2096,7 @@ public:
         return true;
     }
 
-    /*virtual*/ bool CheckExpand(size_t MaxN) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_move_assignable(T, m_Ptr[0] = m_Ptr[0]))
+    /*virtual*/ bool CheckExpand(size_t MaxN) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && (std_is_nothrow_move_assignable(T, m_Ptr[0] = m_Ptr[0]) || std_is_nothrow_copy_assignable(T, m_Ptr[0] = m_Ptr[0])))
     {
         if (IsValid() && MaxN <= (size_t)m_TotalItems)
         {
@@ -2066,14 +2112,56 @@ public:
         {
             return false;
         }
+        if constexpr (std_is_nothrow_move_assignable(T, m_Ptr[0] = m_Ptr[0]))
+        {
+            Move(m2.m_Ptr, m_Ptr, m_MaxIndex);
+        }
+        else
+        {
+            Copy(m2.m_Ptr, m_Ptr, m_MaxIndex);
+        }
+        /*
         const int3264 m = m_MaxIndex;
         for (int3264 i = 0; i < m; i++)
         {
             m2.m_Ptr[i] = m_Ptr[i];
         }
+        */
         m2.m_MaxIndex = (int3264)MaxN;
         Swap(m2);
         return true;
+    }
+
+    static void Copy(T* Dst, const T* Src, int3264 Count) noexcept(std_is_nothrow_copy_assignable(T, Dst[0] = Src[0]))
+    {
+        for (int3264 i = 0; i < Count; i++)
+        {
+            Dst[i] = Src[i];
+        }
+    }
+
+    static void Move(T* Dst, T* Src, int3264 Count) noexcept(std_is_nothrow_move_assignable(T, Dst[0] = (T&&)(Src[0])))
+    {
+        for (int3264 i = 0; i < Count; i++)
+        {
+#ifdef _MaaRF_INTERNAL_BUILD
+            Dst[i] = std_move(Src[i]);
+#else
+            Dst[i] = std::move(Src[i]);
+#endif
+        }
+    }
+
+    static void Move(T* Dst, const T* Src, int3264 Count) noexcept(std_is_nothrow_move_assignable(T, Dst[0] = Src[0]))
+    {
+        for (int3264 i = 0; i < Count; i++)
+        {
+#ifdef _MaaRF_INTERNAL_BUILD
+            Dst[i] = std_move(Src[i]); // just copy op =
+#else
+            Dst[i] = std::move(Src[i]); // just copy op =
+#endif
+        }
     }
 
     virtual constexpr ~CMaaPtr_() noexcept
@@ -2182,18 +2270,28 @@ public:
             }
         }
     }
-    /*virtual*/ bool Resize(int3264 n) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_move_assignable(T, m_Ptr[0] = m_Ptr[0]))
+    /*virtual*/ bool Resize(int3264 n) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && (std_is_nothrow_move_assignable(T, m_Ptr[0] = m_Ptr[0]) || std_is_nothrow_copy_assignable(T, m_Ptr[0] = m_Ptr[0])))
     {
         CMaaPtr_ < T, xThrow > tmp(n);
         if (!tmp.IsValid())
         {
             return false;
         }
+        /*
         const int3264 nn = (int)m_MaxIndex < n ? (int)m_MaxIndex : n;
         for (int3264 i = 0; i < nn; i++)
         {
             //tmp[i] = (*this)[i];
             tmp.m_Ptr[i] = m_Ptr[i];
+        }
+        */
+        if constexpr (std_is_nothrow_move_assignable(T, tmp.m_Ptr[0] = m_Ptr[0]))
+        {
+            Move(tmp.m_Ptr, m_Ptr, (int)m_MaxIndex < n ? (int)m_MaxIndex : n);
+        }
+        else
+        {
+            Copy(tmp.m_Ptr, m_Ptr, (int)m_MaxIndex < n ? (int)m_MaxIndex : n);
         }
         Swap(tmp);
         return true;
@@ -2245,11 +2343,12 @@ public:
     //:   CMaaPtr_<T, xThrow>()
     {
     }
-    CMaaPtrAE_(CMaaPtrAE_<T, xThrow>& That) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_move_assignable(T, this->m_Ptr[0] = this->m_Ptr[0]))
-    :   CMaaPtr_<T, xThrow>(That.m_MaxIndex)
+    CMaaPtrAE_(CMaaPtrAE_<T, xThrow>& That) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_copy_assignable(T, this->m_Ptr[0] = this->m_Ptr[0]))
+        : CMaaPtr_<T, xThrow>(That.m_MaxIndex)
     {
         if (CMaaPtr_<T, xThrow>::IsValid() && That.IsValid())
         {
+            /*
             T* pThis = this->m_Ptr;
             T* pThat = That.m_Ptr;
             const int3264 m = (int3264)CMaaPtr_ < T, xThrow >::MaxIndex();
@@ -2257,9 +2356,15 @@ public:
             {
                 pThis[i] = pThat[i];
             }
+            */
+            Copy(this->m_Ptr, That.m_Ptr, (int3264)CMaaPtr_ < T, xThrow >::MaxIndex());
         }
     }
-    T& operator [] (int3264 Index) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_move_assignable(T, this->m_Ptr[0] = this->m_Ptr[0]) && noexcept(CMaaPtr_<T, xThrow>::CheckExpand(Index + 1)))
+    CMaaPtrAE_(CMaaPtrAE_<T, xThrow>&& That) noexcept
+    {
+        CMaaPtr_<T, xThrow>::Swap(That);
+    }
+    T& operator [] (int3264 Index) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_copy_assignable(T, this->m_Ptr[0] = this->m_Ptr[0]) && noexcept(CMaaPtr_<T, xThrow>::CheckExpand(Index + 1)))
     {
         if (Index < 0 || Index + 1 < 0 || !CMaaPtr_<T, xThrow>::CheckExpand(Index + 1))
         {
