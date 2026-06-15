@@ -1141,9 +1141,6 @@ CMaaFile * ToolsLib_OpenLog(bool bForcedInit = false);
 //------------------------------------------------------------------------------
 
 class CMaaFindFile2
-#ifdef _WIN32
-    : public CMaaSLink
-#endif
 {
 public:
     struct sFind : public CMaaDLink // just for user lists
@@ -1222,8 +1219,6 @@ protected:
     public:
         CMaaString m_Dir, m_Mask;
         int m_iRecursiveDepth;
-        int m_Flags = eFt;
-        int m_FileTypeMask = -1;
 #ifdef _WIN32
         bool m_b1st = true, m_Padding[3];
         intptr_t m_h;
@@ -1244,20 +1239,18 @@ protected:
         cInteral(const CMaaString& Dir, CMaaString Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
         cInteral(const CMaaString& DirWithMask, int iRecursiveDepth = 1) noexcept(noexcept_new);
         ~cInteral();
-#ifdef _WIN32
-        bool Get(sFind& f, CMaaFindFile2& Main) noexcept(noexcept_new);
-#else
-        bool Get(sFind& f) noexcept(noexcept_new);
-#endif
+        bool Get(sFind& f, CMaaFindFile2& ff) noexcept(noexcept_new);
 #ifdef _WIN32
         ADD_ALLOCATOR(CMaaFindFile2::cInteral)
 #endif
     };
-    cInteral m_Internal;
+    cInteral * m_pImp;
     CMaaPtr_<unsigned char, 1> m_pm;
 #ifdef _WIN32
     CMaaSListAD<cInteral> m_Stack;
 #endif
+    int m_Flags = eFt;
+    int m_FileTypeMask = -1;
 
 public:
     CMaaFindFile2(const CMaaString& Dir, const CMaaString& Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
