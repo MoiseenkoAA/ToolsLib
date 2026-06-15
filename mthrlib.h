@@ -1143,7 +1143,7 @@ inline CMaaLiteMutex* __GLock__AllocatorBasicLock(bool bInit = false) noexcept /
 
 // allocator multiple lock, need to call __GLock__LockFn((T *)nullptr) for each types T at startup or create static objects with looks needed to avoid race conditions and faults in multithread environment
 #ifdef TOOLSLIB_KEEP_GLOBAL_MUTEXES_IN_MEMORY
-template<class T> CMaaLiteMutex* __GLock__LockFn(T* obj, bool bInit = false) noexcept
+template<class T> CMaaLiteMutex* __GLock__LockFn(T*, bool bInit = false) noexcept
 {
     static CMaaLiteMutex* gptr = nullptr;
     if (bInit && !gptr)
@@ -1155,7 +1155,7 @@ template<class T> CMaaLiteMutex* __GLock__LockFn(T* obj, bool bInit = false) noe
     return gptr;
 }
 #else
-template<class T> CMaaLiteMutex* __GLock__LockFn(T* obj, bool bInit = false) noexcept
+template<class T> CMaaLiteMutex* __GLock__LockFn(T*, bool bInit = false) noexcept
 {
     if (bInit)
     {

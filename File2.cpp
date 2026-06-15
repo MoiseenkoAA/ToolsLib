@@ -6750,10 +6750,30 @@ bool CMaaFile::CopyDirRecursively(CMaaString SrcPath, CMaaString DstPath, int De
 CMaaFile * g_log = nullptr;
 //---------------------------------------------------------------------------
 #ifdef _WIN32
-DEF_ALLOCATOR(CMaaFindFile2)
+DEF_ALLOCATOR(CMaaFindFile2::cInteral)
 #endif
 //---------------------------------------------------------------------------
-CMaaFindFile2::CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDepth) noexcept(noexcept_new)
+CMaaFindFile2::CMaaFindFile2(const CMaaString& Dir, const CMaaString& Mask, int iRecursiveDepth) noexcept(noexcept_new)
+:   m_Internal(Dir, Mask, iRecursiveDepth)
+{
+#ifdef _WIN32
+    CMaaFindFile2::cInteral::GetAllocator().AddRef();
+#endif
+}
+CMaaFindFile2::CMaaFindFile2(const CMaaString& DirWithMask, int iRecursiveDepth) noexcept(noexcept_new)
+:   m_Internal(DirWithMask, iRecursiveDepth)
+{
+#ifdef _WIN32
+    CMaaFindFile2::cInteral::GetAllocator().AddRef();
+#endif
+}
+CMaaFindFile2::~CMaaFindFile2()
+{
+#ifdef _WIN32
+    CMaaFindFile2::cInteral::GetAllocator().DelRef();
+#endif
+}
+CMaaFindFile2::cInteral::cInteral(const CMaaString& Dir, CMaaString Mask, int iRecursiveDepth) noexcept(noexcept_new)
 {
     m_Dir = Dir;
     if  (iRecursiveDepth > 1 || iRecursiveDepth < 0)
@@ -6812,7 +6832,7 @@ CMaaFindFile2::CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDept
 #endif
 }
 //---------------------------------------------------------------------------
-CMaaFindFile2::CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth) noexcept(noexcept_new)
+CMaaFindFile2::cInteral::cInteral(const CMaaString& DirWithMask, int iRecursiveDepth) noexcept(noexcept_new)
 {
     m_iRecursiveDepth = iRecursiveDepth;
     CMaaString Dir = CMaaFile::MkCompatible(DirWithMask);
@@ -6860,7 +6880,7 @@ CMaaFindFile2::CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth) noexce
 #endif
 }
 //---------------------------------------------------------------------------
-CMaaFindFile2::~CMaaFindFile2()
+CMaaFindFile2::cInteral::~cInteral()
 {
 #ifdef _WIN32
     if (m_h != -1)
@@ -6879,10 +6899,10 @@ CMaaFindFile2::~CMaaFindFile2()
 bool CMaaFindFile2::IsDirOpened() const noexcept
 {
 #ifdef _WIN32
-    return m_h != -1;
+    return m_Internal.m_h != -1;
 #endif
 #ifdef __unix__
-    return m_fts;
+    return m_Internal.m_fts;
 #endif
 }
 //---------------------------------------------------------------------------
@@ -6890,30 +6910,30 @@ int CMaaFindFile2::SetOptFlags(int Flags) noexcept
 {
     if  (Flags == -1)
     {
-        return m_Flags;
+        return m_Internal.m_Flags;
     }
 #ifdef __unix__
     if  (Flags & eGetKeepDev)
     {
-        m_iGetKeepDev = 1;
+        m_Internal.m_iGetKeepDev = 1;
     }
 #endif
-    return (m_Flags = Flags);
+    return (m_Internal.m_Flags = Flags);
 }
 //---------------------------------------------------------------------------
 int CMaaFindFile2::SetFileTypeMasks(int Masks) noexcept
 {
     if  (Masks == -1)
     {
-        return m_FileTypeMask;
+        return m_Internal.m_FileTypeMask;
     }
-    return m_FileTypeMask = Masks;
+    return m_Internal.m_FileTypeMask = Masks;
 }
 //---------------------------------------------------------------------------
 #ifdef _WIN32
-bool CMaaFindFile2::InternalGet(sFind& f, CMaaFindFile2& Main) noexcept(noexcept_new)
+bool CMaaFindFile2::cInteral::Get(sFind& f, CMaaFindFile2& Main) noexcept(noexcept_new)
 #else
-bool CMaaFindFile2::InternalGet(sFind& f) noexcept(noexcept_new)
+bool CMaaFindFile2::cInteral::Get(sFind& f) noexcept(noexcept_new)
 #endif
 {
 #ifdef _WIN32
@@ -6966,7 +6986,7 @@ bool CMaaFindFile2::InternalGet(sFind& f) noexcept(noexcept_new)
     f.m_px = &m_ff;
     if  (f.m_Type == CMaaFindFile2::sFind::eDir && (m_iRecursiveDepth > 1 || m_iRecursiveDepth < 0))
     {
-        CMaaFindFile2 * pNext = TL_NEW CMaaFindFile2(f.m_FileName, m_Mask, m_iRecursiveDepth - 1);
+        cInteral * pNext = TL_NEW cInteral(f.m_FileName, m_Mask, m_iRecursiveDepth - 1);
         if (pNext)
         {
             Main.m_Stack.AddAtFront(pNext);
@@ -7132,11 +7152,11 @@ bool CMaaFindFile2::Get(sFind &f) noexcept(noexcept_new)
     while(1)
     {
 #ifdef _WIN32
-        CMaaFindFile2* p_curr = m_Stack.LookAtFront();
-        p_curr = p_curr ? p_curr : this;
-        if  (!p_curr->InternalGet(f, *this))
+        cInteral * p_curr = m_Stack.LookAtFront();
+        p_curr = p_curr ? p_curr : &m_Internal;
+        if  (!p_curr->Get(f, *this))
         {
-            if (p_curr != this)
+            if (p_curr != &m_Internal)
             {
                 delete m_Stack.GetFromFront();
                 continue;
@@ -7144,7 +7164,7 @@ bool CMaaFindFile2::Get(sFind &f) noexcept(noexcept_new)
             return false;
         }
 #else
-        if (!InternalGet(f))
+        if (!m_Internal.Get(f))
         {
             return false;
         }
@@ -7153,12 +7173,12 @@ bool CMaaFindFile2::Get(sFind &f) noexcept(noexcept_new)
         int Type = f.m_Type;
         Type = Type > eSl ? 31 : Type;
         //g_log && g_log->fprintf("m_FileTypeMask = %08x, Type=%d\n", (int)m_FileTypeMask, Type);
-        if  (!(((int)m_FileTypeMask) & (1 << Type)))
+        if  (!(((int)m_Internal.m_FileTypeMask) & (1 << Type)))
         {
             continue;
         }
         //g_log && g_log->fprintf("%s --- %s\n", (const char *)f.m_FileName, (const char *)m_Mask);
-        if  (f.m_FileName.IsMatchFileMask(m_Mask, 0, &m_pm))
+        if  (f.m_FileName.IsMatchFileMask(m_Internal.m_Mask, 0, &m_pm))
         {
             break;
         }

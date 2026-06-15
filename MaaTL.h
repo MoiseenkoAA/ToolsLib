@@ -2900,30 +2900,30 @@ template<class T> void CMaaAllocatorUnLock(T *) noexcept
 template <class T> class CMaaAllocatorStaticLocker
 {
 public:
-    static void CreateFn(T* obj) noexcept
+    static void CreateFn(T*) noexcept
     {
 #ifndef TOOLSLIB_SINGLE_THREAD
-        __GLock__LockFn(obj, true);
+        __GLock__LockFn(T_NULL(T*), true);
 #endif
     }
-    static void InitLockFn(T* obj) noexcept
+    static void InitLockFn(T*) noexcept
     {
 #ifndef TOOLSLIB_SINGLE_THREAD
-        __GLock__LockFn(obj, true)->Lock();
+        __GLock__LockFn(T_NULL(T*), true)->Lock();
 #endif
     }
-    static void LockFn(T * obj) noexcept
+    static void LockFn(T*) noexcept
     {
 #ifndef TOOLSLIB_SINGLE_THREAD
         // CMaaAllocatorLock<T>(obj); // version before 19.10.2021+
-        __GLock__LockFn(obj)->Lock();
+        __GLock__LockFn(T_NULL(T*))->Lock();
 #endif
     }
-    static void UnLockFn(T * obj) noexcept
+    static void UnLockFn(T*) noexcept
     {
 #ifndef TOOLSLIB_SINGLE_THREAD
         //CMaaAllocatorUnLock<T>(obj); // version before 19.10.2021+
-        __GLock__LockFn(obj)->UnLock();
+        __GLock__LockFn(T_NULL(T*))->UnLock();
 #endif
     }
 };

@@ -1214,47 +1214,59 @@ public:
         eSpecialMask = (1 << 31)
     };
 protected:
-    CMaaString m_Dir, m_Mask;
-    CMaaPtr_<unsigned char, 1> m_pm;
-    int m_iRecursiveDepth;
-    int m_Flags = eFt;
-    int m_FileTypeMask = -1;
+    class cInteral
 #ifdef _WIN32
-    bool m_b1st = true, m_Padding[3];
-    CMaaSListAD<CMaaFindFile2> m_Stack;
-    intptr_t m_h;
+        : public CMaaSLink
+#endif
+    {
+    public:
+        CMaaString m_Dir, m_Mask;
+        int m_iRecursiveDepth;
+        int m_Flags = eFt;
+        int m_FileTypeMask = -1;
+#ifdef _WIN32
+        bool m_b1st = true, m_Padding[3];
+        intptr_t m_h;
 #ifdef _UNICODE
-    struct _wfinddata64_t m_ff;
+        struct _wfinddata64_t m_ff;
 #else
-    struct __finddata64_t m_ff;
+        struct __finddata64_t m_ff;
 #endif
 #endif
 
 #ifdef __unix__
-    FTS * m_fts;
-    FTSENT * m_entry;
-    dev_t m_dev;
-    int m_iGetKeepDev;
-    CMaaUnivHash<ino_t, int> m_hDirInodes;
+        FTS* m_fts;
+        FTSENT* m_entry;
+        dev_t m_dev;
+        int m_iGetKeepDev;
+        CMaaUnivHash<ino_t, int> m_hDirInodes;
+#endif
+        cInteral(const CMaaString& Dir, CMaaString Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
+        cInteral(const CMaaString& DirWithMask, int iRecursiveDepth = 1) noexcept(noexcept_new);
+        ~cInteral();
+#ifdef _WIN32
+        bool Get(sFind& f, CMaaFindFile2& Main) noexcept(noexcept_new);
+#else
+        bool Get(sFind& f) noexcept(noexcept_new);
+#endif
+#ifdef _WIN32
+        ADD_ALLOCATOR(CMaaFindFile2::cInteral)
+#endif
+    };
+    cInteral m_Internal;
+    CMaaPtr_<unsigned char, 1> m_pm;
+#ifdef _WIN32
+    CMaaSListAD<cInteral> m_Stack;
 #endif
 
 public:
-    CMaaFindFile2(CMaaString Dir, CMaaString Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
-    CMaaFindFile2(CMaaString DirWithMask, int iRecursiveDepth = 1) noexcept(noexcept_new);
+    CMaaFindFile2(const CMaaString& Dir, const CMaaString& Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
+    CMaaFindFile2(const CMaaString& DirWithMask, int iRecursiveDepth = 1) noexcept(noexcept_new);
     ~CMaaFindFile2();
     bool IsDirOpened() const noexcept; // optional. is dir opened
     bool Get(sFind &f) noexcept(noexcept_new);
     int SetOptFlags(int Flags = eFt|eForcedFt) noexcept; // |eGetKeepDev
     int SetFileTypeMasks(int Masks = eDirMask|eFileMask) noexcept;
-protected:
-#ifdef _WIN32
-    bool InternalGet(sFind& f, CMaaFindFile2& Main) noexcept(noexcept_new);
-#else
-    bool InternalGet(sFind& f) noexcept(noexcept_new);
-#endif
-#ifdef _WIN32
-    ADD_ALLOCATOR(CMaaFindFile2)
-#endif
 };
 
 #ifdef __unix__
