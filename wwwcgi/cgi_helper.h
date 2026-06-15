@@ -77,8 +77,8 @@ public:
 protected:
 #ifdef FAST_CGI_SUPP
     FCGX_Request * m_pFastCgiRequest;
-    CMaaUnivHash<CMaaString, CMaaString> *m_phCgiParamOverride = nullptr;
 #endif
+    CMaaUnivHash<CMaaString, CMaaString>* m_phCgiParamOverride = nullptr;
     int m_Error;
     bool m_SubstOut;
     CCGIHelper * m_subst_imp;

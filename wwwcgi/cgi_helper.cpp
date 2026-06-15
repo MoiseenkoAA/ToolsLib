@@ -169,17 +169,12 @@ int CCGIHelper::SendIndependentReply(CMaaFile f, CMaaString Header = "");//, _qw
 
 char * CCGIHelper::getenv(const char * name)
 {
-#ifdef FAST_CGI_SUPP
     CMaaString *pval;
-    //if (m_phCgiParamOverride)
-    //{
-    //    printf("find(%s) of %d items\n", name, (int)m_phCgiParamOverride->GetItemCount());
-    //}
     if (m_phCgiParamOverride && (pval = (*m_phCgiParamOverride)[name]))
     {
-        //printf("found: %s\n", (const char *)*pval);
         return (char *)(const char *)*pval;
     }
+#ifdef FAST_CGI_SUPP
     if (m_pFastCgiRequest)
     {
         return FCGX_GetParam(name, m_pFastCgiRequest->envp);
@@ -200,8 +195,8 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
     m_Send500 = false;
 #ifdef FAST_CGI_SUPP
     m_pFastCgiRequest = pFastCgiRequest;
-    m_phCgiParamOverride = phCgiParamOverride;
 #endif
+    m_phCgiParamOverride = phCgiParamOverride;
     if (!pFastCgiRequest)
     {
         if  (!gAllow_PATH_INFO && getenv("PATH_INFO") != nullptr)
@@ -351,7 +346,11 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
         _qword cl = 0;
         mysscanf64(m_ContentLength, &cl);
         //m_cl = cl;
-        if  (cl > 0 && (MaxContentLength < 0 || cl <= MaxContentLength))
+        if (m_phCgiParamOverride && !m_phCgiParamOverride->Find(CMaaStringZ, &m_PostData))
+        {
+            m_QS = m_PostData;
+        }
+        else if (cl > 0 && (MaxContentLength < 0 || cl <= MaxContentLength))
         {
             if  (ProgressFmt.IsEmpty())
             {
@@ -414,7 +413,7 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
     g_temp += "\n";
     g_temp += m_ContentType;
     g_temp += "\n";
-*/
+    */
     //CMaaFile ll(s_SubstIn ? "/var/ram/maa/ssi.txt" : nullptr, CMaaFile::eAC_SrSw, eNoExcept);
     //ll.fprintf("m=%S, qs=%S, %s|%S\n", &m_Method, &m_QS, getenv("QUERY_STRING"), &s_Qs);
     //if (s_SubstIn)
