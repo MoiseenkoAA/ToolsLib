@@ -194,6 +194,7 @@ extern bool gbCMaaPtrThrow;
 
 #define std_is_nothrow_move_constructible0(T) std::is_nothrow_move_constructible<T>::value
 #define std_is_nothrow_move_constructible1(T, a) std::is_nothrow_move_constructible<T>::value
+#define std_is_nothrow_copy_constructible1(T, a) std::is_nothrow_copy_constructible<T>::value
 #define std_is_nothrow_move_assignable(T, eq) std::is_nothrow_move_assignable<T>::value
 #define std_is_nothrow_copy_assignable(T, eq) std::is_nothrow_copy_assignable<T>::value
 
@@ -210,6 +211,7 @@ extern bool gbCMaaPtrThrow;
 
 #define std_is_nothrow_move_constructible0(T) noexcept(T())
 #define std_is_nothrow_move_constructible1(T, a) noexcept(T(a))
+#define std_is_nothrow_copy_constructible1(T, a) noexcept(T(a))
 #define std_is_nothrow_move_assignable(T, eq) noexcept(eq)
 #define std_is_nothrow_copy_assignable(T, eq) noexcept(eq)
 
@@ -228,17 +230,32 @@ template<class T> int CMaaXSign(T x) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
 //---------------------------------------------------------------------------
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value)
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept( noexcept(T(a)) && noexcept(a=b) )
-template < class T > void CMaaSwap(T& a, T& b) noexcept(std_is_nothrow_move_constructible1(T, a) && std_is_nothrow_copy_assignable(T, a = b) && std_is_nothrow_move_assignable(T, a = b))
+#ifdef _MaaRF_INTERNAL_BUILD
+template < class T > void CMaaSwap(T& a, T& b) noexcept(std_is_nothrow_copy_constructible1(T, a) && std_is_nothrow_copy_assignable(T, a = b) && std_is_nothrow_move_assignable(T, a = std_move(b)))
 {
     T tmp(a);
-#ifdef _MaaRF_INTERNAL_BUILD
     a = b;
     b = std_move(tmp);
-#else
-    a = b;
-    b = std::move(tmp);
-#endif
 }
+#else
+template < class T > void CMaaSwap(T& a, T& b) noexcept(std::is_nothrow_swappable_v<T> || (std_is_nothrow_copy_constructible1(T, a) && std_is_nothrow_copy_assignable(T, a = b) && std_is_nothrow_move_assignable(T, a = std_move(b))))
+{
+    if constexpr (std::is_nothrow_swappable_v<T>)
+    {
+        std::swap(a, b);
+    }
+    /*else if constexpr (std::is_swappable_v<T>)
+    {
+        std::swap(a, b);
+    }*/
+    else
+    {
+        T tmp(a);
+        a = b;
+        b = std::move(tmp);
+    }
+}
+#endif
 // noexcept( noexcept(CMaaSwap(a, a)) )
 //---------------------------------------------------------------------------
 struct CMaaDLink

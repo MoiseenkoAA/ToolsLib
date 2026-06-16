@@ -19266,7 +19266,7 @@ CMaaString CgiGetValue(const CMaaString& Hdr, const CMaaString& Name, int* pos, 
 }
 #endif
 //-----------------------------------------------------------------------------------------------
-template <> void CMaaSwap<CMaaString>(CMaaString& a, CMaaString& b)  noexcept
+template <> void CMaaSwap<CMaaString>(CMaaString& a, CMaaString& b) noexcept
 {
     a.Swap(b);
 }

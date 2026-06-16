@@ -2270,6 +2270,10 @@ public:
     bool IsRightCi(const CMaaString& That, int_ cp = -1) const noexcept;
     bool IsMidCi(const CMaaString& That, int nFirst, int_ cp_ = -1) const noexcept;
     void Swap(CMaaString& That) noexcept { CMaaSwap(m_pImp, That.m_pImp); }
+    friend void swap(CMaaString& a, CMaaString& b) noexcept
+    {
+        std::swap(a.m_pImp, b.m_pImp);
+    }
     CMaaString Rewind() const noexcept(noexcept_new);
     CMaaString RewindAdd(const CMaaString &AtBegin, const CMaaString &AtEnd) noexcept(noexcept_new); // rewind *this, add to result
 
@@ -3631,7 +3635,7 @@ private:
     ADD_ALLOCATOR(CMaaString)
 };
 
-template <> void CMaaSwap<CMaaString>(CMaaString& a, CMaaString& b)  noexcept;
+template <> void CMaaSwap<CMaaString>(CMaaString& a, CMaaString& b) noexcept;
 
 //-----------------------------------------------------------------------------------------
 #if 0
