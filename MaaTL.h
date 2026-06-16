@@ -224,9 +224,11 @@ extern bool gbCMaaPtrThrow;
 #endif
 
 //---------------------------------------------------------------------------
-#define Min(a,b) ((a)<(b)?(a):(b))
-#define Max(a,b) ((a)>(b)?(a):(b))
-template<class T> int CMaaXSign(T x) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
+//#define Min(a,b) ((a)<(b)?(a):(b))
+//#define Max(a,b) ((a)>(b)?(a):(b))
+template<class T> T CMaaMin(const T& a, const T& b) noexcept(noexcept(a < b) && noexcept(T(a))) { return a < b ? a : b; }
+template<class T> T CMaaMax(const T& a, const T& b) noexcept(noexcept(a < b) && noexcept(T(a))) { return a < b ? b : a; }
+template<class T> int CMaaXSign(const T& x) noexcept(noexcept(x < 0) && noexcept(x > 0)) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
 //---------------------------------------------------------------------------
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value)
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept( noexcept(T(a)) && noexcept(a=b) )
