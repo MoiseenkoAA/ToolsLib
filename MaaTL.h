@@ -228,14 +228,14 @@ template<class T> int CMaaXSign(T x) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
 //---------------------------------------------------------------------------
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value)
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept( noexcept(T(a)) && noexcept(a=b) )
-template < class T > void CMaaSwap(T& a, T& b) noexcept(std_is_nothrow_move_constructible1(T, a) && std_is_nothrow_copy_assignable(T, a = b))
+template < class T > void CMaaSwap(T& a, T& b) noexcept(std_is_nothrow_move_constructible1(T, a) && std_is_nothrow_copy_assignable(T, a = b) && std_is_nothrow_move_assignable(T, a = b))
 {
     T tmp(a);
 #ifdef _MaaRF_INTERNAL_BUILD
-    a = std_move(b);
+    a = b;
     b = std_move(tmp);
 #else
-    a = std::move(b);
+    a = b;
     b = std::move(tmp);
 #endif
 }
