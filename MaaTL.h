@@ -233,29 +233,30 @@ template<class T> int CMaaXSign(const T& x) noexcept(noexcept(x < 0) && noexcept
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value)
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept( noexcept(T(a)) && noexcept(a=b) )
 #ifdef _MaaRF_INTERNAL_BUILD
-template < class T > void CMaaSwap(T& a, T& b) noexcept(std_is_nothrow_copy_constructible1(T, a) && std_is_nothrow_copy_assignable(T, a = b) && std_is_nothrow_move_assignable(T, a = std_move(b)))
+template < class T > void CMaaSwap(T& a, T& b) noexcept(std_is_nothrow_move_constructible1(T, std_move(a)) /*&& std_is_nothrow_copy_assignable(T, a = b)*/ && std_is_nothrow_move_assignable(T, a = std_move(b)))
 {
-    T tmp(a);
-    a = b;
+    T tmp(std_move(a));
+    a = std_move(b);
     b = std_move(tmp);
 }
 #else
-template < class T > void CMaaSwap(T& a, T& b) noexcept(std::is_nothrow_swappable_v<T> || (std_is_nothrow_copy_constructible1(T, a) && std_is_nothrow_copy_assignable(T, a = b) && std_is_nothrow_move_assignable(T, a = std_move(b))))
+template < class T > void CMaaSwap(T& a, T& b) noexcept(/*std::is_nothrow_swappable_v<T> ||*/ (std_is_nothrow_move_constructible1(T, std::move(a)) /*&& std_is_nothrow_copy_assignable(T, a = b)*/ && std_is_nothrow_move_assignable(T, a = std::move(b))))
 {
-    if constexpr (std::is_nothrow_swappable_v<T>)
+    /*if constexpr (std::is_nothrow_swappable_v<T>)
     {
         std::swap(a, b);
     }
-    /*else if constexpr (std::is_swappable_v<T>)
+    else if constexpr (std::is_swappable_v<T>)
     {
         std::swap(a, b);
-    }*/
+    }
     else
-    {
-        T tmp(a);
-        a = b;
+    */
+    //{
+        T tmp(std::move(a));
+        a = std::move(b);
         b = std::move(tmp);
-    }
+    //}
 }
 #endif
 // noexcept( noexcept(CMaaSwap(a, a)) )
