@@ -186,7 +186,6 @@ public:
         {
             throw "CMaaRBTree(): allocation error";
         }
-        m_pAllocator->AddRefEx();
         try
         {
             _nil = m_pAllocator->NewEx(&m_pAllocator);
@@ -197,7 +196,6 @@ public:
         }
         if (!_nil)
         {
-            m_pAllocator->DelRefEx(&m_pAllocator);
             throw "CMaaRBTree(): allocation error";
         }
 #endif
@@ -213,7 +211,6 @@ public:
         //Node::operator delete(_nil);
 #else
         m_pAllocator->DeleteEx(_nil, &m_pAllocator);
-        m_pAllocator->DelRefEx(&m_pAllocator);
         //m_pAllocator = nullptr; // 24.09.2024
 #endif
     }
@@ -549,30 +546,13 @@ protected:
 protected:
     Node * grandparent(Node *n) noexcept
     {
-        if  (n != _nil && n->p != _nil)
-        {
-            return n->p->p;
-        }
-        else
-        {
-            return _nil;
-        }
+        return (n != _nil && n->p != _nil) ? n->p->p : _nil;
     }
     Node * uncle(Node *n) noexcept
     {
         Node * g = grandparent(n);
-        if  (g == _nil)
-        {
-            return _nil; // No grandparent means no uncle
-        }
-        if  (n->p == g->left)
-        {
-            return g->right;
-        }
-        else
-        {
-            return g->left;
-        }
+        return g == _nil ? _nil // No grandparent means no uncle
+               : n->p == g->left ? g->right : g->left;
     }
     void rotate_left(Node *n) noexcept
     {
@@ -764,12 +744,12 @@ protected:
                 rotate_left(n->p);
 
                 /*
-                 * rotate_left может быть выполнен следующим образом, учитывая что уже есть *g =  grandparent(n) 
+                 * unchecked: rotate_left может быть выполнен следующим образом, учитывая что уже есть g = grandparent(n) 
                  *
-                 * struct node *saved_p=g->left, *saved_left_n=n->left;
+                 * Node *saved_p=g->left, *saved_n_left=n->left;
                  * g->left=n; 
                  * n->left=saved_p;
-                 * saved_p->right=saved_left_n;
+                 * saved_p->right=saved_n_left;
                  *
                  */
 
@@ -780,12 +760,12 @@ protected:
                 rotate_right(n->p);
 
                 /*
-                 * rotate_right может быть выполнен следующим образом, учитывая что уже есть *g =  grandparent(n) 
+                 * unchecked: rotate_right может быть выполнен следующим образом, учитывая что уже есть g = grandparent(n) 
                  *
-                 * struct node *saved_p=g->right, *saved_right_n=n->right;
+                 * Node *saved_p=g->right, *saved_n_right=n->right;
                  * g->right=n; 
                  * n->right=saved_p;
-                 * saved_p->left=saved_right_n;
+                 * saved_p->left=saved_n_right;
                  *
                  */
 

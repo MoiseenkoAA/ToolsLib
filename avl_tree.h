@@ -182,7 +182,7 @@ public:
 
     // Adds  element. ( Copy element to table )
     // Returns 0 if success. 1 - Key alredy exists. 2 - Not enought free memory
-    int Add(const Key& K, const Data& D, int fOverwrite = 0) noexcept(noexcept(insert(root, K, D, fOverwrite)))
+    int Add(const Key& K, const Data& D, int fOverwrite) noexcept(noexcept(insert(root, K, D, fOverwrite)))
     {
         const size_t N0 = N;
         Node * z = insert(root, K, D, fOverwrite);
@@ -193,22 +193,45 @@ public:
         root = z;
         return fOverwrite || N > N0 ? 0 : 1;
     }
-
+    int Add(const Key& K, const Data& D) noexcept(noexcept(insert(root, K, D, 0)))
+    {
+        const size_t N0 = N;
+        Node* z = insert(root, K, D, 0);
+        if (!z)
+        {
+            return 2;
+        }
+        root = z;
+        return N > N0 ? 0 : 1;
+    }
     // Adds  element. ( Owerwrites it if exists )
     // Returns 0 if success. 2 - Not enought free memory
+    /*
     int AddOver(const Key& K, const Data& D) noexcept(noexcept(Add(K, D, 1))) // noexcept(noexcept(insert(root, K, D, 1)))
     {
         return Add(K, D, 1);
     }
+    */
+    int AddOver(const Key& K, const Data& D) noexcept(noexcept(insert(root, K, D, 1)))
+    {
+        const size_t N0 = N;
+        Node* z = insert(root, K, D, 1);
+        if (!z)
+        {
+            return 2;
+        }
+        root = z;
+        return 0;
+    }
 
     // Finds element.
     // If ok: returns 0 and copy Data ( if Data != nullptr )
-    int Find(const Key& K, Data* D = nullptr) const noexcept(noexcept(K < K) && noexcept(*D = *D))
+    int Find(const Key& K, Data* D /*= nullptr*/) const noexcept(noexcept(K < K) && noexcept(*D = *D))
     {
         Node* n = search(root, K);
-        if  (n)
+        if (n)
         {
-            if  (D)
+            if (D)
             {
                 *D = n->d;
             }
@@ -216,14 +239,24 @@ public:
         }
         return 1;
     }
+    int Find(const Key& K) const noexcept(noexcept(K < K))
+    {
+        return search(root, K) ? 0 : 1;
+    }
 
     // Removes element.
     // Returns 0 if ok.
     // it is sutable to add param void * Data ( witch is nullptr by default ) where to return deleted context of Data
-    int Remove(const Key& K, Data* D = nullptr) noexcept(noexcept(K < K) && noexcept(*D = *D))
+    int Remove(const Key& K, Data* D /*= nullptr*/) noexcept(noexcept(K < K) && noexcept(*D = *D))
     {
         const size_t N0 = N;
         root = remove(root, K, D);
+        return N < N0 ? 0 : 1;
+    }
+    int Remove(const Key& K) noexcept(noexcept(K < K))
+    {
+        const size_t N0 = N;
+        root = remove(root, K);
         return N < N0 ? 0 : 1;
     }
 
@@ -475,29 +508,12 @@ protected:
             }
         }
         const int bal = x->UpdateHeightGetBalance();
-        if  (bal > 1)
-        {
-            if  (height(x->right->left) <= height(x->right->right))
-            {
-                x = small_l_rotate(x);
-            }
-            else
-            {
-                x = big_l_rotate(x);
-            }
-        }
-        else if (bal < -1)
-        {
-            if  (height(x->left->right) <= height(x->left->left))
-            {
-                x = small_r_rotate(x);
-            }
-            else
-            {
-                x = big_r_rotate(x);
-            }
-        }
-        return x;
+        return 
+            bal > 1 ?
+                (height(x->right->left) <= height(x->right->right) ? small_l_rotate(x) : big_l_rotate(x)) :
+            bal < -1 ?
+                (height(x->left->right) <= height(x->left->left) ? small_r_rotate(x) : big_r_rotate(x)) :
+            x;
     }
 
     Node * remove(Node * x, const Key& _k, Data* _d) noexcept(noexcept(_k < x->k) && noexcept(*_d = x->d))
@@ -545,7 +561,7 @@ protected:
                     }
                     x->k = r->k;
                     x->d = r->d;
-                    x->right = remove(x->right, r->k, nullptr);
+                    x->right = remove(x->right, r->k/*, nullptr*/);
                 }
                 else
                 {
@@ -555,7 +571,7 @@ protected:
                     }
                     x->k = l->k;
                     x->d = l->d;
-                    x->left = remove(x->left, l->k, nullptr);
+                    x->left = remove(x->left, l->k/*, nullptr*/);
                 }
             }
         }
@@ -566,29 +582,88 @@ protected:
         }
 
         const int bal = x->UpdateHeightGetBalance();
-        if  (bal > 1)
+        return 
+            bal > 1 ?
+                (height(x->right->left) <= height(x->right->right) ? small_l_rotate(x) : big_l_rotate(x)) :
+            bal < -1 ?
+                (height(x->left->right) <= height(x->left->left) ? small_r_rotate(x) : big_r_rotate(x)) :
+            x;
+    }
+
+    Node* remove(Node* x, const Key& _k/*, Data* _d*/) noexcept(noexcept(_k < x->k) /*&& noexcept(*_d = x->d)*/)
+    {
+        if (!x)
         {
-            if  (height(x->right->left) <= height(x->right->right))
+            return x;
+        }
+
+        if (_k < x->k)
+        {
+            x->left = remove(x->left, _k/*, _d*/);
+        }
+        else if (x->k < _k)
+        {
+            x->right = remove(x->right, _k/*, _d*/);
+        }
+        else
+        {
+            /*
+            if (_d)
             {
-                x = small_l_rotate(x);
+                *_d = x->d;
+            }
+            */
+            Node* l = x->left;
+            Node* r = x->right;
+            if (!r)
+            {
+                DeleteNode(x);
+                x = l;
+                N--;
+            }
+            else if (!l)
+            {
+                DeleteNode(x);
+                x = r;
+                N--;
             }
             else
             {
-                x = big_l_rotate(x);
+                if (height(x->right) >= height(x->left))
+                {
+                    while (r->left)
+                    {
+                        r = r->left;
+                    }
+                    x->k = r->k;
+                    x->d = r->d;
+                    x->right = remove(x->right, r->k/*, nullptr*/);
+                }
+                else
+                {
+                    while (l->right)
+                    {
+                        l = l->right;
+                    }
+                    x->k = l->k;
+                    x->d = l->d;
+                    x->left = remove(x->left, l->k/*, nullptr*/);
+                }
             }
         }
-        else if (bal < -1)
+
+        if (!x)
         {
-            if  (height(x->left->right) <= height(x->left->left))
-            {
-                x = small_r_rotate(x);
-            }
-            else
-            {
-                x = big_r_rotate(x);
-            }
+            return x;
         }
-        return x;
+
+        const int bal = x->UpdateHeightGetBalance();
+        return
+            bal > 1 ?
+                (height(x->right->left) <= height(x->right->right) ? small_l_rotate(x) : big_l_rotate(x)) :
+            bal < -1 ?
+                (height(x->left->right) <= height(x->left->left) ? small_r_rotate(x) : big_r_rotate(x)) :
+            x;
     }
 
     Node * search(Node * x, const Key &_k) const noexcept(noexcept(_k < x->k))
