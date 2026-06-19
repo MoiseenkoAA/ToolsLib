@@ -11,7 +11,7 @@
 
 // ToolsLib/rbtree.h
 
-/* Copyright (C) 2002-2025 Andrey A. Moiseenko (support@maasoftware.ru)
+/* Copyright (C) 2002-2026 Andrey A. Moiseenko (support@maasoftware.ru)
  * All rights reserved.
  *
  * This library contains cross-platform templates for working heap
