@@ -334,6 +334,12 @@ public:
     {
         return RBInsert(k, d, m_bMulti) ? 0 : 1;
     }
+#if 0
+    int Add_(const Key& k, const Data& d) noexcept(noexcept(RBInsertWiki(k, d, m_bMulti)))
+    {
+        return RBInsertWiki(k, d, m_bMulti) ? 0 : 1; // ok too
+    }
+#endif
     // Handle != nullptr - ok
     Handle AddNode(const Key& k, const Data& d) noexcept(noexcept(RBInsert(k, d, m_bMulti)))
     {
@@ -661,33 +667,11 @@ protected:
         if  (n == n->p->right && n->p == g->left)
         {
             rotate_left(n->p);
-
-            /*
-             * rotate_left может быть выполнен следующим образом, учитывая что уже есть *g =  grandparent(n) 
-             *
-             * struct node *saved_p=g->left, *saved_left_n=n->left;
-             * g->left=n; 
-             * n->left=saved_p;
-             * saved_p->right=saved_left_n;
-             * 
-             */
-
             n = n->left;
         }
         else if (n == n->p->left && n->p == g->right)
         {
             rotate_right(n->p);
-
-            /*
-             * rotate_right может быть выполнен следующим образом, учитывая что уже есть *g =  grandparent(n) 
-             *
-             * struct node *saved_p=g->right, *saved_right_n=n->right;
-             * g->right=n; 
-             * n->right=saved_p;
-             * saved_p->left=saved_right_n;
-             * 
-             */
-
             n = n->right;
         }
         insert_case5(n);
@@ -742,33 +726,11 @@ protected:
             if  (n == n->p->right && n->p == g->left)
             {
                 rotate_left(n->p);
-
-                /*
-                 * unchecked: rotate_left может быть выполнен следующим образом, учитывая что уже есть g = grandparent(n) 
-                 *
-                 * Node *saved_p=g->left, *saved_n_left=n->left;
-                 * g->left=n; 
-                 * n->left=saved_p;
-                 * saved_p->right=saved_n_left;
-                 *
-                 */
-
                 n = n->left;
             }
             else if (n == n->p->left && n->p == g->right)
             {
                 rotate_right(n->p);
-
-                /*
-                 * unchecked: rotate_right может быть выполнен следующим образом, учитывая что уже есть g = grandparent(n) 
-                 *
-                 * Node *saved_p=g->right, *saved_n_right=n->right;
-                 * g->right=n; 
-                 * n->right=saved_p;
-                 * saved_p->left=saved_n_right;
-                 *
-                 */
-
                 n = n->right;
             }
             g = grandparent(n);
