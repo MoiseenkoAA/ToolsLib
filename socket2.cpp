@@ -1574,6 +1574,10 @@ int _IP6::FromStringEx(const CMaaString &str, const char * AvailableTrailers) no
 {
     return CMaaIpToLongEx(str, (warning_int)str.Length(), m, AvailableTrailers);
 }
+template<> int CMaaXSign(const _IP6& a, const _IP6& b) noexcept
+{
+    return a.Compare(b);
+}
 
 #if defined(__TOOLS_USE_WINSOCK2) || defined(__unix__)
 

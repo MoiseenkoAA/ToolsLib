@@ -365,6 +365,7 @@ template <> _dword CMaaHashFunction<_IP6>(const _IP6& k) noexcept;
 template <> _uqword CMaaHashFunction64<_IP6>(const _IP6& k) noexcept;
 inline _dword CMaaHashFunction(const _IP6& k) noexcept { return k.Hash(); }
 inline _uqword CMaaHashFunction64(const _IP6& k) noexcept { return k.Hash64(); }
+template<> int CMaaXSign(const _IP6& a, const _IP6& b) noexcept;
 
 extern const _IP6 gIp6_0, gIp6_1, gIp6_v4Supp;
 

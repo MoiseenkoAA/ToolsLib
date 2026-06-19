@@ -1211,7 +1211,7 @@ public:
         eSpecialMask = (1 << 31)
     };
 protected:
-    class cInteral
+    class CMaaFindFile2Imp
 #ifdef _WIN32
         : public CMaaSLink
 #endif
@@ -1236,18 +1236,18 @@ protected:
         int m_iGetKeepDev;
         CMaaUnivHash<ino_t, int> m_hDirInodes;
 #endif
-        cInteral(const CMaaString& Dir, CMaaString Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
-        cInteral(const CMaaString& DirWithMask, int iRecursiveDepth = 1) noexcept(noexcept_new);
-        ~cInteral();
+        CMaaFindFile2Imp(const CMaaString& Dir, CMaaString Mask, int iRecursiveDepth = 1) noexcept(noexcept_new);
+        CMaaFindFile2Imp(const CMaaString& DirWithMask, int iRecursiveDepth = 1) noexcept(noexcept_new);
+        ~CMaaFindFile2Imp();
         bool Get(sFind& f, CMaaFindFile2& ff) noexcept(noexcept_new);
 #ifdef _WIN32
-        ADD_ALLOCATOR(CMaaFindFile2::cInteral)
+        ADD_ALLOCATOR(CMaaFindFile2Imp)
 #endif
     };
-    cInteral * m_pImp;
+    CMaaFindFile2Imp * m_pImp;
     CMaaPtr_<unsigned char, 1> m_pm;
 #ifdef _WIN32
-    CMaaSListAD<cInteral> m_Stack;
+    CMaaSListAD<CMaaFindFile2Imp> m_Stack;
 #endif
     int m_Flags = eFt;
     int m_FileTypeMask = -1;
