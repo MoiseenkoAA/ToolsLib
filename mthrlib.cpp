@@ -3964,7 +3964,7 @@ int gCMaaToolLib_crt_Initializer() noexcept
 {
     if (!gCMaaToolLib_crt_Initialized)
     {
-        if (!CMaaString::CheckRuntimeConditions())
+        if (!CMaaString::CheckRuntimeConditions() || sizeof(_word) != 2)
         {
             exit(101);
         }
