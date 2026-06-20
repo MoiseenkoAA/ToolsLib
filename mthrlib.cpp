@@ -4016,30 +4016,41 @@ int gCMaaToolLib_crt_Initializer() noexcept
     return 0;
 }
 
+
+//------------------------------------------------------------------------------
+// class CMaaToolsLibClassImpRefKeeper to avoid delete/new on some zero count imps
+//------------------------------------------------------------------------------
+class CMaaToolsLibClassImpRefKeeper
+{
+public:
+    CMaaToolsLibClassImpRefKeeper() noexcept
+    {
+        CMaaFile::CMaaFileImp::GetAllocator().AddRefEx();
+#ifdef _WIN32
+        CMaaFindFile2::CMaaFindFile2Imp::GetAllocator().AddRefEx();
+#endif
+    }
+    ~CMaaToolsLibClassImpRefKeeper()
+    {
+#ifdef _WIN32
+        CMaaFindFile2::CMaaFindFile2Imp::GetAllocator().DelRefEx();
+#endif
+        CMaaFile::CMaaFileImp::GetAllocator().DelRefEx();
+    }
+};
+//------------------------------------------------------------------------------
 struct CMaaToolLib_crt_Initializer
 {
-    CMaaToolLib_crt_Initializer()
+    int m_i = gCMaaToolLib_crt_Initializer();
+
+    CMaaToolsLibClassImpRefKeeper m_FileRefKeeper;
+
+    CMaaToolLib_crt_Initializer() noexcept
     {
-        gCMaaToolLib_crt_Initializer();
-        /*
-        {
-            CMaaWin32Locker<CMaaLiteMutex> l_2(gLock_Atomic2);
-            l_2.Lock();
-            CMaaWin32Locker<CMaaLiteMutex> l_1(gLock_Atomic);
-            l_1.Lock();
-            //l_1.UnLock();
-            //l_2.UnLock();
-        }
-        */
-        
+        //gCMaaToolLib_crt_Initializer();
         //CMaaGetCpuCount();
-        
         GetUsTime();
         GetMsTime();
-
-        //CMaaString s1, s2;
-        //s1.Format( "%d", 1);
-        //s2.Format2("%d", "%1", 1);
 #if 0
         CMaaXmlDocument doc(CMaaStringDoc, CMaaStringDoc);
         CMaaXmlElement e = doc.DocumentElement(); // doc.CreateElement("a");
@@ -4048,12 +4059,6 @@ struct CMaaToolLib_crt_Initializer
         //e.FindNodeWithAttrRO("b", "c", "d");
 #endif
         //Init_CMaaXmlNodeImpl_statics();
-
-#if TOOLSLIB_USE_CMAASTRING64 == 2
-        //CMaaString64 s64_1, s64_2;
-        //s64_1.Format("%d", 1);
-        //s64_2.Format2("%d", "%1", 1);
-#endif
 
 #ifndef TOOLSLIB_SINGLE_THREAD
 #if 0

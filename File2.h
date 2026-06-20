@@ -147,12 +147,15 @@ _qword GetCurrentTime_us(time_t * pt = nullptr, int * pusec = nullptr) noexcept;
 #define CMaaFileSystemSlash ((const CMaaString&)CMaaFile::C().sSlash)
 #define CMaaFileOtherSystemSlash ((const CMaaString&)CMaaFile::C().sOtherSlash)
 //------------------------------------------------------------------------------
+class CMaaToolsLibClassImpRefKeeper;
+//------------------------------------------------------------------------------
 // class CMaaFile
 //------------------------------------------------------------------------------
 #define CTOOFile2 CMaaFile
 class ToolsExport CMaaFile : public XTOOFile2Error
 {
     //friend int main(int argn, char * args[]);
+    friend class CMaaToolsLibClassImpRefKeeper;
 protected:
     struct CMaaFileImp :
 #if MANUAL_CMaaFileImp_REFS
@@ -1142,6 +1145,9 @@ CMaaFile * ToolsLib_OpenLog(bool bForcedInit = false);
 
 class CMaaFindFile2
 {
+#ifdef _WIN32
+    friend class CMaaToolsLibClassImpRefKeeper;
+#endif
 public:
     struct sFind : public CMaaDLink // just for user lists
     {
