@@ -162,17 +162,16 @@ public:
 
 protected:
     Node* _nil, * root;
-    size_t N;
-    bool m_bMulti;
+    size_t N = 0;
 #ifndef TOOLSLIB_RB_SHARED_ALLOCATOR
     CMaaFixedAllocator<Node, -1>* m_pAllocator;
 #endif
+    bool m_bMulti, m_Padding[3];
 
 public:
     CMaaRBTree(bool Multi = true) //noexcept(noexcept_new)
     :   m_bMulti(Multi)
     {
-        N = 0;
 #ifdef TOOLSLIB_RB_SHARED_ALLOCATOR
         _nil = (Node*)TL_NEW char[sizeof(Node)]; // for a lock-free constructor, UL allocator
         //_nil = (Node*)Node::operator new(sizeof(Node));
@@ -205,7 +204,10 @@ public:
     }
     ~CMaaRBTree()
     {
-        SimpleFree(root);
+        if (root != _nil)
+        {
+            SimpleFree(root);
+        }
 #ifdef TOOLSLIB_RB_SHARED_ALLOCATOR
         delete [] (char *)_nil;
         //Node::operator delete(_nil);
@@ -216,7 +218,10 @@ public:
     }
     void RemoveAll() noexcept
     {
-        SimpleFree(root);
+        if (root != _nil)
+        {
+            SimpleFree(root);
+        }
         root = _nil;
         N = 0;
         _nil->color = eBlue;
@@ -244,7 +249,7 @@ protected:
     // delete subtree
     void SimpleFree(Node* x) noexcept
     {
-        if (x != _nil)
+        //if (x != _nil)
         {
             if (x->left != _nil)
             {
@@ -1483,14 +1488,7 @@ public:
     // https://ru.wikipedia.org/wiki/%D0%9A%D1%80%D0%B0%D1%81%D0%BD%D0%BE-%D1%87%D1%91%D1%80%D0%BD%D0%BE%D0%B5_%D0%B4%D0%B5%D1%80%D0%B5%D0%B2%D0%BE
     Node * Sibling(Node * n) noexcept
     {
-        if  (n == n->p->left)
-        {
-            return n->p->right;
-        }
-        else
-        {
-            return n->p->left;
-        }
+        return n == n->p->left ? n->p->right : n->p->left;
     }
     void RBDeleteWiki(Node * z) noexcept(!CMAA_RB_DEBUG)
     {
@@ -1897,9 +1895,9 @@ protected:
 public:
     void Swap(CMaaRBTree<Key, Data> &That) noexcept
     {
-        CMaaSwap(N, That.N);
         CMaaSwap(_nil, That._nil);
         CMaaSwap(root, That.root);
+        CMaaSwap(N, That.N);
 #ifndef TOOLSLIB_RB_SHARED_ALLOCATOR
         CMaaSwap(m_pAllocator, That.m_pAllocator);
 #endif
@@ -1914,7 +1912,7 @@ public:
         x = x ? x : root;
         for (int l = 0; l < ll; l++)
         {
-            bool e = false;
+            bool e;
             CMaaString str = Print(x, w, l, &e);
             if  (e)
             {
@@ -1948,7 +1946,7 @@ public:
             {
                 w2 = 2;
             }
-            int w1 = w2 / 2;
+            const int w1 = w2 / 2;
             w2 -= w1;
             CMaaString sp1(nullptr, w1), sp2(nullptr, w2);
             sp1.Fill(' ');
@@ -1957,20 +1955,18 @@ public:
         }
         if  (x->left != _nil && x->left->p != x)
         {
-            static char err[512];
-            sprintf(err, "chk: %d->left error", x->k);
+            CMaaString err = Node2Text(x);
+            err.Format("chk: {%S}->left error", &err);
             throw err;
         }
         if  (x->right != _nil && x->right->p != x)
         {
-            static char err[512];
-            sprintf(err, "chk: %d->right error", x->k);
+            CMaaString err = Node2Text(x);
+            err.Format("chk: {%S}->right error", &err);
             throw err;
         }
         bool ee[2];
-        CMaaString Ret =
-        Print(x->left, w / 2, l - 1, &ee[0]) +
-        Print(x->right, w - w / 2, l - 1, &ee[1]);
+        CMaaString Ret = Print(x->left, w / 2, l - 1, &ee[0]) + Print(x->right, w - w / 2, l - 1, &ee[1]);
         if  (e)
         {
             *e = ee[0] && ee[1];

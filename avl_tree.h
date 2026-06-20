@@ -67,28 +67,38 @@
 
 template <class Key, class Data> class CMaaAVLTree
 {
+    typedef unsigned char TypeHeight;
+    //typedef int TypeHeight; // slower
+
+    typedef int TypeBalance;
+    //typedef char TypeBalance; // the same speed
+
 protected:
     class Node
     {
     public:
-        Node * left, * right;
+        Node * left = nullptr,
+            * right = nullptr;
         Key k;
         Data d;
-        unsigned char height;
+        TypeHeight height = 1;
         Node(const Key& _k, const Data& _d) noexcept(noexcept(Key(_k)) && noexcept(Data(_d)))
-        :   left(nullptr),
-            right(nullptr),
-            k(_k),
-            d(_d),
-            height(1)
+        :   k(_k),
+            d(_d)
         {
         }
-        int UpdateHeightGetBalance() noexcept
+        void UpdateHeight() noexcept
         {
-            const unsigned char l = left ? left->height : 0;
-            const unsigned char r = right ? right->height : 0;
+            const TypeHeight l = left ? left->height : 0;
+            const TypeHeight r = right ? right->height : 0;
             height = 1 + (l > r ? l : r);
-            return (int)r - (int)l;
+        }
+        TypeBalance UpdateHeightGetBalance() noexcept
+        {
+            const TypeHeight l = left ? left->height : 0;
+            const TypeHeight r = right ? right->height : 0;
+            height = 1 + (l > r ? l : r);
+            return (TypeBalance)r - (TypeBalance)l;
         }
         /*
         Key key() noexcept(noexcept(Key(k)))
@@ -125,11 +135,11 @@ protected:
 #endif
     };
 
-    Node * root;
+    Node * root = nullptr;
 #ifndef TOOLSLIB_AVL_SHARED_ALLOCATOR
     CMaaFixedAllocator<Node, -1>* m_pAllocator;
 #endif
-    size_t N;
+    size_t N = 0;
 
 public:
 
@@ -137,8 +147,6 @@ public:
 #ifdef TOOLSLIB_AVL_SHARED_ALLOCATOR
         noexcept
 #endif
-    :   root(nullptr),
-        N(0)
     {
 #ifndef TOOLSLIB_AVL_SHARED_ALLOCATOR
         m_pAllocator = TL_NEW CMaaFixedAllocator<Node, -1>(eNotInit);
@@ -214,7 +222,6 @@ public:
     */
     int AddOver(const Key& K, const Data& D) noexcept(noexcept(insert(root, K, D, 1)))
     {
-        const size_t N0 = N;
         Node* z = insert(root, K, D, 1);
         if (!z)
         {
@@ -277,7 +284,7 @@ public:
         x = x ? x : root;
         for (int l = 0; l < ll; l++)
         {
-            bool e = false;
+            bool e;
             CMaaString str = Print(x, w, l, &e);
             if  (e)
             {
@@ -310,7 +317,7 @@ public:
             {
                 w2 = 2;
             }
-            int w1 = w2 / 2;
+            const int w1 = w2 / 2;
             w2 -= w1;
             CMaaString sp1(nullptr, w1), sp2(nullptr, w2);
             sp1.Fill(' ');
@@ -318,9 +325,7 @@ public:
             return sp1 + Ret + sp2;
         }
         bool ee[2];
-        CMaaString Ret =
-        Print(x->left, w / 2, l - 1, &ee[0]) +
-        Print(x->right, w - w / 2, l - 1, &ee[1]);
+        CMaaString Ret = Print(x->left, w / 2, l - 1, &ee[0]) + Print(x->right, w - w / 2, l - 1, &ee[1]);
         if  (e)
         {
             *e = ee[0] && ee[1];
@@ -360,7 +365,7 @@ protected:
         }
     }
 
-    static unsigned char height(const Node * x) noexcept
+    static TypeHeight height(const Node * x) noexcept
     {
         return x ? x->height : 0;
     }
@@ -375,8 +380,8 @@ protected:
         Node* b = a->right;
         a->right = b->left;
         b->left = a;
-        a->UpdateHeightGetBalance();
-        b->UpdateHeightGetBalance();
+        a->UpdateHeight();
+        b->UpdateHeight();
         return b;
     }
 
@@ -395,9 +400,9 @@ protected:
         b->left = c->right;
         c->left = a;
         c->right = b;
-        a->UpdateHeightGetBalance();
-        b->UpdateHeightGetBalance();
-        c->UpdateHeightGetBalance();
+        a->UpdateHeight();
+        b->UpdateHeight();
+        c->UpdateHeight();
         return c;
     }
 
@@ -411,8 +416,8 @@ protected:
         Node* b = a->left;
         a->left = b->right;
         b->right = a;
-        a->UpdateHeightGetBalance();
-        b->UpdateHeightGetBalance();
+        a->UpdateHeight();
+        b->UpdateHeight();
         return b;
     }
 
@@ -431,9 +436,9 @@ protected:
         b->right = c->left;
         c->right = a;
         c->left = b;
-        a->UpdateHeightGetBalance();
-        b->UpdateHeightGetBalance();
-        c->UpdateHeightGetBalance();
+        a->UpdateHeight();
+        b->UpdateHeight();
+        c->UpdateHeight();
         return c;
     }
 
@@ -507,7 +512,7 @@ protected:
                 return x;
             }
         }
-        const int bal = x->UpdateHeightGetBalance();
+        const TypeBalance bal = x->UpdateHeightGetBalance();
         return 
             bal > 1 ?
                 (height(x->right->left) <= height(x->right->right) ? small_l_rotate(x) : big_l_rotate(x)) :
@@ -581,7 +586,7 @@ protected:
             return x;
         }
 
-        const int bal = x->UpdateHeightGetBalance();
+        const TypeBalance bal = x->UpdateHeightGetBalance();
         return 
             bal > 1 ?
                 (height(x->right->left) <= height(x->right->right) ? small_l_rotate(x) : big_l_rotate(x)) :
@@ -657,7 +662,7 @@ protected:
             return x;
         }
 
-        const int bal = x->UpdateHeightGetBalance();
+        const TypeBalance bal = x->UpdateHeightGetBalance();
         return
             bal > 1 ?
                 (height(x->right->left) <= height(x->right->right) ? small_l_rotate(x) : big_l_rotate(x)) :
