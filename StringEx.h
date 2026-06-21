@@ -4498,26 +4498,30 @@ public:
         s = std::move(That.s);
         return *this;
     }
-    CMaaString operator=(const CMaaString& That) noexcept
+    CMaaStringG& operator=(const CMaaString& That) noexcept
     {
         lk l;
-        return (s = That);
+        s = That;
+        return *this;
     }
-    CMaaString operator=(CMaaString&& That) noexcept
+    CMaaStringG& operator=(CMaaString&& That) noexcept
     {
         lk l;
-        return (s = That);
+        s = That;
+        return *this;
     }
-    CMaaString operator=(const char * pszTxt) noexcept(noexcept_new)
+    CMaaStringG& operator=(const char * pszTxt) noexcept(noexcept_new)
     {
         lk l;
-        return (s = pszTxt);
+        s = pszTxt;
+        return *this;
     }
 #ifdef TOOLSLIB_CHAR8T_SUPPORT
-    CMaaString operator=(const char8_t * pszTxt) noexcept(noexcept_new)
+    CMaaStringG& operator=(const char8_t * pszTxt) noexcept(noexcept_new)
     {
         lk l;
-        return (s = pszTxt);
+        s = pszTxt;
+        return *this;
     }
 #endif
     CMaaStringG operator=(const CMaaString & That) const noexcept = delete;
