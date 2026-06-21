@@ -4418,6 +4418,9 @@ class CMaaStringG
     CMaaString s;
     struct lk
     {
+#ifndef TOOLSLIB_SINGLE_THREAD
+        static constexpr CMaaLiteMutex s_mtx{}; // mutex
+#endif
         lk() noexcept
         {
             Lock();
@@ -4426,16 +4429,22 @@ class CMaaStringG
         {
             UnLock();
         }
+        
+        lk(const lk&) = delete;
+        lk(lk&&) = delete;
+        lk& operator=(const lk&) = delete;
+        lk& operator=(lk&&) = delete;
+
         static void Lock() noexcept
         {
 #ifndef TOOLSLIB_SINGLE_THREAD
-            gCMaaSyncAssignLockUpperLock();
+            ((CMaaLiteMutex&)s_mtx).Lock();
 #endif
         }
         static void UnLock() noexcept
         {
 #ifndef TOOLSLIB_SINGLE_THREAD
-            gCMaaSyncAssignLockUpperUnLock();
+            ((CMaaLiteMutex&)s_mtx).UnLock();
 #endif
         }
     };
@@ -4477,6 +4486,18 @@ public:
         lk l;
         s = std::move(That.s);
     }
+    CMaaStringG& operator=(const CMaaStringG& That) noexcept
+    {
+        lk l;
+        s = That.s;
+        return *this;
+    }
+    CMaaStringG& operator=(CMaaStringG&& That) noexcept
+    {
+        lk l;
+        s = std::move(That.s);
+        return *this;
+    }
     CMaaString operator=(const CMaaString& That) noexcept
     {
         lk l;
@@ -4486,11 +4507,6 @@ public:
     {
         lk l;
         return (s = That);
-    }
-    CMaaString operator=(CMaaStringG&& That) noexcept
-    {
-        lk l;
-        return (s = std::move(That.s));
     }
     CMaaString operator=(const char * pszTxt) noexcept(noexcept_new)
     {
@@ -4504,10 +4520,10 @@ public:
         return (s = pszTxt);
     }
 #endif
-    CMaaString operator=(const CMaaString & That) const noexcept = delete;
-    CMaaString operator=(const char * pszTxt) const = delete;
+    CMaaStringG operator=(const CMaaString & That) const noexcept = delete;
+    CMaaStringG operator=(const char * pszTxt) const = delete;
 #ifdef TOOLSLIB_CHAR8T_SUPPORT
-    CMaaString operator=(const char8_t * pszTxt) const = delete;
+    CMaaStringG operator=(const char8_t * pszTxt) const = delete;
 #endif
 
     constexpr ~CMaaStringG() {} // noexcept
