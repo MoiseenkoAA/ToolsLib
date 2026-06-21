@@ -1328,21 +1328,26 @@ CMaaString CMaaFile::GetExeFileName(int bFullPath, bool bThrow)
     return txt;
 }
 //---------------------------------------------------------------------------
-CMaaString CMaaFile::GetExePath(bool bRelease, bool bThrow)
+const CMaaString& CMaaFile::GetExePath(bool bRelease, bool bThrow)
 {
-    CMaaString Dir = GetExeFileName(1, bThrow);
-    const int n = (warning_int)Dir.ReverseFind(FILESYSTEM_SLASH);
-    if  (n > 0)
+    static CMaaString v[2];
+    if (v[bRelease].IsEmpty())
     {
-        Dir = Dir.Left(n + 1);
-#ifdef _DEBUG
-        if  (bRelease && Dir.IsRightCi("\\debug\\", 7, 0))
+        CMaaString Dir = GetExeFileName(1, bThrow);
+        const int n = (warning_int)Dir.ReverseFind(FILESYSTEM_SLASH);
+        if (n > 0)
         {
-            Dir = Dir - 7 + "\\Release\\";
-        }
+            Dir = Dir.Left(n + 1);
+#ifdef _DEBUG
+            if (bRelease && Dir.IsRightCi("\\debug\\", 7, 0))
+            {
+                Dir = Dir - 7 + "\\Release\\";
+            }
 #endif
+        }
+        v[bRelease] = Dir;
     }
-    return Dir;
+    return v[bRelease];
 }
 //---------------------------------------------------------------------------
 #endif // _WIN32
