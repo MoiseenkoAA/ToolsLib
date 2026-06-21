@@ -1328,10 +1328,11 @@ CMaaString CMaaFile::GetExeFileName(int bFullPath, bool bThrow)
     return txt;
 }
 //---------------------------------------------------------------------------
-const CMaaString CMaaFile::GetExePath(bool bRelease, bool bThrow)
+CMaaString CMaaFile::GetExePath(bool bRelease, bool bThrow)
 {
-#ifdef TOOLSLIB_SINGLE_THREAD
-    CMaaAtomicFastMutexLocker agLocker(gLock); // automatic scope locker
+#ifndef TOOLSLIB_SINGLE_THREAD
+    static constexpr CMaaLiteMutex s_mtx; // mutex
+    CMaaAtomicFastMutexLocker agLocker((CMaaLiteMutex&)s_mtx); // automatic scope locker
 #endif
     static CMaaString v[2];
     if (v[bRelease].IsEmpty())

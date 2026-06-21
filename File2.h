@@ -433,7 +433,7 @@ public:
     static CMaaString GetSystemDirectory(bool bThrow = false);
     static CMaaString GetWindowsDirectory(bool bThrow = false);
     static CMaaString GetExeFileName(int bFullPath = 1, bool bThrow = false);
-    static const CMaaString GetExePath(bool bRelease = false, bool bThrow = false); // returns dir name with ending '\\'
+    static CMaaString GetExePath(bool bRelease = false, bool bThrow = false); // returns dir name with ending '\\'
     static DWORD GetFileAttributes(const CMaaString &FileName, bool bThrow = false);
     static _dword Attributes(const CMaaString &FileName, bool bThrow = true);
     static _dword Attributes(const char* szFileName, bool bThrow = true);
