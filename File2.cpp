@@ -1332,7 +1332,7 @@ CMaaString CMaaFile::GetExePath(bool bRelease, bool bThrow)
 {
 #ifndef TOOLSLIB_SINGLE_THREAD
     static constexpr CMaaLiteMutex s_mtx; // mutex
-    CMaaAtomicFastMutexLocker agLocker((CMaaLiteMutex&)s_mtx); // automatic scope locker
+    CMaaAtomicFastMutexLocker Locker((CMaaLiteMutex&)s_mtx); // automatic scope locker
 #endif
     static CMaaString v[2];
     if (v[bRelease].IsEmpty())

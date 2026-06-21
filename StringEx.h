@@ -4420,11 +4420,19 @@ class CMaaStringG
     {
         lk() noexcept
         {
+            Lock();
+        }
+        ~lk() noexcept
+        {
+            UnLock();
+        }
+        static void Lock() noexcept
+        {
 #ifndef TOOLSLIB_SINGLE_THREAD
             gCMaaSyncAssignLockUpperLock();
 #endif
         }
-        ~lk() noexcept
+        static void UnLock() noexcept
         {
 #ifndef TOOLSLIB_SINGLE_THREAD
             gCMaaSyncAssignLockUpperUnLock();
@@ -4433,27 +4441,21 @@ class CMaaStringG
     };
     void Lock() noexcept
     {
-#ifndef TOOLSLIB_SINGLE_THREAD
-        gCMaaSyncAssignLockUpperLock();
-#endif
+        lk::Lock();
     }
     void UnLock() noexcept
     {
-#ifndef TOOLSLIB_SINGLE_THREAD
-        gCMaaSyncAssignLockUpperUnLock();
-#endif
+        lk::UnLock();
     }
 public:
-    CMaaStringG() noexcept
-    {
-    }
+    constexpr CMaaStringG() noexcept {}
     CMaaStringG(const char * pszStr) noexcept(noexcept_new)
     :   s(pszStr)
     {
     }
 #ifdef TOOLSLIB_CHAR8T_SUPPORT
     CMaaStringG(const char8_t * pszStr) noexcept(noexcept_new)
-        : s(pszStr)
+    :   s(pszStr)
     {
     }
 #endif
@@ -4461,28 +4463,45 @@ public:
     :   s(pMem, Len)
     {
     }
-    CMaaStringG(const CMaaString & That) noexcept
+    CMaaStringG(const CMaaString& That) noexcept
     :   s(That)
     {
     }
-    CMaaString operator=(const CMaaString & That) noexcept
+    CMaaStringG(const CMaaStringG& That) noexcept
     {
         lk l;
-        s = That;
-        return s;
+        s = That.s;
+    }
+    CMaaStringG(CMaaStringG&& That) noexcept
+    {
+        lk l;
+        s = std::move(That.s);
+    }
+    CMaaString operator=(const CMaaString& That) noexcept
+    {
+        lk l;
+        return (s = That);
+    }
+    CMaaString operator=(CMaaString&& That) noexcept
+    {
+        lk l;
+        return (s = That);
+    }
+    CMaaString operator=(CMaaStringG&& That) noexcept
+    {
+        lk l;
+        return (s = std::move(That.s));
     }
     CMaaString operator=(const char * pszTxt) noexcept(noexcept_new)
     {
         lk l;
-        s = pszTxt;
-        return s;
+        return (s = pszTxt);
     }
 #ifdef TOOLSLIB_CHAR8T_SUPPORT
     CMaaString operator=(const char8_t * pszTxt) noexcept(noexcept_new)
     {
         lk l;
-        s = pszTxt;
-        return s;
+        return (s = pszTxt);
     }
 #endif
     CMaaString operator=(const CMaaString & That) const noexcept = delete;
@@ -4491,9 +4510,7 @@ public:
     CMaaString operator=(const char8_t * pszTxt) const = delete;
 #endif
 
-    ~CMaaStringG() // noexcept
-    {
-    }
+    constexpr ~CMaaStringG() {} // noexcept
 
     bool operator == (const char * str) const noexcept
     {
@@ -4512,6 +4529,11 @@ public:
         lk l;
         return s == That;
     }
+    bool operator == (const CMaaStringG & That) const noexcept
+    {
+        lk l;
+        return s == That.s;
+    }
     bool operator != (const char * str) const noexcept
     {
         lk l;
@@ -4529,20 +4551,46 @@ public:
         lk l;
         return s != That;
     }
+    bool operator != (const CMaaStringG & That) const noexcept
+    {
+        lk l;
+        return s != That.s;
+    }
     bool operator < (const CMaaString & That) const noexcept
     {
         lk l;
         return s < That;
+    }
+    bool operator < (const CMaaStringG & That) const noexcept
+    {
+        lk l;
+        return s < That.s;
     }
     bool operator > (const CMaaString & That) const noexcept
     {
         lk l;
         return s > That;
     }
+    bool operator > (const CMaaStringG & That) const noexcept
+    {
+        lk l;
+        return s > That.s;
+    }
     operator CMaaString () const noexcept
     {
         lk l;
         return s;
+    }
+    void Format(const char* format, ...) noexcept
+    {
+        CMaaString txt;
+
+        va_list list;
+        va_start(list, format);
+        txt._FormatV(-1, "unknown", format, list);
+        va_end(list);
+
+        *this = std::move(txt);
     }
     void Format2(const char * format, CMaaString text, ...) noexcept
     {
@@ -4558,7 +4606,7 @@ public:
     void Empty() noexcept
     {
         lk l;
-        s.Empty(); // *this = CMaaString {};
+        s.Empty();
     }
 };
 
