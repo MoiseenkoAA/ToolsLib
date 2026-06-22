@@ -414,36 +414,12 @@ inline constexpr void Byte2Hex_nzt_HLT(char* txt, _byte x, char aA, char t = 0) 
 
 inline constexpr int_ To0F_LH(char c) noexcept
 {
-    if (c >= '0' && c <= '9')
-    {
-        return c - '0';
-    }
-    if (c >= 'a' && c <= 'f')
-    {
-        return c - 'a' + 10;
-    }
-    if (c >= 'A' && c <= 'F')
-    {
-        return c - 'A' + 10;
-    }
-    return -1;
+    return (c >= '0' && c <= '9') ? c - '0' : (c >= 'a' && c <= 'f') ? c - 'a' + 10 : (c >= 'A' && c <= 'F') ? c - 'A' + 10 : -1;
 }
 
 inline constexpr int_ To0F_HL(char c) noexcept
 {
-    if (c >= '0' && c <= '9')
-    {
-        return c - '0';
-    }
-    if (c >= 'A' && c <= 'F')
-    {
-        return c - 'A' + 10;
-    }
-    if (c >= 'a' && c <= 'f')
-    {
-        return c - 'a' + 10;
-    }
-    return -1;
+    return (c >= '0' && c <= '9') ? c - '0' : (c >= 'A' && c <= 'F') ? c - 'A' + 10 : (c >= 'a' && c <= 'f') ? c - 'a' + 10 : -1;
 }
 
 inline constexpr int_ To0F(char c) noexcept

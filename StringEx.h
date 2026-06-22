@@ -4457,7 +4457,7 @@ class CMaaStringG
         lk::UnLock();
     }
 public:
-    constexpr CMaaStringG() noexcept {}
+    constexpr_ CMaaStringG() noexcept {}
     CMaaStringG(const char * pszStr) noexcept(noexcept_new)
     :   s(pszStr)
     {
@@ -4530,7 +4530,7 @@ public:
     CMaaStringG operator=(const char8_t * pszTxt) const = delete;
 #endif
 
-    constexpr ~CMaaStringG() {} // noexcept
+    constexpr_ ~CMaaStringG() {} // noexcept
 
     bool operator == (const char * str) const noexcept
     {
