@@ -1085,7 +1085,6 @@ XTOOWsaErr::XTOOWsaErr(int Err, int _IsDnsError)
 
 //------------------------------------------------------------------------------
 #ifndef __unix__
-
 struct XTOOSockErrImp : public XTOOWsaErrImp
 #else
 struct XTOOSockErrImp : public XTOOErrnoImp
@@ -1161,16 +1160,7 @@ XTOOSockErrImp::XTOOSockErrImp(const char * Msg, CMaaSocket * pSock, const char 
         try
         {
 #ifndef TOOLSLIB_SINGLE_THREAD
-#ifndef __unix__TMP
-#ifdef __TOOLS_USE_WINSOCK2
             pSock->Notify_PreDeletingByException();
-#else
-            pSock->Notify_PreDeletingByExeption();
-#endif
-            //pSock->AsyncSelect ( 0 ); //!!! DEBUG
-#else
-            pSock->Notify_PreDeletingByException();
-#endif
 #endif
         }
         catch(...)
@@ -1282,16 +1272,7 @@ XTOOSockCloseImp::XTOOSockCloseImp(CMaaSocket * pSock)
     if  (pSock)
     {
 #ifndef TOOLSLIB_SINGLE_THREAD
-#ifndef __unix__TMP
-#ifdef __TOOLS_USE_WINSOCK2
         pSock->Notify_PreDeletingByException();
-#else
-        pSock->Notify_PreDeletingByExeption();
-#endif
-        //pSock->AsyncSelect ( 0 ); //!!! DEBUG
-#else
-        pSock->Notify_PreDeletingByException();
-#endif
 #endif
     }
 }
@@ -1589,6 +1570,57 @@ XTOOLastErrorEx::XTOOLastErrorEx(const char * Format, va_list Args)
      ((XTOOErrMsgImp *)m_pImp)->InsertInMsg(s, ' ');
 }
 */
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// class CMaaToolsLibClassImpRefKeeper to avoid delete/new on some zero count imps
+//------------------------------------------------------------------------------
+CMaaToolsLibClassImpRefKeeper::CMaaToolsLibClassImpRefKeeper() noexcept
+{
+#ifdef TOOLSLIB_ERRORS_IMP_ALLOCATORS
+    XTOOErrMsgImp::GetAllocator().AddRefEx();
+    XTOOErrnoImp::GetAllocator().AddRefEx();
+    XTOOWsaErrImp::GetAllocator().AddRefEx();
+    XTOOSockErrImp::GetAllocator().AddRefEx();
+    XTOOSockCloseImp::GetAllocator().AddRefEx();
+    XTOOGetLastErrorImp::GetAllocator().AddRefEx();
+#endif
+    CMaaFile::CMaaFileImp::GetAllocator().AddRefEx();
+#ifdef _WIN32
+    CMaaFindFile2::CMaaFindFile2Imp::GetAllocator().AddRefEx();
+#else
+#ifndef TOOLSLIB_SINGLE_THREAD
+    //C_os_StartProcess::Reader::GetAllocator().AddRefEx();
+    //C_os_StartProcess::Writer::GetAllocator().AddRefEx();
+#if defined(__TOOLS_USE_WINSOCK2) || defined(__unix__)
+    CMaaSockThread::SCmd::GetAllocator().AddRefEx();
+#endif
+#endif
+#endif
+}
+CMaaToolsLibClassImpRefKeeper::~CMaaToolsLibClassImpRefKeeper()
+{
+#ifndef _WIN32
+#ifndef TOOLSLIB_SINGLE_THREAD
+#if defined(__TOOLS_USE_WINSOCK2) || defined(__unix__)
+    CMaaSockThread::SCmd::GetAllocator().DelRefEx();
+#endif
+    //C_os_StartProcess::Writer::GetAllocator().DelRefEx();
+    //C_os_StartProcess::Reader::GetAllocator().DelRefEx();
+#endif
+#else
+    CMaaFindFile2::CMaaFindFile2Imp::GetAllocator().DelRefEx();
+#endif
+    CMaaFile::CMaaFileImp::GetAllocator().DelRefEx();
+#ifdef TOOLSLIB_ERRORS_IMP_ALLOCATORS
+    XTOOGetLastErrorImp::GetAllocator().DelRefEx();
+    XTOOSockCloseImp::GetAllocator().DelRefEx();
+    XTOOSockErrImp::GetAllocator().DelRefEx();
+    XTOOWsaErrImp::GetAllocator().DelRefEx();
+    XTOOErrnoImp::GetAllocator().DelRefEx();
+    XTOOErrMsgImp::GetAllocator().DelRefEx();
+#endif
+}
 //------------------------------------------------------------------------------
 
 //==============================================================================

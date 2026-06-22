@@ -130,7 +130,7 @@ public:
     virtual int Notify_Connected ( _IP Ip, _Port Port, const char * DnsName );
     virtual int Notify_Closed ();
     virtual int Notify_TimeOut ();
-    virtual int Notify_PreDeletingByExeption ();
+    virtual int Notify_PreDeletingByException ();
     virtual CMaaString GetConnectionName () noexcept;
 
     void Error ( const char * msg );

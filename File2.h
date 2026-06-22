@@ -1280,6 +1280,8 @@ bool unix_StartProcess(const char * ExecFileName, const char ** args = nullptr, 
 
 class C_os_StartProcess
 {
+    friend class CMaaToolsLibClassImpRefKeeper;
+
     int m_Flags;
     int m_Errno;
 

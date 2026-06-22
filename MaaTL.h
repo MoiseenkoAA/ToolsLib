@@ -3817,7 +3817,11 @@ struct SF1
 {
     static constexpr int PreAllocate(int) noexcept { return 0; }
     static constexpr int AddRef() noexcept { return 0; }
+    static constexpr int AddRefUl() noexcept { return 0; }
+    static constexpr int AddRefEx() noexcept { return 0; }
     static constexpr int DelRef() noexcept { return 0; }
+    static constexpr int DelRefUl() noexcept { return 0; }
+    static constexpr int DelRefEx() noexcept { return 0; }
     static constexpr int GetFreeCount() noexcept { return 0; }
     static constexpr int GetTotalCount() noexcept { return 0; }
 };

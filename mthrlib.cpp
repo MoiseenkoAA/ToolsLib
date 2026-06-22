@@ -3964,7 +3964,7 @@ int gCMaaToolLib_crt_Initializer() noexcept
 {
     if (!gCMaaToolLib_crt_Initialized)
     {
-        if (!CMaaString::CheckRuntimeConditions() || sizeof(_word) != 2)
+        if constexpr (!CMaaString::CheckRuntimeConditions() || sizeof(_word) != 2)
         {
             exit(101);
         }
@@ -4017,28 +4017,6 @@ int gCMaaToolLib_crt_Initializer() noexcept
 }
 
 
-//------------------------------------------------------------------------------
-// class CMaaToolsLibClassImpRefKeeper to avoid delete/new on some zero count imps
-//------------------------------------------------------------------------------
-class CMaaToolsLibClassImpRefKeeper
-{
-public:
-    CMaaToolsLibClassImpRefKeeper() noexcept
-    {
-        CMaaFile::CMaaFileImp::GetAllocator().AddRefEx();
-#ifdef _WIN32
-        CMaaFindFile2::CMaaFindFile2Imp::GetAllocator().AddRefEx();
-#endif
-    }
-    ~CMaaToolsLibClassImpRefKeeper()
-    {
-#ifdef _WIN32
-        CMaaFindFile2::CMaaFindFile2Imp::GetAllocator().DelRefEx();
-#endif
-        CMaaFile::CMaaFileImp::GetAllocator().DelRefEx();
-    }
-};
-//------------------------------------------------------------------------------
 struct CMaaToolLib_crt_Initializer
 {
     int m_i = gCMaaToolLib_crt_Initializer();

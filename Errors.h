@@ -265,7 +265,7 @@ private:
 class CMaaSocket
 {
 public:
-    int Notify_PreDeletingByExeption() { return 0; }
+    //int Notify_PreDeletingByExeption() { return 0; }
     int Notify_PreDeletingByException() { return 0; }
 };
 #endif
@@ -483,5 +483,16 @@ public:
 };
 
 //==============================================================================
+
+//------------------------------------------------------------------------------
+// class CMaaToolsLibClassImpRefKeeper to avoid delete/new on some zero count imps
+//------------------------------------------------------------------------------
+class CMaaToolsLibClassImpRefKeeper
+{
+public:
+    CMaaToolsLibClassImpRefKeeper() noexcept;
+    ~CMaaToolsLibClassImpRefKeeper();
+};
+//------------------------------------------------------------------------------
 
 #endif // __TOOLS_ERRORS_H

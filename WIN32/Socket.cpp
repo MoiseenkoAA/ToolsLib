@@ -326,7 +326,7 @@ int CMaaSocket::Notify_Closed ()
     return 0;
 }
 //---------------------------------------------------------------------------
-int CMaaSocket::Notify_PreDeletingByExeption ()
+int CMaaSocket::Notify_PreDeletingByException ()
 {
     AsyncSelect ( 0 ); // So you can use message box to display error message. This avoids the next messages to be processed by CMaaSocket
     return 0;
