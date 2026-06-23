@@ -60,11 +60,6 @@
 #include "perm.h"
 #include "temp.h"
 
-
-#ifdef __unix__
-#define __unix__TMP
-#endif
-
 #define static_constexpr_Imp static constexpr
 //#define static_constexpr_Imp static
 
@@ -1592,19 +1587,21 @@ CMaaToolsLibClassImpRefKeeper::CMaaToolsLibClassImpRefKeeper() noexcept
 #ifndef TOOLSLIB_SINGLE_THREAD
     //C_os_StartProcess::Reader::GetAllocator().AddRefEx();
     //C_os_StartProcess::Writer::GetAllocator().AddRefEx();
-#if defined(__TOOLS_USE_WINSOCK2) || defined(__unix__)
+#endif
+#endif
+
+#if !defined(TOOLSLIB_SINGLE_THREAD) && (defined(__TOOLS_USE_WINSOCK2) || defined(__unix__))
     CMaaSockThread::SCmd::GetAllocator().AddRefEx();
-#endif
-#endif
 #endif
 }
 CMaaToolsLibClassImpRefKeeper::~CMaaToolsLibClassImpRefKeeper()
 {
-#ifndef _WIN32
-#ifndef TOOLSLIB_SINGLE_THREAD
-#if defined(__TOOLS_USE_WINSOCK2) || defined(__unix__)
+#if !defined(TOOLSLIB_SINGLE_THREAD) && (defined(__TOOLS_USE_WINSOCK2) || defined(__unix__))
     CMaaSockThread::SCmd::GetAllocator().DelRefEx();
 #endif
+
+#ifndef _WIN32
+#ifndef TOOLSLIB_SINGLE_THREAD
     //C_os_StartProcess::Writer::GetAllocator().DelRefEx();
     //C_os_StartProcess::Reader::GetAllocator().DelRefEx();
 #endif
