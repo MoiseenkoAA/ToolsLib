@@ -1250,7 +1250,11 @@ protected:
         ADD_ALLOCATOR(CMaaFindFile2Imp)
 #endif
     };
-    CMaaFindFile2Imp * m_pImp;
+#ifdef _WIN32
+    CMaaFindFile2Imp* m_pImp;
+#else
+    CMaaFindFile2Imp m_Imp;
+#endif
     CMaaPtr_<unsigned char, 1> m_pm;
 #ifdef _WIN32
     CMaaSListAD<CMaaFindFile2Imp> m_Stack;
