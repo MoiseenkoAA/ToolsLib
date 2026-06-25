@@ -1159,12 +1159,27 @@ public:
 #endif
     virtual void Swap(CMaaUnivHashL<Key, Data, bStandartHash, AllocatorType, Lock, Locker>& That) noexcept
     {
-        m_lk->WLock();
-        That.m_lk->WLock();
-        m_h.Swap(That.m_h);
-        m_lk.Swap(That.m_lk);
-        That.m_lk->WUnLock();
-        m_lk->WUnLock();
+        if (this != &That)
+        {
+            if (m_lk < That.m_lk)
+            {
+                m_lk->WLock();
+                That.m_lk->WLock();
+                m_h.Swap(That.m_h);
+                //m_lk.Swap(That.m_lk);
+                That.m_lk->WUnLock();
+                m_lk->WUnLock();
+            }
+            else
+            {
+                That.m_lk->WLock();
+                m_lk->WLock();
+                m_h.Swap(That.m_h);
+                //m_lk.Swap(That.m_lk);
+                m_lk->WUnLock();
+                That.m_lk->WUnLock();
+            }
+        }
     }
     
     virtual void Swap(CMaaUnivHash<Key, Data, bStandartHash, AllocatorType> &ht) noexcept
