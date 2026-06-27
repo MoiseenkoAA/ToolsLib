@@ -385,6 +385,81 @@ void CMaaAtomicFastMutex::FlushLog(bool bForced) const noexcept
 {
 }
 
+#ifndef TOOLSLIB_SINGLE_THREAD
+_dword CMaaAtomicFastMutex2W::Lock_us(_qword us) noexcept
+{
+    if (us == -1)
+    {
+        return Lock();
+    }
+    if (!us)
+    {
+        return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+    }
+    const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+    const CMaaTime& tt = gHRTime;
+    const _uqword nxt = tt.GetNextTime(us);
+    if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+    {
+        m_Lock.fetch_add(1, std::TL_memory_order_acq_rel);
+    }
+    else
+    {
+        int s = 100;
+        while (1)
+        {
+            if (TryLock())
+            {
+                return WAIT_OBJECT_0;
+            }
+            if (tt.GetCounter() >= nxt)
+            {
+                return WAIT_TIMEOUT;
+            }
+            if (--s)
+            {
+                std::this_thread::yield(); // win32,win64: SwitchToThread();
+            }
+            else
+            {
+                s = 100;
+                CMaaThreadIdType abThreadId = m_ThreadId.load(std::TL_memory_order_acquire);
+                if (abThreadId != InvalidThrId)
+                {
+                    if (!CMaaThreadExists(abThreadId))
+                    {
+                        if (m_ThreadId.compare_exchange_strong(abThreadId, ThreadId, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+                        {
+                            m_Lock.store(0, std::TL_memory_order_release);
+                            return WAIT_ABANDONED;
+                        }
+                    }
+                    else
+                    {
+                        std::this_thread::yield(); // win32,win64: SwitchToThread();
+                    }
+                }
+            }
+        }
+        m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+    }
+    return WAIT_OBJECT_0;
+}
+
+_dword CMaaAtomicFastMutex2W::Lock(_dword ms) noexcept
+{
+    if (ms == INFINITE)
+    {
+        return Lock();
+    }
+    if (!ms)
+    {
+        return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+    }
+    return Lock_us(1000 * (_uqword)ms);
+}
+#endif
+
 
 CMaaAtomicFastMutexW::CMaaAtomicFastMutexW(/*int Spins*/) noexcept
 :   m_Lock(0),

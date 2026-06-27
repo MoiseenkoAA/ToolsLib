@@ -60,8 +60,7 @@
 
 //#define DEBUG_RW_LOCKS
 
-#if 1
-// for #define CMaa_gLock_lib_Mutex CMaaAtomicFastMutex2W
+#ifdef CONSTEXPR_GLOCK_LIB_ATOMIC // for #define CMaa_gLock_lib_Mutex CMaaAtomicFastMutex2W
 inline CMaa_gLock_lib_Mutex* __GLock__lib() noexcept
 {
     static constexpr CMaa_gLock_lib_Mutex g;
@@ -110,6 +109,17 @@ inline CMaaMutex* __GLock__lib2(bool bInit = false) noexcept
     }
     return gptr;
 }
+#ifdef CONSTEXPR_GLOCK_USR_ATOMIC
+inline CMaa_gLock_usr_Mutex* __GLock__usr() noexcept
+{
+    static constexpr CMaa_gLock_usr_Mutex g;
+    return (CMaa_gLock_usr_Mutex*)&g;
+}
+inline CMaa_gLock_usr_Mutex* __GLock__usr(bool) noexcept
+{
+    return __GLock__usr();
+}
+#else
 inline CMaa_gLock_usr_Mutex* __GLock__usr(bool bInit = false) noexcept
 {
     static CMaa_gLock_usr_Mutex* gptr = nullptr;
@@ -128,6 +138,7 @@ inline CMaa_gLock_usr_Mutex* __GLock__usr(bool bInit = false) noexcept
     }
     return gptr;
 }
+#endif
 inline CMaaMutex* __GLock__usr2(bool bInit = false) noexcept
 {
     static CMaaMutex* gptr = nullptr;
@@ -146,6 +157,17 @@ inline CMaaMutex* __GLock__usr2(bool bInit = false) noexcept
     }
     return gptr;
 }
+#ifdef CONSTEXPR_GLOCK_USR_ATOMIC
+inline CMaa_gLock_usr3_Mutex* __GLock__usr3() noexcept
+{
+    static constexpr CMaa_gLock_usr3_Mutex g;
+    return (CMaa_gLock_usr3_Mutex*)&g;
+}
+inline CMaa_gLock_usr3_Mutex* __GLock__usr3(bool) noexcept
+{
+    return __GLock__usr3();
+}
+#else
 inline CMaa_gLock_usr3_Mutex* __GLock__usr3(bool bInit = false) noexcept
 {
     static CMaa_gLock_usr3_Mutex* gptr = nullptr;
@@ -164,6 +186,7 @@ inline CMaa_gLock_usr3_Mutex* __GLock__usr3(bool bInit = false) noexcept
     }
     return gptr;
 }
+#endif
 inline CMaa_gLock_lib_Mutex& Get_gLock() noexcept
 {
     return gLock_lib;

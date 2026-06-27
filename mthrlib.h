@@ -81,6 +81,10 @@
 #include <curses.h>
 */
 
+#define CONSTEXPR_GLOCK_LIB_ATOMIC
+//#define CONSTEXPR_GLOCK_USR_ATOMIC
+//#define AFM0_PROFILE
+
 // default: std::memory_order_seq_cst
 
 #define TOOLSLIB_CE_WS_MO // std
@@ -139,25 +143,34 @@ class CMaaWin32Lock;
 //#define TOOLSLIB_FAST_gLock_usr_Mutex // TOOLSLIB_FAST_MTX - bad performance
 #define TOOLSLIB_FAST_gLock_usr3_Mutex
 
-/*
+#ifdef CONSTEXPR_GLOCK_LIB_ATOMIC
+#define CMaa_gLock_lib_Mutex CMaaAtomicFastMutex2W
+#else
 #ifdef TOOLSLIB_FAST_gLock_lib_Mutex
 #define CMaa_gLock_lib_Mutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
 #else
 #define CMaa_gLock_lib_Mutex CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
 #endif
-*/
-#define CMaa_gLock_lib_Mutex CMaaAtomicFastMutex2W
+#endif
 
+#ifdef CONSTEXPR_GLOCK_USR_ATOMIC
+#define CMaa_gLock_usr_Mutex CMaaAtomicFastMutex2W
+#else
 #ifdef TOOLSLIB_FAST_gLock_usr_Mutex
 #define CMaa_gLock_usr_Mutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
 #else
 #define CMaa_gLock_usr_Mutex CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
 #endif
+#endif
 
+#ifdef CONSTEXPR_GLOCK_USR_ATOMIC
+#define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex2W
+#else
 #ifdef TOOLSLIB_FAST_gLock_usr3_Mutex
 #define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex // CMaaAtomicFastMutex is safe here
 #else
 #define CMaa_gLock_usr3_Mutex CMaaMutex
+#endif
 #endif
 
 
@@ -356,7 +369,7 @@ public:
 };
 
 #define CMaaStdRecursiveMutex CMaaAtomicFastMutex
-//#define CMaaAtomicFastMutex2W CMaaAtomicFastMutex
+#define CMaaAtomicFastMutex2W CMaaAtomicFastMutex
 
 class CMaaFastMutex
 {
@@ -594,6 +607,9 @@ public:
 class CMaaAtomicFastMutex0 // the simplest, fast mutex // non recursive
 {
     mutable std::atomic_flag m_Lock;
+#ifdef AFM0_PROFILE
+    static inline std::atomic<int> s_CollisionsCount = {0};
+#endif
 public:
     constexpr CMaaAtomicFastMutex0() noexcept
     :   m_Lock ATOMIC_FLAG_INIT
@@ -609,6 +625,9 @@ public:
             // Note that even though wait guarantees it returns only after the value has
             // changed, the lock is acquired after the next condition check.
             //m_Lock.wait(true, std::memory_order_relaxed)
+#endif
+#ifdef AFM0_PROFILE
+            ++s_CollisionsCount;
 #endif
             ;
     }
@@ -754,11 +773,8 @@ public:
     void StillLocked(const char* SrcFile, int SrcLine) noexcept {}
     void FlushLog(bool bForced) const noexcept {}
 };
-//#define CMaaAtomicFastMutex0 CMaaAtomicFastMutex0W // can make cpu usage lower and can be something slower
+#define CMaaAtomicFastMutex0 CMaaAtomicFastMutex0W // can make cpu usage lower and can be something slower
 
-#ifdef TOOLSLIB_SINGLE_THREAD
-#define CMaaAtomicFastMutex2W CMaaAtomicFastMutexST2W
-#endif
 class CMaaAtomicFastMutex2W // 2026 // the simplest, recursive fast mutex // wait() + notify_one() version
 {
     static constexpr CMaaThreadIdType InvalidThrId{ CMaaInvalidThreadId() };
@@ -769,7 +785,7 @@ class CMaaAtomicFastMutex2W // 2026 // the simplest, recursive fast mutex // wai
 
 public:
     constexpr CMaaAtomicFastMutex2W() noexcept
-    :   m_Lock{ 0 },
+    :   m_Lock{ -1 },
         m_ThreadId{ InvalidThrId }
     {
     }
@@ -836,6 +852,9 @@ public:
         }
         return -1; // error
     }
+    _dword Lock_us(_qword us) noexcept;
+    _dword Lock(_dword ms) noexcept;
+    int IsLocked() const noexcept { return 1 + m_Lock; }
     constexpr void AddRef() const noexcept {}
     constexpr int UnRef() const noexcept { return 1; }
 #ifdef _WIN32_000
@@ -867,10 +886,6 @@ public:
     void StillLocked(const char* SrcFile, int SrcLine) noexcept {}
     void FlushLog(bool bForced) const noexcept {}
 };
-#endif
-#ifdef TOOLSLIB_SINGLE_THREAD
-#undef CMaaAtomicFastMutex2W
-#define CMaaAtomicFastMutex2W CMaaAtomicFastMutex
 #endif
 
 template<class T = CMaaAtomicFastMutex> class CMaaAtomicFastMutexLocker

@@ -228,9 +228,17 @@ extern bool gbCMaaPtrThrow;
 //#define Max(a,b) ((a)>(b)?(a):(b))
 template<class T> T CMaaMin(const T& a, const T& b) noexcept(noexcept(a < b) && noexcept(T(a))) { return a < b ? a : b; }
 template<class T> T CMaaMax(const T& a, const T& b) noexcept(noexcept(a < b) && noexcept(T(a))) { return a < b ? b : a; }
-template<class T> int CMaaXSign(const T& x) noexcept(noexcept(x < 0) && noexcept(x > 0)) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
+#ifdef _MaaRF_INTERNAL_BUILD
+template<class T> int CMaaXSign1(const T& x) noexcept(noexcept(x < 0) && noexcept(x > 0)) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
+#else
+//template<typename T> requires std::signed_integral<T> int CMaaXSign1(const T& x) noexcept(noexcept(x < 0) && noexcept(x > 0)) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
+template<typename T> int CMaaXSign1(const T& x) noexcept(noexcept(x < 0) && noexcept(x > 0)) { static_assert(std::is_signed<T>::value, "T must be a signed type!"); return x < 0 ? -1 : x > 0 ? 1 : 0; }
+#endif
 //template<class T> int CMaaXSign(const T& a, const T& b) noexcept(noexcept(a < b) && noexcept(a == b)) { return a < b ? -1 : a == b ? 0 : 1; }
+// CMaaXSign is for qsort compare function generally
 template<class T> int CMaaXSign(const T& a, const T& b) noexcept(noexcept(a < b)) { return a < b ? -1 : b < a ? 1 : 0; }
+// CMaaXSign1 is CMaaXSign whitch is return { -1, 0, 1 }
+template<class T> int CMaaXSign1(const T& a, const T& b) noexcept(noexcept(CMaaXSign(a, b))) { const int v = CMaaXSign(a, b); return v < 0 ? -1 : v ? 1 : 0; }
 //---------------------------------------------------------------------------
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept(std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value)
 //template < class T > void CMaaSwap ( T & a, T & b ) noexcept( noexcept(T(a)) && noexcept(a=b) )
