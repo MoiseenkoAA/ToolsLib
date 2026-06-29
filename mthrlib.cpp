@@ -4039,10 +4039,10 @@ int gCMaaToolLib_crt_Initializer() noexcept
 {
     if (!gCMaaToolLib_crt_Initialized)
     {
-        if constexpr (!CMaaString::CheckRuntimeConditions() || sizeof(_word) != 2)
-        {
-            exit(101);
-        }
+        //if constexpr (!CMaaString::CheckRuntimeConditions() || sizeof(_word) != 2)
+        //{
+        //    exit(101);
+        //}
         TL_DbgAlloc;
 
         gCMaaToolLib_crt_Initialized = true;

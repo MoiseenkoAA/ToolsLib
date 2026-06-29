@@ -1533,7 +1533,7 @@ public:
     CMaaString(const CMaaString& That, int Start, int Len) noexcept;
     CMaaString(const CMaaString& That) noexcept;
     CMaaString(CMaaString&& That) noexcept { m_pImp = That.m_pImp; That.m_pImp = sp_NullImp; }
-    static bool constexpr CheckRuntimeConditions() noexcept { return sizeof(std::atomic<int>) == sizeof(int) && sizeof(std::atomic<unsigned short>) == 2 && sizeof(std::atomic<unsigned char>) == 1 && sizeof(wchar_t) <= 4 && sizeof(char32_t) <= 4; }
+    static bool constexpr CheckRuntimeConditions() noexcept { static_assert(sizeof(std::atomic<int>) == sizeof(int) && sizeof(std::atomic<unsigned short>) == 2 && sizeof(std::atomic<unsigned char>) == 1 && sizeof(wchar_t) <= 4 && sizeof(char32_t) <= 4, "CMaaString::CheckRuntimeConditions() failed!"); return true; }
     CMaaString& operator=(const CMaaString& That) noexcept;
     CMaaString& operator=(CMaaString&& That) noexcept;
 #if TOOLSLIB_USE_CMAASTRING64 == 2
