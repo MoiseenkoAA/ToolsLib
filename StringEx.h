@@ -1468,6 +1468,7 @@ public:
     CMaaString(const void* pMem, size_t Len, _e1 Flags /**/) noexcept = delete;
     CMaaString(const void* pMem, size_t Len, _e2 Flags /**/) noexcept = delete;
 #endif
+    // pMem must not be nullptr
     CMaaString(const void* pMem, _e1 Flags /**/) noexcept;
 #ifdef TOOLSLIB_FORCE_TRY_AND_CHECK_ConstStr
     //CMaaString(const CMaaConstStr &s, _e2 Flags /**/) noexcept;
@@ -1508,8 +1509,10 @@ public:
         }
         m_pImp = sp_NullImp;
     }
+    // pMem must not be nullptr
     CMaaString(char* pMem, _e2 Flags /**/) noexcept;
 #endif
+    // pMem must not be nullptr
     CMaaString(const void* pMem, _e2 Flags /**/) noexcept;
 
     // CMaaString(nullptr, Len, -1) allocates Len bytes non-initialized memory, or direct memory referenced string if ptr != nullptr Len bytes

@@ -3939,6 +3939,7 @@ CMaaString::CMaaString(const void* pMem, size_t Len, _e2 /*Flags*/) noexcept
 }
 #endif
 
+// pMem must not be nullptr
 CMaaString::CMaaString(const void* pMem, _e1 /*Flags*/) noexcept
 {
     const int Len = int_strlen((const char*)pMem);
@@ -3968,6 +3969,7 @@ CMaaString::CMaaString(const void* pMem, _e1 /*Flags*/) noexcept
     m_pImp = sp_NullImp;
 }
 
+// pMem must not be nullptr
 CMaaString::CMaaString(const void* pMem, _e2 /*Flags*/) noexcept
 {
     const int Len = int_strlen((const char *)pMem);
@@ -3998,6 +4000,7 @@ CMaaString::CMaaString(const void* pMem, _e2 /*Flags*/) noexcept
 }
 #ifdef TOOLSLIB_FORCE_TRY_AND_CHECK_ConstStr
 //CMaaString::CMaaString(const CMaaConstStr &s, _e2 /*Flags*/) noexcept
+// pMem must not be nullptr
 CMaaString::CMaaString(char* pMem, _e2 /*Flags*/) noexcept
 {
     const int Len = int_strlen(pMem);
