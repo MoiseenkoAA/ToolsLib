@@ -2539,26 +2539,22 @@ int CMaaXmlNode::RemoveAllHiddenPtrs() noexcept
 }
 int CMaaXmlNode::AddHiddenInt(int Name, int x) noexcept(noexcept_new)
 {
-    //return AddHiddenPtr(Name, (void*)x);
-    return AddHiddenPtr(Name, reinterpret_cast<void*>(static_cast<long long>(x)));
+    return AddHiddenPtr(Name, (void*)(size_t)x);
 }
 int CMaaXmlNode::AddHiddenInt_mutable(int Name, int x) const noexcept(noexcept_new)
 {
-    //return AddHiddenPtr(Name, (void*)x);
-    return AddHiddenPtr_mutable(Name, reinterpret_cast<void*>(static_cast<long long>(x)));
+    return AddHiddenPtr_mutable(Name, (void*)(size_t)x);
 }
 int CMaaXmlNode::GetHiddenInt(int Name, int Default) const noexcept
 {
     bool bGot;
     void * ptr = GetHiddenPtr(Name, bGot);
-    //return bGot ? (int)(long)ptr : Default;
-    return bGot ? static_cast<int>(reinterpret_cast<long long>(ptr)) : Default;
+    return bGot ? (int)(size_t)ptr : Default;
 }
 int CMaaXmlNode::GetHiddenInt(int Name, int Default, bool& bGot) const noexcept
 {
     void* ptr = GetHiddenPtr(Name, bGot);
-    //return bGot ? (int)(long)ptr : Default;
-    return bGot ? static_cast<int>(reinterpret_cast<long long>(ptr)) : Default;
+    return bGot ? (int)(size_t)ptr : Default;
 }
 int CMaaXmlNode::GetHiddenInt(int Name, int Default, bool* bGot) const noexcept
 {
@@ -2568,8 +2564,7 @@ int CMaaXmlNode::GetHiddenInt(int Name, int Default, bool* bGot) const noexcept
         bGot = &b;
     }
     void* ptr = GetHiddenPtr(Name, bGot);
-    //return bGot ? (int)(long)ptr : Default;
-    return bGot ? static_cast<int>(reinterpret_cast<long long>(ptr)) : Default;
+    return bGot ? (int)(size_t)ptr : Default;
 }
 int CMaaXmlNode::AddHiddenStringImp(int Name, const CMaaString& Str) noexcept(noexcept_new)
 {
@@ -2702,25 +2697,21 @@ int CMaaXmlNode::RemoveAllHiddenPtrs(bool bDeref) noexcept
 */
 int CMaaXmlNode::AddHiddenInt(const CMaaString& Name, int x) noexcept(noexcept_new)
 {
-    //return AddHiddenPtr(Name, (void*)x);
-    return AddHiddenPtr(Name, reinterpret_cast<void*>(static_cast<long long>(x)));
+    return AddHiddenPtr(Name, (void*)(size_t)x);
 }
 int CMaaXmlNode::AddHiddenInt_mutable(const CMaaString& Name, int x) const noexcept(noexcept_new)
 {
-    //return AddHiddenPtr(Name, (void*)x);
-    return AddHiddenPtr_mutable(Name, reinterpret_cast<void*>(static_cast<long long>(x)));
+    return AddHiddenPtr_mutable(Name, (void*)(size_t)x);
 }
 int CMaaXmlNode::GetHiddenInt(const CMaaString &Name, int Default) const noexcept
 {
     bool bGot;
-    //const int r = (int)(long)(GetHiddenPtr(Name, bGot);
-    const int r = static_cast<int>(reinterpret_cast<long long>(GetHiddenPtr(Name, bGot)));
+    const int r = (int)(size_t)GetHiddenPtr(Name, bGot);
     return bGot ? r : Default;
 }
 int CMaaXmlNode::GetHiddenInt(const CMaaString& Name, int Default, bool& bGot) const noexcept
 {
-    //const int r = (int)(long)(GetHiddenPtr(Name, bGot);
-    const int r = static_cast<int>(reinterpret_cast<long long>(GetHiddenPtr(Name, bGot)));
+    const int r = (int)(size_t)GetHiddenPtr(Name, bGot);
     return bGot ? r : Default;
 }
 int CMaaXmlNode::GetHiddenInt(const CMaaString& Name, int Default, bool* bGot) const noexcept
@@ -2730,8 +2721,7 @@ int CMaaXmlNode::GetHiddenInt(const CMaaString& Name, int Default, bool* bGot) c
     {
         bGot = &b;
     }
-    //const int r = (int)(long)(GetHiddenPtr(Name, bGot);
-    const int r = static_cast<int>(reinterpret_cast<long long>(GetHiddenPtr(Name, bGot)));
+    const int r = (int)(size_t)GetHiddenPtr(Name, bGot);
     return bGot ? r : Default;
 }
 #if 0
@@ -2742,12 +2732,8 @@ int CMaaXmlNode::GetHiddenInt(const char * const& pszName, int Default, bool* bG
     {
         bGot = &b;
     }
-    int r = static_cast<int>(reinterpret_cast<long long>(GetHiddenPtr(CMaaStringRO(pszName), bGot)));
-    if (!*bGot)
-    {
-        r = Default;
-    }
-    return r;
+    int r = (int)(size_t)GetHiddenPtr(CMaaStringRO(pszName), bGot);
+    return *bGot ? r : Default;
 }
 #endif
 int CMaaXmlNode::AddHiddenString(const CMaaString &Name, const CMaaString &Str) noexcept(noexcept_new)
