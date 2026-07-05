@@ -362,7 +362,13 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
             {
                 m_ProgressFn = ProgressFn;
             }
-            CMaaFile fStdIn(CMaaFileStdin, CMaaFile::eR_SrSw, eNoExcept);
+            CMaaFile fStdIn;
+#ifdef FAST_CGI_SUPP
+            if (!m_pFastCgiRequest)
+#endif
+            {
+                fStdIn = CMaaFile(CMaaFileStdin, CMaaFile::eR_SrSw, eNoExcept);
+            }
             CMaaConcatString1 str;
             _qword len = 0;
             CMaaPtr_<char, 1> Buffer(1024 * 1024);

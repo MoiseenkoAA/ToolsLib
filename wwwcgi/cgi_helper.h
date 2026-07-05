@@ -79,7 +79,9 @@ protected:
     FCGX_Request * m_pFastCgiRequest;
 #endif
     CMaaUnivHash<CMaaString, CMaaString>* m_phCgiParamOverride = nullptr;
-    CMaaFile m_fStdOut; // = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true) for CGI, {} for FastCGI
+public:
+    CMaaFile m_fStdOut; // = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true) for CGI, = {} for FastCGI
+protected:
     int m_Error;
     bool m_SubstOut;
     CCGIHelper * m_subst_imp;
