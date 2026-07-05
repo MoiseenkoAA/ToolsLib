@@ -138,12 +138,12 @@ _qword GetCurrentTime_us(time_t * pt = nullptr, int * pusec = nullptr) noexcept;
 //------------------------------------------------------------------------------
 // class CMaaFile global defs
 //------------------------------------------------------------------------------
-#define CMaaFileStdin ((const CMaaString&)CMaaFile::C().sStdin)
-#define CMaaFileStdout ((const CMaaString&)CMaaFile::C().sStdout)
-#define CMaaFileStderr ((const CMaaString&)CMaaFile::C().sStderr)
-#define CMaaFileNul ((const CMaaString&)CMaaFile::C().sNul)
-#define CMaaFileNull ((const CMaaString&)CMaaFile::C().sNull)
-#define CMaaFileDevNull ((const CMaaString&)CMaaFile::C().sDevNull)
+#define CMaaFileStdin ((const CMaaString&)CMaaFile::C().sStdin)     // "stdin"
+#define CMaaFileStdout ((const CMaaString&)CMaaFile::C().sStdout)   // "stdout"
+#define CMaaFileStderr ((const CMaaString&)CMaaFile::C().sStderr)   // "stderr"
+#define CMaaFileNul ((const CMaaString&)CMaaFile::C().sNul)         // "nul"
+#define CMaaFileNull ((const CMaaString&)CMaaFile::C().sNull)       // "null"
+#define CMaaFileDevNull ((const CMaaString&)CMaaFile::C().sDevNull) // "/dev/null"
 #define CMaaFileSystemSlash ((const CMaaString&)CMaaFile::C().sSlash)
 #define CMaaFileOtherSystemSlash ((const CMaaString&)CMaaFile::C().sOtherSlash)
 //------------------------------------------------------------------------------
@@ -228,6 +228,10 @@ public:
         m_bIsThrow = bThrow;
         return b;
     }
+    static void SetThreadLocalPath(const CMaaString &Path = CMaaStringZ) noexcept;
+    static CMaaString GetThreadLocalPath() noexcept;
+    static CMaaString TLPath(const CMaaString &x) noexcept(noexcept_new);
+    static CMaaString& TLPath2(CMaaString& x) noexcept(noexcept_new);
 
     enum ePrefix
     {
@@ -279,6 +283,7 @@ public:
     }
 
 #if defined(_WIN32) && defined(_UNICODE)
+#define MkFsCompatible_(x) CMaaFile::MkCompatible_(x)
 #define MkFsCompatible(x) CMaaFile::MkCompatible(x)
 #ifdef CMAASTRING_HAS_ADD_REF_DATA_F
 #define MkFsNative(x) CMaaFile::MkNative(x) //Utf8ToUnicode(x)
@@ -292,6 +297,7 @@ public:
 //#define _uc_MkCompatible(x) Utf8ToUnicode(CMaaFile::MkCompatible(x))
 //#define _uc_MkCompatible_cast(x) (_WC_*)(const char *)(x)
 #else
+#define MkFsCompatible_(x) CMaaFile::MkCompatible_(x)
 #define MkFsCompatible(x) CMaaFile::MkCompatible(x)
 #define MkFsNative(x) (x)
 #define MkFsNativeCompatible(x) CMaaFile::MkNativeCompatible(x)
@@ -344,7 +350,8 @@ public:
     static CMaaString ToUppercase(CMaaString FileName, int iCodePage = 1251 /**/);
     static CMaaString ToLowercase(CMaaString FileName, int iCodePage = 1251 /**/);
 
-    static CMaaString MkCompatible(const CMaaString &Name1);
+    static CMaaString MkCompatible_(const CMaaString& Name1); // with out of thread_local path append
+    static CMaaString MkCompatible(const CMaaString& Name1); // with thread_local path append
 #ifdef CMaaString_TEST1
     //static CMaaString MkCompatible(const char * pszName) { return MkCompatible(CMaaString(pszName)); }
 #endif
@@ -1223,7 +1230,7 @@ protected:
 #endif
     {
     public:
-        CMaaString m_Dir, m_Mask;
+        CMaaString m_Dir, m_Dir2, m_Mask;
         int m_iRecursiveDepth;
 #ifdef _WIN32
         bool m_b1st = true, m_Padding[3];

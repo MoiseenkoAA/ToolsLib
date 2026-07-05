@@ -138,6 +138,28 @@ const CMaaFile::CE2& CMaaFile::C2() noexcept
 //---------------------------------------------------------------------------
 DEF_ALLOCATOR(CMaaFile::CMaaFileImp)
 //---------------------------------------------------------------------------
+static thread_local_ CMaaString s_strThreadLocalPath;
+void CMaaFile::SetThreadLocalPath(const CMaaString &Path) noexcept
+{
+    s_strThreadLocalPath = Path;
+}
+CMaaString CMaaFile::GetThreadLocalPath() noexcept
+{
+    return s_strThreadLocalPath;
+}
+CMaaString CMaaFile::TLPath(const CMaaString& x) noexcept(noexcept_new)
+{
+    return s_strThreadLocalPath.IsNotEmpty() ? GetAbsolutePath(x, s_strThreadLocalPath) : x;
+}
+CMaaString & CMaaFile::TLPath2(CMaaString& x) noexcept(noexcept_new)
+{
+    if (s_strThreadLocalPath.IsNotEmpty())
+    {
+        x = GetAbsolutePath(x, s_strThreadLocalPath);
+    }
+    return x;
+}
+
 #ifdef _WIN32
 //---------------------------------------------------------------------------
 CMaaFile::CMaaFileImp::CMaaFileImp(HANDLE hFile, bool bStdHandle) noexcept
@@ -447,7 +469,8 @@ CMaaString CMaaFile::MkNative(const CMaaString& Name1) noexcept // Utf8ToUnicode
 #endif
 }
 #endif
-CMaaString CMaaFile::MkCompatible(const CMaaString &Name1)
+// with out of thread_local path append
+CMaaString CMaaFile::MkCompatible_(const CMaaString &Name1)
 {
 #ifdef CMAASTRING_HAS_ADD_REF_DATA_F
     if (Name1.HasAddRefData0())
@@ -535,6 +558,97 @@ CMaaString CMaaFile::MkCompatible(const CMaaString &Name1)
     ((CMaaString&)Name1).SetAddRefData(Name, 0);
 #endif
     return Name;
+}
+//---------------------------------------------------------------------------
+// with thread_local path append
+CMaaString CMaaFile::MkCompatible(const CMaaString& Name1)
+{
+#ifdef CMAASTRING_HAS_ADD_REF_DATA_F
+    if (Name1.HasAddRefData0())
+    {
+        CMaaString Name = Name1.GetAddRefData(0);
+        if (Name.IsNotEmpty())
+        {
+            return TLPath2(Name); //.Str0Copy();
+        }
+    }
+#endif
+
+    CMaaString Name = Name1;
+    Name.ReplaceNN(OTHER_FILESYSTEM_SLASH, FILESYSTEM_SLASH);
+
+#if 0
+    // Handling "\\..\\" and "\\.."
+    CMaaString Name2 = Name;
+    {
+        int pos = 0;
+        while (pos >= 0)
+        {
+            int pos1 = Name2.Find(pos, szFILESYSTEM_SLASH ".." szFILESYSTEM_SLASH);
+            int pos2 = Name2.Find(pos, szFILESYSTEM_SLASH "..");
+            if (pos2 + 3 != Name2.Length())
+            {
+                pos2 = -1;
+            }
+            pos = (pos1 < 0 || (pos2 >= 0 && pos2 < pos1)) ? pos2 : pos1;
+            if (pos >= 0)
+            {
+                int pos_1 = pos - 1;
+                while (pos_1 >= 0)
+                {
+                    pos_1 = Name2.ReverseFind(pos_1, szFILESYSTEM_SLASH, 1, -1);
+                    if (pos_1 >= 0 && Name2[pos_1 + 1] == FILESYSTEM_SLASH)
+                    {
+                        pos_1--;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                if (pos_1 >= 0)
+                {
+                    if (pos_1 > 0 || Name2[pos + 3] == FILESYSTEM_SLASH)
+                    {
+                        Name2.SetLeftMid(pos_1, pos + 3);
+                        pos = pos_1;
+                    }
+                    else
+                    {
+                        Name2 = Name;
+                        break;
+                    }
+                }
+                else
+                {
+                    Name2 = Name;
+                    break;
+                }
+            }
+        }
+        Name = Name2;
+    }
+#endif
+    
+#if defined(_WIN32) && defined(_UNICODE)
+    if constexpr (ALLOW_NZT_FILENAMES)
+    {
+        //return Name;
+    }
+    else
+#endif
+    {
+#ifdef CMAASTRING_HAS_ADD_REF_DATA_F
+        Name = Name.Str0Copy();
+#else
+        return TLPath2(Name).Str0Copy();
+#endif
+    }
+
+#ifdef CMAASTRING_HAS_ADD_REF_DATA_F
+    ((CMaaString&)Name1).SetAddRefData(Name, 0);
+#endif
+    return TLPath2(Name).Str0Copy();
 }
 //---------------------------------------------------------------------------
 CMaaString CMaaFile::MkNativeCompatible(const CMaaString& FileName)
@@ -1441,13 +1555,13 @@ bool CMaaFile::chroot(const CMaaString &Path, bool bThrow)
 CMaaString CMaaFile::AppendPath(CMaaString src, CMaaString append, bool * pError)
 {
     bool bError = false;
-    src = MkFsCompatible(src);
-    append = MkFsCompatible(append);
+    src = MkFsCompatible_(src);
+    append = MkFsCompatible_(append);
     CMaaString Drive;
 #ifdef _WIN32
     if  (src[1] == ':')
     {
-        Drive = src.RefLeft(3);
+        Drive = src.Left(3);
         src = src.RefMid(3);
     }
     else if (src[0] == FILESYSTEM_SLASH && src[1] == FILESYSTEM_SLASH)
@@ -1455,7 +1569,7 @@ CMaaString CMaaFile::AppendPath(CMaaString src, CMaaString append, bool * pError
         int n = (warning_int)src.Find(2, FILESYSTEM_SLASH);
         if  (n > 0)
         {
-            Drive = src.RefLeft(n + 1);
+            Drive = src.Left(n + 1);
             src = src.RefMid(n + 1);
         }
         else
@@ -1467,7 +1581,7 @@ CMaaString CMaaFile::AppendPath(CMaaString src, CMaaString append, bool * pError
 #else
     if  (src[0] == FILESYSTEM_SLASH)
     {
-        Drive = src.RefLeft(1);
+        Drive = src.Left(1);
         src = src.RefMid(1);
     }
 #endif
@@ -1486,7 +1600,7 @@ CMaaString CMaaFile::AppendPath(CMaaString src, CMaaString append, bool * pError
             Dir = append.RefLeft(n);
             append = append.RefMid(n + 1);
         }
-        if  (Dir.IsNotEmpty() && Dir != ".")
+        if  (Dir.IsNotEmpty() && Dir != "." && Dir != szFILESYSTEM_SLASH)
         {
             if  (Dir == "..")
             {
@@ -1499,8 +1613,9 @@ CMaaString CMaaFile::AppendPath(CMaaString src, CMaaString append, bool * pError
                     }
                     else
                     {
-                        bError = true;
-                        break;
+                        continue;
+                        //bError = true;
+                        //break;
                     }
                 }
                 else
@@ -1563,14 +1678,14 @@ CMaaString CMaaFile::AppendPath(CMaaString src, CMaaString append, bool * pError
 CMaaString CMaaFile::GetRelativePath(CMaaString AbsPath, CMaaString RelatedTo, /*out*/ bool *pbReleted /*= nullptr*/)
 {
     CMaaString Ret;
-    AbsPath = MkFsCompatible(AbsPath);
-    RelatedTo = MkFsCompatible(RelatedTo);
+    AbsPath = MkFsCompatible_(AbsPath);
+    RelatedTo = MkFsCompatible_(RelatedTo);
 
     if  (pbReleted)
     {
         *pbReleted = false;
     }
-    if  (AbsPath == "")
+    if  (AbsPath.IsEmpty())
     {
         return RelatedTo;
     }
@@ -1627,14 +1742,14 @@ CMaaString CMaaFile::GetRelativePath(CMaaString AbsPath, CMaaString RelatedTo, /
 CMaaString CMaaFile::GetAbsolutePath(CMaaString RelOrAbsPath, CMaaString RelatedTo, /*out*/ bool *pbWasReleted /*= nullptr*/)
 {
     CMaaString Ret;
-    RelOrAbsPath = MkFsCompatible(RelOrAbsPath);
-    RelatedTo = MkFsCompatible(RelatedTo);
+    RelOrAbsPath = MkFsCompatible_(RelOrAbsPath);
+    RelatedTo = MkFsCompatible_(RelatedTo);
 
     if  (pbWasReleted)
     {
         *pbWasReleted = false;
     }
-    if  (RelatedTo == "")
+    if  (RelatedTo.IsEmpty())
     {
         return RelOrAbsPath;
     }
@@ -2962,10 +3077,21 @@ bool CMaaFile::Open(const CMaaString &Name1, int /*eMode*/ fMode0, const CMaaStr
     {
         return false;
     }
-    CMaaString Name2 = (fMode & eMMI) ? Name1
+    CMaaString Name2 = 
+        (fMode & eMMI) ? Name1
 #ifdef __unix__
         .Str0Copy()
 #endif
+        :
+        (s_strThreadLocalPath.IsNotEmpty() && Mode.Find(0, "|notstdhandle", 13) < 0 && (Name1 == CMaaFileStdout || Name1 == CMaaFileStdin || Name1 == CMaaFileStderr
+#ifdef _WIN32
+            // || Name1 == CMaaFileNul
+#endif
+#ifdef __unix__
+            || Name1 == CMaaFileNull
+#endif
+            )
+        ) ? Name1
         : MkFsCompatible(Name1);
 
 #ifdef CMAASTRING_HAS_ADD_REF_DATA_F
@@ -3096,8 +3222,8 @@ bool CMaaFile::Open(const CMaaString &Name1, int /*eMode*/ fMode0, const CMaaStr
             {
                 dwCreationDisposition = CREATE_ALWAYS;
             }
-            const CMaaString n_ = Name.RefRight(CMaaFileNul.Length() + 1);
-            if  (n_.Length() != CMaaFileNul.Length() + 1 || (*(const char *)n_ != '\\' && *(const char*)n_ != ':') || !n_.IsMidCi(CMaaFileNul, 1, 0)) // "nul"
+            const char c = Name[Name.Length() - CMaaFileNul.Length() - 1];
+            if ((c && c != '\\' && c != ':') || !Name.IsRightCi(CMaaFileNul, 0)) // "nul"
 #endif
 #ifdef __unix__
             flags |= O_CREAT;// | O_TRUNC; //!!! "N" feature
@@ -6802,6 +6928,9 @@ CMaaFindFile2::CMaaFindFile2Imp::CMaaFindFile2Imp(const CMaaString& Dir, CMaaStr
     }
     else
     {
+        m_Mask = Mask;
+        Mask = "*.*";
+/*
 #ifdef _WIN32
         if  (Mask[0] == FILESYSTEM_SLASH || Mask[1] == ':')
         {
@@ -6823,7 +6952,9 @@ CMaaFindFile2::CMaaFindFile2Imp::CMaaFindFile2Imp(const CMaaString& Dir, CMaaStr
             m_Mask = CMaaString("*") + szFILESYSTEM_SLASH + Mask;
         }
 #endif
+*/
     }
+    m_Dir2 = CMaaFile::MkCompatible(m_Dir).Str0Copy();
     m_Dir = m_Dir.Str0Copy();
     m_Mask = m_Mask.Str0Copy();
     m_iRecursiveDepth = iRecursiveDepth;
@@ -6855,12 +6986,10 @@ CMaaFindFile2::CMaaFindFile2Imp::CMaaFindFile2Imp(const CMaaString& Dir, CMaaStr
 CMaaFindFile2::CMaaFindFile2Imp::CMaaFindFile2Imp(const CMaaString& DirWithMask, int iRecursiveDepth) noexcept(noexcept_new)
 {
     m_iRecursiveDepth = iRecursiveDepth;
-    CMaaString Dir = CMaaFile::MkCompatible(DirWithMask);
+    CMaaString Dir = CMaaFile::MkCompatible_(DirWithMask);
     const int n = (warning_int)Dir.ReverseFind(FILESYSTEM_SLASH);
     if  (n < 0)
     {
-        //char pfx[3] = {'.', FILESYSTEM_SLASH, 0};
-        //Dir = CMaaString(pfx) + Dir;
         m_Dir = ".";
         m_Mask = CMaaString("*" szFILESYSTEM_SLASH) + DirWithMask;
     }
@@ -6869,10 +6998,13 @@ CMaaFindFile2::CMaaFindFile2Imp::CMaaFindFile2Imp(const CMaaString& DirWithMask,
         m_Dir = DirWithMask.RefLeft(n == 0 ? 1 : n);
         m_Mask = DirWithMask;
     }
-    m_Dir = CMaaFile::MkCompatible(m_Dir);
-    m_Mask = CMaaFile::MkCompatible(m_Mask);
-    m_Dir = m_Dir.Str0Copy();
-    m_Mask = m_Mask.Str0Copy();
+    m_Dir2 = CMaaFile::MkCompatible(m_Dir).Str0Copy();
+    if (m_Dir2.Length() > 2 && m_Dir2.IsRight(szFILESYSTEM_SLASH ".", 2))
+    {
+        m_Dir2 -= 2;
+    }
+    m_Dir = CMaaFile::MkCompatible_(m_Dir).Str0Copy();
+    m_Mask = CMaaFile::MkCompatible_(m_Mask).Str0Copy();
 #ifdef _WIN32
     CMaaString tmp = (iRecursiveDepth > 1 || iRecursiveDepth < 0) ? MkFsNativeCompatible((m_Dir + szFILESYSTEM_SLASH + "*.*")) : MkFsNativeCompatible(Dir);
 #ifdef _UNICODE
@@ -6883,6 +7015,10 @@ CMaaFindFile2::CMaaFindFile2Imp::CMaaFindFile2Imp(const CMaaString& DirWithMask,
 #endif
 #ifdef __unix__
     m_iGetKeepDev = 0;
+    if (m_Dir == "." && s_strThreadLocalPath.IsNotEmpty())
+    {
+        m_Dir.Empty();
+    }
     CMaaString DirEx = MkFsNativeCompatible(m_Dir);
     char * Paths[2] = { (char *)(const char *)DirEx, nullptr };
     //        int ftsoptions = FTS_SEEDOT | FTS_NOCHDIR;
@@ -6997,12 +7133,12 @@ bool CMaaFindFile2::CMaaFindFile2Imp::Get(sFind& f, CMaaFindFile2& ff) noexcept(
     {
         f.m_Type = CMaaFindFile2::sFind::eFile;
     }
-    f.m_Dir = m_Dir;
-    f.m_FileName = m_Dir + szFILESYSTEM_SLASH + f.m_Fn;
+    f.m_Dir = m_Dir2;
+    f.m_FileName = m_Dir2 + szFILESYSTEM_SLASH + f.m_Fn;
     f.m_px = &m_ff;
     if  (f.m_Type == CMaaFindFile2::sFind::eDir && (m_iRecursiveDepth > 1 || m_iRecursiveDepth < 0))
     {
-        CMaaFindFile2Imp * pNext = TL_NEW CMaaFindFile2Imp(f.m_FileName, m_Mask, m_iRecursiveDepth - 1);
+        CMaaFindFile2Imp * pNext = TL_NEW CMaaFindFile2Imp(f.m_FileName, ff.m_pImp->m_Mask, m_iRecursiveDepth - 1);
         if (pNext)
         {
             ff.m_Stack.AddAtFront(pNext);
