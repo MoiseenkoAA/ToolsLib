@@ -203,6 +203,7 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
         {
             exit(1);
         }
+        m_fStdOut = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true);
     }
     m_subst_imp = g_imp;
     m_SubstOut = s_SubstOut;
@@ -983,15 +984,15 @@ int CCGIHelper::SendFCgiHeaderEx(CMaaString txt)
 }
 #endif
 
-int CCGIHelper::SendReply(const CMaaString &Data, const CMaaString &ContentType, const CMaaString &FileName, const CMaaString &Header, const CMaaString &ErrorText, time_t t, CMaaFile fStdOut)
+int CCGIHelper::SendReply(const CMaaString &Data, const CMaaString &ContentType, const CMaaString &FileName, const CMaaString &Header, const CMaaString &ErrorText, time_t t) //, CMaaFile fStdOut)
 {
-    return SendReply(Data, ContentType, FileName, Header, ErrorText, t, false, fStdOut);
+    return SendReply(Data, ContentType, FileName, Header, ErrorText, t, false); // , fStdOut);
 }
 CMaaString CCGIHelper::GetMethod() const noexcept
 {
     return m_Method;
 }
-int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString FileName, CMaaString Header, const CMaaString &ErrorText, time_t t, bool bInline, CMaaFile fStdOut)
+int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString FileName, CMaaString Header, const CMaaString &ErrorText, time_t t, bool bInline) //, CMaaFile fStdOut)
 {
     //ErrorText = ErrorText.ToHttpHtmlDisplayedText(true);
     if (!IsSubsted() && m_n100Count > 0)
@@ -1033,7 +1034,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
         else
 #endif
         {
-            fStdOut.Write(txt);
+            m_fStdOut.Write(txt);
         }
         return 0;
     }
@@ -1192,7 +1193,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     _qword len = Data.Length();
     //_qword pos = 0;
 
-    //CMaaFile fStdOut(CMaaFileStdout, CMaaFile::eW_SrSw, eNoExcept);
+    //CMaaFile m_fStdOut(CMaaFileStdout, CMaaFile::eW_SrSw, eNoExcept);
 
     if  (Method != "HEAD" && Method != "GET" && Method != "POST")
     {
@@ -1220,7 +1221,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
                 else
 #endif
                 {
-                    fStdOut.Write(txt);
+                    m_fStdOut.Write(txt);
                 }
             }
         }
@@ -1319,7 +1320,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
                 else
 #endif
                 {
-                    fStdOut.Write(txt);
+                    m_fStdOut.Write(txt);
                 }
             }
         }
@@ -1452,8 +1453,8 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
             else
 #endif
             {
-                fStdOut.Write(txt);
-                fStdOut.Write(Data);
+                m_fStdOut.Write(txt);
+                m_fStdOut.Write(Data);
             }
         }
         m_EndFileSent = m_Method != "HEAD" && bEndFileSent;
@@ -1481,12 +1482,12 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     return 0;
 }
 
-int CCGIHelper::SendReply(CMaaFile f, const CMaaString &Header, const CMaaString &FileName, time_t t, const CMaaString &ContentType, _qword fStart, _qword fEnd, CMaaFile fStdOut)
+int CCGIHelper::SendReply(CMaaFile f, const CMaaString &Header, const CMaaString &FileName, time_t t, const CMaaString &ContentType, _qword fStart, _qword fEnd) //, CMaaFile fStdOut)
 {
-    return SendReply(f, Header, FileName, t, ContentType, fStart, fEnd, false, fStdOut);
+    return SendReply(f, Header, FileName, t, ContentType, fStart, fEnd, false); // , fStdOut);
 }
 
-int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, time_t t, CMaaString ContentType, _qword fStart, _qword fEnd, bool bInline, CMaaFile fStdOut)
+int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, time_t t, CMaaString ContentType, _qword fStart, _qword fEnd, bool bInline) //, CMaaFile fStdOut)
 {
     if (!IsSubsted() && m_n100Count > 0)
     {
@@ -1523,7 +1524,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
         else
 #endif
         {
-            fStdOut.Write(txt);
+            m_fStdOut.Write(txt);
         }
         return 0;
     }
@@ -1678,7 +1679,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
             else
 #endif
             {
-                fStdOut.Write(txt);
+                m_fStdOut.Write(txt);
             }
         }
         return Ret;
@@ -1753,7 +1754,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
             else
 #endif
             {
-                fStdOut.Write(txt);
+                m_fStdOut.Write(txt);
             }
         }
         return Ret;
@@ -1877,8 +1878,8 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
     else
 #endif
     {
-        fStdOut.Write(txt);
-        fStdOut.Write(Data);
+        m_fStdOut.Write(txt);
+        m_fStdOut.Write(Data);
     }
     if  (!len && f.Length() == 0)
     {
@@ -1912,7 +1913,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
             else
 #endif
             {
-                nn = fStdOut.Write(Buffer, x);
+                nn = m_fStdOut.Write(Buffer, x);
             }
         }
         if  (nn == 0)
@@ -1947,7 +1948,7 @@ int CCGIHelper::SendIndependentReply(CMaaFile /*f*/, CMaaString /*Header*/)//, _
 {
     return 1; // error
 }
-int CCGIHelper::Send100Continue(CMaaFile fStdOut)
+int CCGIHelper::Send100Continue() //(CMaaFile fStdOut)
 {
     int r = 0;
     if   (/*!IsSubsted() &&*/ m_Last100Cont && time(nullptr) - m_Last100Cont >= 120)
@@ -1970,7 +1971,7 @@ int CCGIHelper::Send100Continue(CMaaFile fStdOut)
                 "Cache-control: no-transform\r\n"
                 "\r\n"
             );
-        if (fStdOut.Write(s) == (_dword)s.Length() && s.IsNotEmpty())
+        if (m_fStdOut.Write(s) == (_dword)s.Length() && s.IsNotEmpty())
         {
             m_n100Count++;
         }
@@ -1978,7 +1979,7 @@ int CCGIHelper::Send100Continue(CMaaFile fStdOut)
         {
             r = 1;
         }
-        //fStdOut.Flush(); // error: fdatasync() Error code=22 (Invalid argument)
+        //m_fStdOut.Flush(); // error: fdatasync() Error code=22 (Invalid argument)
         m_Last100Cont = time(nullptr);
     }
     return r;
