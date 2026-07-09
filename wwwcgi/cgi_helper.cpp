@@ -68,7 +68,7 @@
 // returns utf8 env variable or nullptr
 char * my_getenv(const char * name)
 {
-    static CMaaString bb;
+    static CMaaStringG bb;
     wchar_t Buffer[1024 + 1];
     CMaaString aa = Utf8ToUnicode(CMaaStringRO(name));
     //CMaaString bb = Utf8ToUnicode(value);
@@ -87,7 +87,7 @@ char * my_getenv(const char * name)
             if (x && x < Buf2.Size() / sizeof(wchar_t))
             {
                 bb = UnicodeToUtf8(CMaaString(Buf2, 2 * x));
-                return (char*)(const char*)bb;
+                return (char*)(const char*)(CMaaString)bb;
             }
             else
             {
@@ -98,7 +98,7 @@ char * my_getenv(const char * name)
     if (x)
     {
         bb = UnicodeToUtf8(CMaaString(Buffer, 2 * x));
-        return (char*)(const char*)bb;
+        return (char*)(const char*)(CMaaString)bb;
     }
     return nullptr;
 }
@@ -803,7 +803,7 @@ CMaaString CCGIHelper::GetContentTypeByFileExtention(const CMaaString &Ext, cons
     return GetContentTypeByExtention(Ext, DefaultContentType);
 }
 
-static const CMaaConstStr s_ct[][2] =
+static constexpr CMaaConstStr s_ct[][2] =
 {
     {"xml", "text/xml"},
     {"d""oc", "application/msword"},
@@ -908,9 +908,26 @@ static const CMaaConstStr s_ct[][2] =
     {"", ""}
 };
 
+static const CMaaUnivHash<CMaaString, CMaaString>* s_pMimeTable = nullptr;
+const CMaaUnivHash<CMaaString, CMaaString>* CCGIHelper::MakeMimeTable()
+{
+    static CMaaUnivHash<CMaaString, CMaaString> t(sizeof(s_ct) / sizeof(s_ct[0]), [&]()
+        {
+            for (int i = 0; s_ct[i][0].len && s_ct[i][1].len; i++)
+            {
+                t.Add(s_ct[i][0], s_ct[i][1]);
+            }
+            s_pMimeTable = &t;
+        });
+    return s_pMimeTable;
+}
 CMaaString CCGIHelper::GetContentTypeByExtention(CMaaString Ext, const CMaaString &DefaultContentType)
 {
     Ext = Ext.ToLower(0);
+    if (s_pMimeTable)
+    {
+        return (*s_pMimeTable)[Ext, DefaultContentType];
+    }
     for (int i = 0; s_ct[i][0].len && s_ct[i][1].len; i++)
     {
         if  (Ext == s_ct[i][0])
@@ -2083,7 +2100,7 @@ static CMaaString CgiGetValue(const CMaaString& Hdr0, const CMaaString& Name0, i
                 {
                     break;
                 }
-                Val += Hdr.Mid(n0 + 1, n2 - n0 - 1);
+                Val.AddMid(Hdr, n0 + 1, n2 - n0 - 1);
                 n2 = n3;
                 n0 = n3 + 2;
             }

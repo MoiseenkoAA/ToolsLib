@@ -4100,7 +4100,7 @@ CMaaString& CMaaString::operator -= (int n) noexcept(noexcept_new)
     return *this;
 }
 //---------------------------------------------------------------------------
-CMaaString & CMaaString::Add(const void* pMem, int Len) noexcept(noexcept_new) // slow
+CMaaString & CMaaString::Add(const void* pMem, int Len) noexcept(noexcept_new)
 {
     if (Len > 0)
     {
@@ -4143,6 +4143,23 @@ CMaaString & CMaaString::Add(const void* pMem, int Len) noexcept(noexcept_new) /
                 }
             }
         }
+    }
+    return *this;
+}
+//---------------------------------------------------------------------------
+// like  *this += str.RefMid(First, nCount);
+CMaaString& CMaaString::AddMid(const CMaaString& str, int First, int nCount) noexcept(noexcept_new)
+{
+    // like  *this += str.RefMid(First, nCount);
+    const int l = str.Length();
+    if (First < 0 && nCount > -First)
+    {
+        nCount += First;
+        Add(str, nCount <= l ? nCount : l);
+    }
+    else if (First >= 0 && First < l)
+    {
+        Add(First + (const char*)str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
     }
     return *this;
 }
@@ -14638,45 +14655,43 @@ CMaaString CMaaString::Translit(int_ cp) const noexcept(noexcept_new)
 {
     CMaaWin32Locker_aLocker_gLock_Atomic;
     aLocker_Lock;
-    static bool b1st = true;
+    //static bool b1st = true;
     static int_ MapOffset[256], MapLengths[256];
     static const unsigned char * pSrc = (const unsigned char *)"àáâãäå¸æçèéêëìíîïðñòóôõö÷øùúûüýþÿÀÁÂÃÄÅ¨ÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß";
     static const char * pDst = "a.b.v.g.d.e.e.zh.z.i.y.k.l.m.n.o.p.r.s.t.u.f.h.ts.ch.sh.sch.'.y.'.e.yu.ya.A.B.V.G.D.E.E.Zh.Z.I.Y.K.L.M.N.O.P.R.S.T.U.F.H.Ts.Ch.Sh.Sch.'.Y.'.E.Yu.Ya.";
     static const int pDstLen = int_strlen(pDst);
-    static CMaaUnivHash<CMaaString, unsigned char> MapUtf8Ru2Cp1251;
-    if  (b1st)
-    {
-        int_ pos = 0;
-        int_ i;
-        for (i = 0; i < 256; i++)
+    static CMaaUnivHash<CMaaString, unsigned char> MapUtf8Ru2Cp1251(64, [&]()
         {
-            MapOffset[i] = -1;
-            MapLengths[i] = 0;
-        }
-        for (i = 0; pSrc[i]; i++)
-        {
-            MapOffset[pSrc[i]] = pos;
-            while(pDst[pos])
+            int_ pos = 0;
+            int_ i;
+            for (i = 0; i < 256; i++)
             {
-                if  (pDst[pos++] == '.')
-                {
-                    break;
-                }
+                MapOffset[i] = -1;
+                MapLengths[i] = 0;
             }
-            MapLengths[pSrc[i]] = pos - 1 - MapOffset[pSrc[i]];
-        }
-        CMaaString RussianAlphabet2 = "Ð°Ð±Ð²Ð³Ð´ÐµÑ‘Ð¶Ð·Ð¸Ð¹ÐºÐ»Ð¼Ð½Ð¾Ð¿Ñ€ÑÑ‚ÑƒÑ„Ñ…Ñ†Ñ‡ÑˆÑ‰ÑŠÑ‹ÑŒÑÑŽÑÐÐ‘Ð’Ð“Ð”Ð•ÐÐ–Ð—Ð˜Ð™ÐšÐ›ÐœÐÐžÐŸÐ Ð¡Ð¢Ð£Ð¤Ð¥Ð¦Ð§Ð¨Ð©ÐªÐ«Ð¬Ð­Ð®Ð¯";
-                                 // u8"àáâãäå¸æçèéêëìíîïðñòóôõö÷øùúûüýþÿÀÁÂÃÄÅ¨ÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß"
-        i = 0;
-        while(RussianAlphabet2.IsNotEmpty())
-        {
-            const int l = RussianAlphabet2.Utf8Pos(1);
-            CMaaString w = RussianAlphabet2.RefMid(0, l);
-            RussianAlphabet2 = RussianAlphabet2.RefMid(l);
-            MapUtf8Ru2Cp1251.Add(w, pSrc[i++]);
-        }
-        b1st = false;
-    }
+            for (i = 0; pSrc[i]; i++)
+            {
+                MapOffset[pSrc[i]] = pos;
+                while (pDst[pos])
+                {
+                    if (pDst[pos++] == '.')
+                    {
+                        break;
+                    }
+                }
+                MapLengths[pSrc[i]] = pos - 1 - MapOffset[pSrc[i]];
+            }
+            CMaaString RussianAlphabet2 = "Ð°Ð±Ð²Ð³Ð´ÐµÑ‘Ð¶Ð·Ð¸Ð¹ÐºÐ»Ð¼Ð½Ð¾Ð¿Ñ€ÑÑ‚ÑƒÑ„Ñ…Ñ†Ñ‡ÑˆÑ‰ÑŠÑ‹ÑŒÑÑŽÑÐÐ‘Ð’Ð“Ð”Ð•ÐÐ–Ð—Ð˜Ð™ÐšÐ›ÐœÐÐžÐŸÐ Ð¡Ð¢Ð£Ð¤Ð¥Ð¦Ð§Ð¨Ð©ÐªÐ«Ð¬Ð­Ð®Ð¯";
+            // u8"àáâãäå¸æçèéêëìíîïðñòóôõö÷øùúûüýþÿÀÁÂÃÄÅ¨ÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß"
+            i = 0;
+            while (RussianAlphabet2.IsNotEmpty())
+            {
+                const int l = RussianAlphabet2.Utf8Pos(1);
+                CMaaString w = RussianAlphabet2.RefMid(0, l);
+                RussianAlphabet2 = RussianAlphabet2.RefMid(l);
+                MapUtf8Ru2Cp1251.Add(w, pSrc[i++]);
+            }
+        });
     aLocker_UnLock;
 
     char Buffer[TOOLSLIB_CS_64K];
@@ -17578,7 +17593,7 @@ CMaaString CMaaString::ToJsArgValue(char quote) const noexcept(noexcept_new)
             }
             else
             {
-                str += dst_replacements.RefMid(2 * n, 2);
+                str.AddMid(dst_replacements, 2 * n, 2);
             }
             N++;
         }
@@ -18460,7 +18475,7 @@ CMaaString CMaaString::QuoteShArg(bool * pbErr) const noexcept(noexcept_new)
         }
         else
         {
-            str += dst_replacements.RefMid(2 * n, 2);
+            str.AddMid(dst_replacements, 2 * n, 2);
         }
     }
     return str;
@@ -19145,7 +19160,7 @@ CMaaString CMaaString::HttpGetValue(const CMaaString& Name0, int* pos, int* next
                 {
                     break;
                 }
-                Val += Mid(n0 + 1, n3 - n0 - 1);
+                Val.AddMid(*this, n0 + 1, n3 - n0 - 1);
                 n2 = n3;
                 n0 = n3 + 2;
             }
@@ -19201,7 +19216,7 @@ CMaaString CMaaString::HttpGetValue(const char* Name0, int* pos, int* nextpos) c
                 {
                     break;
                 }
-                Val += Mid(n0 + 1, n3 - n0 - 1);
+                Val.AddMid(*this, n0 + 1, n3 - n0 - 1);
                 n2 = n3;
                 n0 = n3 + 2;
             }
@@ -19525,7 +19540,7 @@ CMaaString NormalizeSummKIB(int len, const CMaaString &s)
     }
     good += psz[i];
     good += '=';
-    good += input.RefMid(point + 1);
+    good.AddMid(input, point + 1);
     CMaaString r = good;
     if  (r.Length() < len)
     {
@@ -19563,7 +19578,7 @@ CMaaString NormalizeSummSpComma(const CMaaString &s)
     }
     good += psz[i];
     good += ',';
-    good += input.RefMid(point + 1);
+    good.AddMid(input, point + 1);
     return good;
 }
 //-------------------------------------------------------------------------
@@ -19735,9 +19750,9 @@ CMaaString SummToTextSumm_rub(const CMaaString &s, bool bFullText, CMaaString *p
         for (; i > 0; i--)
         {
             o += ' ';
-            o += input.RefMid(point - 3 * i, 3);
+            o.AddMid(input, point - 3 * i, 3);
         }
-        o += input.RefMid(point);
+        o.AddMid(input, point);
         *pSummSp = (CMaaString)o;
     }
     if  (pSummComma)
@@ -19750,9 +19765,9 @@ CMaaString SummToTextSumm_rub(const CMaaString &s, bool bFullText, CMaaString *p
         for (; i > 0; i--)
         {
             o += ',';
-            o += input.RefMid(point - 3 * i, 3);
+            o.AddMid(input, point - 3 * i, 3);
         }
-        o += input.RefMid(point);
+        o.AddMid(input, point);
         *pSummComma = (CMaaString)o;
     }
     return Ret;
@@ -19925,9 +19940,9 @@ CMaaString SummToTextSumm_usd(const CMaaString &s, bool bFullText, CMaaString *p
         for (; i > 0; i--)
         {
             o += ' ';
-            o += input.RefMid(point - 3 * i, 3);
+            o.AddMid(input, point - 3 * i, 3);
         }
-        o += input.RefMid(point);
+        o.AddMid(input, point);
         *pSummSp = (CMaaString)o;
     }
     if  (pSummComma)
@@ -19938,9 +19953,9 @@ CMaaString SummToTextSumm_usd(const CMaaString &s, bool bFullText, CMaaString *p
         for (; i > 0; i--)
         {
             o += ',';
-            o += input.RefMid(point - 3 * i, 3);
+            o.AddMid(input, point - 3 * i, 3);
         }
-        o += input.RefMid(point);
+        o.AddMid(input, point);
         *pSummComma = (CMaaString)o;
     }
     return Ret;

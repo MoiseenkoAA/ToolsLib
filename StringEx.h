@@ -1932,7 +1932,8 @@ public:
     //CMaaString & operator += ( const char * pszStr );
     CMaaString & operator += (const CMaaString& That) noexcept(noexcept_new);
     CMaaString & operator -= (int n) noexcept(noexcept_new);
-    CMaaString & Add(const void * pMem, int Len) noexcept(noexcept_new); // slow
+    CMaaString & Add(const void * pMem, int Len) noexcept(noexcept_new);
+    CMaaString & AddMid(const CMaaString& str, int First, int nCount = -1) noexcept(noexcept_new); // like  *this += str.RefMid(First, nCount);
     CMaaString & operator += (const char * szString) noexcept(noexcept_new);
 #ifdef TOOLSLIB_CHAR8T_SUPPORT
     CMaaString& operator += (const char8_t* szString) noexcept(noexcept_new) { return operator += ((const char*)szString); }
@@ -4165,6 +4166,20 @@ public:
         operator += ((char)c);
     }
 #endif
+    void AddMid(const CMaaString &str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
+    {
+        // like  *this += str.RefMid(First, nCount);
+        const int l = str.Length();
+        if (First < 0 && nCount > -First)
+        {
+            nCount += First;
+            Add(str, nCount <= l ? nCount : l);
+        }
+        else if (First >= 0 && First < l)
+        {
+            Add(First + (const char*)str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
+        }
+    }
     void Add(const char* str, int len) noexcept(xThrow <= 0 || bCountMode)
     {
         if (len <= 0)

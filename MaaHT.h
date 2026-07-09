@@ -695,6 +695,18 @@ public:
     {
         GenericCtor(Size, nullptr, 0 TOOLSLIB_CHECK_HT_USAGE_ARG2);
     }
+    /* err
+    template<typename F> CMaaUnivHash_New(F f) noexcept(noexcept_new)
+    {
+        GenericCtor(15, nullptr, 0 TOOLSLIB_CHECK_HT_USAGE_ARG2);
+        f();
+    }
+    */
+    template<typename F> CMaaUnivHash_New(size_t Size, F f) noexcept(noexcept_new)
+    {
+        GenericCtor(Size, nullptr, 0 TOOLSLIB_CHECK_HT_USAGE_ARG2);
+        f();
+    }
     CMaaUnivHash_New(size_t Size, CMaaUnivHash_New<Key, Data, bStandartHash, AllocatorType>* ptr, int iPreallocate, int Flags
 #ifndef TOOLSLIB_CHECK_HT_USAGE
             = TOOLSLIB_HT_DEF_FLAG

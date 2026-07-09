@@ -171,21 +171,28 @@ const char* GetWsaErrorMessage(int Code) noexcept
 {
 #ifdef TOOLSLIB_KEEP_GLOBALS_IN_MEMORY
     // this object is longer exist and is not deleted
-    static CMaaUnivHash<int, const char*> *ph = TL_NEW_ CMaaUnivHash<int, const char*>(sizeof(WsaErrorMessages) / sizeof(WsaErrorMessages[0]));
+    static CMaaUnivHash<int, const char*> *ph = TL_NEW_ CMaaUnivHash<int, const char*>(sizeof(WsaErrorMessages) / sizeof(WsaErrorMessages[0]), [&]()
+        {
+            for (int i = 0; WsaErrorMessages[i].Msg; i++)
+            {
+                ph->Add(WsaErrorMessages[i].Code, WsaErrorMessages[i].Msg);
+            }
+        });
+    return (*ph)[Code, nullptr];
 #else
     // this object is shorter exist and is deleted at program exit
-    static CMaaUnivHash<int, const char*> h(sizeof(WsaErrorMessages) / sizeof(WsaErrorMessages[0]));
-    CMaaUnivHash<int, const char*>* ph = &h;
-#endif
-    if (!ph->GetItemCount())
-    {
-        for (int i = 0; WsaErrorMessages[i].Msg; i++)
+    static CMaaUnivHash<int, const char*> h(sizeof(WsaErrorMessages) / sizeof(WsaErrorMessages[0]), [&]()
         {
-            ph->Add(WsaErrorMessages[i].Code, WsaErrorMessages[i].Msg);
-        }
-    }
+            for (int i = 0; WsaErrorMessages[i].Msg; i++)
+            {
+                h.Add(WsaErrorMessages[i].Code, WsaErrorMessages[i].Msg);
+            }
+        });
+    return h[Code, nullptr];
+    //CMaaUnivHash<int, const char*>* ph = &h;
+#endif
 
-    const char* r = (*ph)[Code, nullptr];
+    //const char* r = (*ph)[Code, nullptr];
     /*
     {
         for (int i = 0; WsaErrorMessages[i].Msg; i++)
@@ -198,7 +205,7 @@ const char* GetWsaErrorMessage(int Code) noexcept
         }
     }
     */
-    return r;
+    //return r;
 }
 //---------------------------------------------------------------------------
 #ifdef TOOLSLIB_SHARED_ALLOCATOR

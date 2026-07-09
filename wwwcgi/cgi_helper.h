@@ -205,6 +205,7 @@ public:
     static thread_local_ CMaaString s_Output;
 
     CMaaString GetMethod() const noexcept;
+    static const CMaaUnivHash<CMaaString, CMaaString>* MakeMimeTable();
 
 public:
 

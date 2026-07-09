@@ -378,7 +378,7 @@ bool gd_Image::GetFixedFontTextSize(CMaaString Text, gdFontPtr pFont, int * pSiz
     return pFont ? true : false;
 }
 
-CMaaString g_uText;
+//CMaaStringG g_uText;
 bool gd_Image::DrawText(CMaaString Text, gdFontPtr pFont, int x, int y, int Color)
 {
     if  (!im)
@@ -395,7 +395,7 @@ bool gd_Image::DrawText(CMaaString Text, gdFontPtr pFont, int x, int y, int Colo
     {
         CMaaString uText = Utf8ToUnicode(Text, 1251);
         uText = UnicodeToUnicodeBigEndian(uText);
-        g_uText = uText;
+        //g_uText = uText;
         gdImageString16(im, pFont, x, y, (unsigned short *)(const char *)uText, Color == -1 ? TextColor : Color);
     }
     else
