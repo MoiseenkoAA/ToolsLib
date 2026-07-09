@@ -68,7 +68,7 @@
 // returns utf8 env variable or nullptr
 char * my_getenv(const char * name)
 {
-    static CMaaStringG bb;
+    static thread_local_ CMaaString bb;
     wchar_t Buffer[1024 + 1];
     CMaaString aa = Utf8ToUnicode(CMaaStringRO(name));
     //CMaaString bb = Utf8ToUnicode(value);
@@ -87,7 +87,7 @@ char * my_getenv(const char * name)
             if (x && x < Buf2.Size() / sizeof(wchar_t))
             {
                 bb = UnicodeToUtf8(CMaaString(Buf2, 2 * x));
-                return (char*)(const char*)(CMaaString)bb;
+                return (char*)(const char*)bb;
             }
             else
             {
@@ -98,7 +98,7 @@ char * my_getenv(const char * name)
     if (x)
     {
         bb = UnicodeToUtf8(CMaaString(Buffer, 2 * x));
-        return (char*)(const char*)(CMaaString)bb;
+        return (char*)(const char*)bb;
     }
     return nullptr;
 }
