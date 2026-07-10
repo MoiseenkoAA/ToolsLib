@@ -2100,7 +2100,7 @@ static CMaaString CgiGetValue(const CMaaString& Hdr0, const CMaaString& Name0, i
                 {
                     break;
                 }
-                Val.AddMid(Hdr, n0 + 1, n2 - n0 - 1);
+                Val.AddMidOf(Hdr, n0 + 1, n2 - n0 - 1);
                 n2 = n3;
                 n0 = n3 + 2;
             }

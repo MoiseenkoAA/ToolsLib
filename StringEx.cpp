@@ -4100,13 +4100,13 @@ CMaaString& CMaaString::operator -= (int n) noexcept(noexcept_new)
     return *this;
 }
 //---------------------------------------------------------------------------
-CMaaString & CMaaString::Add(const void* pMem, int Len) noexcept(noexcept_new)
+CMaaString & CMaaString::Add(const void* pMem, int Len, _e1632 Flags) noexcept(noexcept_new)
 {
     if (Len > 0)
     {
         if (m_pImp == sp_NullImp)
         {
-            *this = CMaaString(pMem, Len);
+            *this = CMaaString(pMem, Len, Flags);
         }
         else
         {
@@ -4125,7 +4125,7 @@ CMaaString & CMaaString::Add(const void* pMem, int Len) noexcept(noexcept_new)
 #endif
                 memmove(m_pImp->m_pszStr + m_pImp->m_iLength, pMem, Len);
                 m_pImp->m_iLength += Len;
-                //m_pImp->f2.f12.m_Flags1 |= ((That.m_pImp->GetUtf1632Flags() & eCryptoKey) >> 8);
+                m_pImp->f2.f12.m_Flags1 |= ((Flags & eCryptoKey) >> 8);
                 if (!(TOOLSLIB_LOAD_ATOMIC(m_pImp->f2.a12.m_Flags0) & (CMaaStringImp::eDontDelete)))
                 {
                     *(_qword*)(m_pImp->m_pszStr + m_pImp->m_iLength) = 0;
@@ -4133,7 +4133,7 @@ CMaaString & CMaaString::Add(const void* pMem, int Len) noexcept(noexcept_new)
             }
             else
             {
-                CMaaString NewString(nullptr, (size_t)m_pImp->m_iLength + (size_t)Len, (_e1_)m_pImp->GetUtf1632Flags() /*eNotInitMem*/, 256);
+                CMaaString NewString(nullptr, (size_t)m_pImp->m_iLength + (size_t)Len, (_e1_)(m_pImp->GetUtf1632Flags() | (Flags & eCryptoKey)) /*eNotInitMem*/, 256);
                 if (NewString.IsValid())
                 {
                     memcpy(NewString.m_pImp->m_pszStr, m_pImp->m_pszStr, m_pImp->m_iLength);
@@ -4147,19 +4147,31 @@ CMaaString & CMaaString::Add(const void* pMem, int Len) noexcept(noexcept_new)
     return *this;
 }
 //---------------------------------------------------------------------------
+// like  *this += str.Left(nCount);
+CMaaString& CMaaString::AddLeftOf(const CMaaString& str, int nCount) noexcept(noexcept_new)
+{
+    // like  *this += str.Left(nCount);
+    if (nCount > 0)
+    {
+        const int l = str.Length();
+        Add(str, nCount <= l ? nCount : l, str.GetUtf1632Flags());
+    }
+    return *this;
+}
+//---------------------------------------------------------------------------
 // like  *this += str.RefMid(First, nCount);
-CMaaString& CMaaString::AddMid(const CMaaString& str, int First, int nCount) noexcept(noexcept_new)
+CMaaString& CMaaString::AddMidOf(const CMaaString& str, int First, int nCount) noexcept(noexcept_new)
 {
     // like  *this += str.RefMid(First, nCount);
     const int l = str.Length();
     if (First < 0 && nCount > -First)
     {
         nCount += First;
-        Add(str, nCount <= l ? nCount : l);
+        Add(str, nCount <= l ? nCount : l, str.GetUtf1632Flags());
     }
     else if (First >= 0 && First < l)
     {
-        Add(First + (const char*)str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
+        Add(First + (const char*)str, nCount >= 0 && First <= l - nCount ? nCount : l - First, str.GetUtf1632Flags());
     }
     return *this;
 }
@@ -17593,7 +17605,7 @@ CMaaString CMaaString::ToJsArgValue(char quote) const noexcept(noexcept_new)
             }
             else
             {
-                str.AddMid(dst_replacements, 2 * n, 2);
+                str.AddMidOf(dst_replacements, 2 * n, 2);
             }
             N++;
         }
@@ -18475,7 +18487,7 @@ CMaaString CMaaString::QuoteShArg(bool * pbErr) const noexcept(noexcept_new)
         }
         else
         {
-            str.AddMid(dst_replacements, 2 * n, 2);
+            str.AddMidOf(dst_replacements, 2 * n, 2);
         }
     }
     return str;
@@ -19160,7 +19172,7 @@ CMaaString CMaaString::HttpGetValue(const CMaaString& Name0, int* pos, int* next
                 {
                     break;
                 }
-                Val.AddMid(*this, n0 + 1, n3 - n0 - 1);
+                Val.AddMidOf(*this, n0 + 1, n3 - n0 - 1);
                 n2 = n3;
                 n0 = n3 + 2;
             }
@@ -19216,7 +19228,7 @@ CMaaString CMaaString::HttpGetValue(const char* Name0, int* pos, int* nextpos) c
                 {
                     break;
                 }
-                Val.AddMid(*this, n0 + 1, n3 - n0 - 1);
+                Val.AddMidOf(*this, n0 + 1, n3 - n0 - 1);
                 n2 = n3;
                 n0 = n3 + 2;
             }
@@ -19540,7 +19552,7 @@ CMaaString NormalizeSummKIB(int len, const CMaaString &s)
     }
     good += psz[i];
     good += '=';
-    good.AddMid(input, point + 1);
+    good.AddMidOf(input, point + 1);
     CMaaString r = good;
     if  (r.Length() < len)
     {
@@ -19578,7 +19590,7 @@ CMaaString NormalizeSummSpComma(const CMaaString &s)
     }
     good += psz[i];
     good += ',';
-    good.AddMid(input, point + 1);
+    good.AddMidOf(input, point + 1);
     return good;
 }
 //-------------------------------------------------------------------------
@@ -19746,13 +19758,13 @@ CMaaString SummToTextSumm_rub(const CMaaString &s, bool bFullText, CMaaString *p
         // 1.00 10.00 100.00
         // 1000.00
         i = (point - 1) / 3;
-        o += input.RefLeft(point - i * 3);
+        o.AddLeftOf(input, point - i * 3);
         for (; i > 0; i--)
         {
             o += ' ';
-            o.AddMid(input, point - 3 * i, 3);
+            o.AddMidOf(input, point - 3 * i, 3);
         }
-        o.AddMid(input, point);
+        o.AddMidOf(input, point);
         *pSummSp = (CMaaString)o;
     }
     if  (pSummComma)
@@ -19761,13 +19773,13 @@ CMaaString SummToTextSumm_rub(const CMaaString &s, bool bFullText, CMaaString *p
         // 1.00 10.00 100.00
         // 1000.00
         i = (point - 1) / 3;
-        o += input.RefLeft(point - i * 3);
+        o.AddLeftOf(input, point - i * 3);
         for (; i > 0; i--)
         {
             o += ',';
-            o.AddMid(input, point - 3 * i, 3);
+            o.AddMidOf(input, point - 3 * i, 3);
         }
-        o.AddMid(input, point);
+        o.AddMidOf(input, point);
         *pSummComma = (CMaaString)o;
     }
     return Ret;
@@ -19936,26 +19948,26 @@ CMaaString SummToTextSumm_usd(const CMaaString &s, bool bFullText, CMaaString *p
     {
         o.Empty();
         i = (point - 1) / 3;
-        o += input.RefLeft(point - i * 3);
+        o.AddLeftOf(input, point - i * 3);
         for (; i > 0; i--)
         {
             o += ' ';
-            o.AddMid(input, point - 3 * i, 3);
+            o.AddMidOf(input, point - 3 * i, 3);
         }
-        o.AddMid(input, point);
+        o.AddMidOf(input, point);
         *pSummSp = (CMaaString)o;
     }
     if  (pSummComma)
     {
         o.Empty();
         i = (point - 1) / 3;
-        o += input.RefLeft(point - i * 3);
+        o.AddLeftOf(input, point - i * 3);
         for (; i > 0; i--)
         {
             o += ',';
-            o.AddMid(input, point - 3 * i, 3);
+            o.AddMidOf(input, point - 3 * i, 3);
         }
-        o.AddMid(input, point);
+        o.AddMidOf(input, point);
         *pSummComma = (CMaaString)o;
     }
     return Ret;

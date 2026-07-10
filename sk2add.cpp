@@ -107,7 +107,7 @@ int CHttpResponceHandlerForReader::AppendData(CMaaString &Method, const void * p
             if  (n > 0)
             {
                 m_InHeader = InHeader.Left(n + 4);
-                m_Buffer.AddMid(InHeader, n + 4);
+                m_Buffer.AddMidOf(InHeader, n + 4);
                 m_Status = -1;
                 if  (m_hType == eRequest)
                 {
