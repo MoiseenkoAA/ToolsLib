@@ -103,6 +103,7 @@ _qword maa_wcslen(const _WC_* pText) noexcept;
 _qword maa_wcslen32(const char32_t* pText) noexcept;
 
 class ToolsExport CMaaString;
+template <int xThrow = 0, bool bCountMode = false> class CMaaConcatString_;
 //--------------------------------------------------------------------------
 //CMaaString DataToString ( const void * ptr, int len );
 //--------------------------------------------------------------------------
@@ -1934,7 +1935,38 @@ public:
     CMaaString & operator -= (int n) noexcept(noexcept_new);
     CMaaString & Add(const void * pMem, int Len, _e1632 Flags = eUtf8Flag /*=0*/) noexcept(noexcept_new);
     CMaaString & AddLeftOf(const CMaaString& str, int nCount) noexcept(noexcept_new); // like  *this += str.Left(nCount);
+    CMaaString & AddLeftOf(const CMaaConstStr& str, int nCount) noexcept(noexcept_new);
+    CMaaString & AddLeftOf(const char* str, int nCount) noexcept(noexcept_new);
     CMaaString & AddMidOf(const CMaaString& str, int First, int nCount = -1) noexcept(noexcept_new); // like  *this += str.RefMid(First, nCount);
+    CMaaString & AddMidOf(const CMaaConstStr& str, int First, int nCount = -1) noexcept(noexcept_new);
+    CMaaString & AddMidOf(const char* str, int First, int nCount = -1) noexcept(noexcept_new);
+    template <int x> CMaaString & AddLeftOf(const CMaaConcatString_<x, false>& str, int nCount) noexcept(noexcept_new)
+    {
+        const int l = (int)str.Length();
+        if (nCount > 0 && str.IsValid() && l > 0)
+        {
+            const int l = str.Length();
+            Add(str.const_ptr(), nCount <= l ? nCount : l);
+        }
+        return *this;
+    }
+    template <int x> CMaaString & AddMidOf(const CMaaConcatString_<x, false>& str, int First, int nCount = -1) noexcept(noexcept_new)
+    {
+        const int l = (int)str.Length();
+        if (str.IsValid() && l > 0)
+        {
+            if (First < 0 && nCount > -First)
+            {
+                nCount += First;
+                Add(str.const_ptr(), nCount <= l ? nCount : l);
+            }
+            else if (First >= 0 && First < l)
+            {
+                Add(First + str.const_ptr(), nCount >= 0 && First <= l - nCount ? nCount : l - First);
+            }
+        }
+        return *this;
+    }
     CMaaString & operator += (const char * szString) noexcept(noexcept_new);
 #ifdef TOOLSLIB_CHAR8T_SUPPORT
     CMaaString& operator += (const char8_t* szString) noexcept(noexcept_new) { return operator += ((const char*)szString); }
@@ -3844,7 +3876,8 @@ CMaaString GetCopyrightText(int_ StartYear = 0, const char * format = "Copyright
 #if (TOOLSLIB_USE_CMAASTRING64 < 2) || (TOOLSLIB_CMAASTRING64 > 0)
 //#define CMaaConcatString_TEST
 
-template <int xThrow = 0, bool bCountMode = false> class CMaaConcatString_
+//template <int xThrow = 0, bool bCountMode = false> class CMaaConcatString_;
+template <int xThrow, bool bCountMode> class CMaaConcatString_
 {
     char * m_ptr;
     CMaaPtr_<char, xThrow> m_Buffer;
@@ -3972,6 +4005,14 @@ public:
     CMaaConcatString_(CMaaConcatString_<xThrow, bCountMode>&& That) noexcept = delete;
     CMaaConcatString_<xThrow, bCountMode>& operator=(CMaaConcatString_<xThrow, bCountMode>&& That) noexcept = delete;
 
+    char* ptr() noexcept
+    {
+        return IsValid() ? m_ptr : nullptr;
+    }
+    const char * const_ptr() const noexcept
+    {
+        return IsValid() ? m_ptr : nullptr;
+    }
     constexpr size_t GetLength() const noexcept
     {
         return m_StringLength;
@@ -4009,7 +4050,7 @@ public:
     }
     bool SetNewLengthValue(size_t Length) noexcept
     {
-        if  (IsValid() && Length <= m_StringLength)
+        if (IsValid() && Length <= m_StringLength)
         {
             m_StringLength = Length;
             return true;
@@ -4176,6 +4217,29 @@ public:
             Add(str, nCount <= l ? nCount : l);
         }
     }
+    void AddLeftOf(const CMaaConstStr& str, int nCount) noexcept(xThrow <= 0 || bCountMode)
+    {
+        if (nCount > 0)
+        {
+            Add(str, nCount <= str.len ? nCount : str.len);
+        }
+    }
+    void AddLeftOf(const char* str, int nCount) noexcept(xThrow <= 0 || bCountMode)
+    {
+        if (nCount > 0)
+        {
+            const int l = int_strlen(str);
+            Add(str, nCount <= l ? nCount : l);
+        }
+    }
+    template <int x> void AddLeftOf(const CMaaConcatString_<x, false> &str, int nCount) noexcept(xThrow <= 0 || bCountMode)
+    {
+        const int l = (int)str.Length();
+        if (nCount > 0 && str.IsValid() && l > 0)
+        {
+            Add(str.const_ptr(), nCount <= l ? nCount : l);
+        }
+    }
     void AddMidOf(const CMaaString &str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
     {
         // like  *this += str.RefMid(First, nCount);
@@ -4188,6 +4252,47 @@ public:
         else if (First >= 0 && First < l)
         {
             Add(First + (const char*)str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
+        }
+    }
+    void AddMidOf(const CMaaConstStr& str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
+    {
+        if (First < 0 && nCount > -First)
+        {
+            nCount += First;
+            Add(str.p, nCount <= str.len ? nCount : str.len);
+        }
+        else if (First >= 0 && First < str.len)
+        {
+            Add(First + str.p, nCount >= 0 && First <= str.len - nCount ? nCount : str.len - First);
+        }
+    }
+    void AddMidOf(const char* str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
+    {
+        const int l = int_strlen(str);
+        if (First < 0 && nCount > -First)
+        {
+            nCount += First;
+            Add(str, nCount <= l ? nCount : l);
+        }
+        else if (First >= 0 && First < l)
+        {
+            Add(First + str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
+        }
+    }
+    template <int x> void AddMidOf(const CMaaConcatString_<x, false> &str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
+    {
+        const int l = (int)str.Length();
+        if (str.IsValid() && l > 0)
+        {
+            if (First < 0 && nCount > -First)
+            {
+                nCount += First;
+                Add(str.const_ptr(), nCount <= l ? nCount : l);
+            }
+            else if (First >= 0 && First < l)
+            {
+                Add(First + str.const_ptr(), nCount >= 0 && First <= l - nCount ? nCount : l - First);
+            }
         }
     }
     void Add(const char* str, int len) noexcept(xThrow <= 0 || bCountMode)

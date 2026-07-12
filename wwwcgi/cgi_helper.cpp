@@ -967,6 +967,13 @@ int CCGIHelper::SendFCgiHeaderEx(CMaaString txt)
 
     const int l0 = txt.Length();
     CMaaString ContentType;
+    if (txt.IsLeftCi("Location:", 9, 0) || txt.FindCi("Location:", 0) > 0)
+    {
+        if (!txt.IsLeftCi("HTTP/", 5, 0) && !txt.IsLeftCi("Status:", 7, 0))
+        {
+            txt = CMaaString("Status: 302 Redirect\r\n") + txt;
+        }
+    }
     while(txt.IsNotEmpty())
     {
         CMaaString Line = txt.GetLine(CMaaStringCrLf, true, false, true);
