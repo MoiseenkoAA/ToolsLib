@@ -1624,7 +1624,7 @@ void CMaaTcpFile::fnCreateNewThread(void * param, CMaaSockThread * MainThr)
         {
             throw 1;
         }
-        c = TL_NEW CMaaTcpFileConnection(t->m_pFdSockets, p->m_Url, p->m_DefPort, p);
+        c = TL_NEW CMaaTcpFileConnection(t->m_pFdSockets, (const char*)p->m_Url, p->m_DefPort, p);
         if  (!c)
         {
             throw 2;

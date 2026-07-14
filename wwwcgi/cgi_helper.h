@@ -58,22 +58,23 @@
  * [including the GNU Public Licence.]
  */
 
+char * getenv8(const char * name);
+
 #ifdef _WIN32
-char* my_getenv(const char* name); // returns utf8 env variable or nullptr
-int my_setenv(const char* name, const char* value, int overwrite);
-int my_unsetenv(const char* name);
+CMaaString my_getenv(const CMaaString& name); // returns utf8 env variable or nullptr
+int my_setenv(const CMaaString& name, const CMaaString& value, int overwrite);
+int my_unsetenv(const CMaaString& name);
 #define getenv my_getenv
 #define setenv my_setenv
 #define unsetenv my_unsetenv
 #endif
-
 
 extern bool gAllow_PATH_INFO;
 
 class CCGIHelper
 {
 public:
-    char * getenv(const char * name);
+    CMaaString getenv(const CMaaString& name);
 protected:
 #ifdef FAST_CGI_SUPP
     FCGX_Request * m_pFastCgiRequest;

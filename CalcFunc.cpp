@@ -517,10 +517,10 @@ int CArithmeticExpression::GetLexem(CMaaString expr, int &index, int &begin, int
             }
 
             int StopPos = 0;
-            bool btmp = mysscanf64(pos + expr, &x, -1, &StopPos, !PrevLexemArIf ? sz_Modificators_1st_chars_1 : sz_Modificators_1st_chars_2);
+            bool btmp = mysscanf64(pos + (const char *)expr, &x, -1, &StopPos, !PrevLexemArIf ? sz_Modificators_1st_chars_1 : sz_Modificators_1st_chars_2);
             if  (!btmp)
             {
-                btmp = mysscanf64(pos + expr, &x, StopPos, &StopPos, !PrevLexemArIf ? sz_Modificators_1st_chars_1 : sz_Modificators_1st_chars_2);
+                btmp = mysscanf64(pos + (const char*)expr, &x, StopPos, &StopPos, !PrevLexemArIf ? sz_Modificators_1st_chars_1 : sz_Modificators_1st_chars_2);
             }
             //__utf8_printf("<1> %d\n", pos);
             pos += StopPos;
@@ -564,9 +564,9 @@ int CArithmeticExpression::GetLexem(CMaaString expr, int &index, int &begin, int
                         {
                             _qword xx = 0;
                             int StopPos = 0;
-                            if  (!mysscanf64(pos + expr, &xx, -1, &StopPos, ":) "))
+                            if  (!mysscanf64(pos + (const char*)expr, &xx, -1, &StopPos, ":) "))
                             {
-                                mysscanf64(pos + expr, &xx, -1, &StopPos, ":) ");
+                                mysscanf64(pos + (const char*)expr, &xx, -1, &StopPos, ":) ");
                             }
                             pos += StopPos;
                             x = x * 60 + xx;
@@ -588,9 +588,9 @@ int CArithmeticExpression::GetLexem(CMaaString expr, int &index, int &begin, int
                             _qword xx = 0;
                             //int pos0 = pos;
                             int StopPos = 0;
-                            if  (!mysscanf64(pos + expr, &xx, -1, &StopPos, sz_sp_ch_modificators))
+                            if  (!mysscanf64(pos + (const char*)expr, &xx, -1, &StopPos, sz_sp_ch_modificators))
                             {
-                                mysscanf64(pos + expr, &xx, -1, &StopPos, sz_sp_ch_modificators);
+                                mysscanf64(pos + (const char*)expr, &xx, -1, &StopPos, sz_sp_ch_modificators);
                             }
                             pos += StopPos;
                             //while(expr[pos] == ' ') pos++;

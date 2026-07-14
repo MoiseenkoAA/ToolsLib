@@ -1319,8 +1319,15 @@ class C_os_StartProcess
         CMaaFile m_File;
         CMaaConcatString1 m_strData;
         CMaaPtr_<char, 1> m_Buffer;
+#ifdef FAST_CGI_SUPP
+        FCGX_Request* m_pFastCgiRequest = nullptr; // for handles with a number of -4
+#endif
     public:
-        Reader(CMaaString &Data, int fd);
+        Reader(CMaaString &Data, int fd
+#ifdef FAST_CGI_SUPP
+            , FCGX_Request* pFastCgiRequest = nullptr // for handles with a number of -4
+#endif
+        );
         ~Reader();
         unsigned Run();
 
@@ -1332,6 +1339,9 @@ public:
     //CMaaAutoInitObject<int, -2> m_fdStdIn, m_fdStdOut, m_fdStdErr;
     int m_fdStdIn = -2, m_fdStdOut = -2, m_fdStdErr = -2;
     CMaaString m_StdInSend, m_StdOutRecv, m_StdErrRecv; // for handles with a number of -3
+#ifdef FAST_CGI_SUPP
+    FCGX_Request* m_pFastCgiRequest = nullptr; // for handles with a number of -4
+#endif
 
     bool m_bEJudge;
     int m_MemLimit;

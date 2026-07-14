@@ -1980,7 +1980,7 @@ _IP CMaaSocket::GetHostByName(const char * DnsName, _Port * pPort, _IP * pAllIPs
         if  (txt[x] == ':' && pPort)
         {
             int Port = 0;
-            dsscanf(x + 1 + txt, "%d", &Port);
+            dsscanf(x + 1 + (const char*)txt, "%d", &Port);
             *pPort = Port;
         }
         if  (*pAllIPsCount > 1)
@@ -1999,7 +1999,7 @@ _IP CMaaSocket::GetHostByName(const char * DnsName, _Port * pPort, _IP * pAllIPs
         if  (x >= 0 && pPort)
         {
             int Port = 0;
-            dsscanf(x + 1 + txt, "%d", &Port);
+            dsscanf(x + 1 + (const char*)txt, "%d", &Port);
             *pPort = Port;
             txt = txt.Left(x);
         }
@@ -2064,7 +2064,7 @@ _byte * CMaaSocket::GetHostByName6(_byte * RetIp, const char * DnsName, _Port * 
         if  (txt[x] == ':' && pPort)
         {
             int Port = 0;
-            dsscanf(x + 1 + txt, "%d", &Port);
+            dsscanf(x + 1 + (const char*)txt, "%d", &Port);
             *pPort = Port;
         }
         if  (*pAllIPsCount > 1)
@@ -2083,7 +2083,7 @@ _byte * CMaaSocket::GetHostByName6(_byte * RetIp, const char * DnsName, _Port * 
         if  (x >= 0 &&  pPort)
         {
             int Port = 0;
-            dsscanf(x + 1 + txt, "%d", &Port);
+            dsscanf(x + 1 + (const char*)txt, "%d", &Port);
             *pPort = Port;
             txt = txt.Left(x);
         }

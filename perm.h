@@ -100,7 +100,7 @@
 #endif
 
 #ifdef __linux__
-#define FAST_CGI_SUPP
+//#define FAST_CGI_SUPP
 #endif
 //#define NEW_DELETE_PRINTF
 

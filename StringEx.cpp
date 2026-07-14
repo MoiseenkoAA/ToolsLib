@@ -4233,8 +4233,7 @@ CMaaString::Helper CMaaString::operator + (const CMaaString & That) const noexce
 {
     TOOLSLIB_STR_HELPER_printf("H S::op+(c S&)\n");
     CMaaString tmp(*this);
-    tmp += That;
-    return tmp;
+    return (tmp += That);
 }
 //---------------------------------------------------------------------------
 CMaaString::Helper CMaaString::operator + (const char * szString) const noexcept(noexcept_new)
@@ -4242,9 +4241,8 @@ CMaaString::Helper CMaaString::operator + (const char * szString) const noexcept
     if (szString)
     {
         CMaaString tmp(*this);
-        tmp += szString;
         TOOLSLIB_STR_HELPER_printf("H S::op+(c c*)\n");
-        return tmp;
+        return (tmp += szString);
     }
     TOOLSLIB_STR_HELPER_printf("H S::op+(c c* nullptr)\n");
     return *this;
@@ -18770,14 +18768,12 @@ int CMaaString::Utf8PartOfCharsLength() const noexcept
 }
 bool CMaaString::ListHas(const CMaaString &prop, const CMaaString &d) const noexcept(noexcept_new)
 {
-    CMaaString f = d;
-    (f += prop) += d;
+    CMaaString f = d + prop + d;
     return (f.Length() == 2 * d.Length() + prop.Length()) && Find(f) >= 0;
 }
 bool CMaaString::ListNotHas(const CMaaString &prop, const CMaaString &d) const noexcept(noexcept_new)
 {
-    CMaaString f = d;
-    (f += prop) += d;
+    CMaaString f = d + prop + d;
     return (f.Length() != 2 * d.Length() + prop.Length()) || Find(f) < 0;
 }
 bool CMaaString::ListAdd(const CMaaString &prop, int MaxLen, const CMaaString &d) noexcept(noexcept_new)
@@ -18818,8 +18814,7 @@ bool CMaaString::ListAdd(const CMaaString &prop, int MaxLen, const CMaaString &d
 }
 bool CMaaString::ListRem(const CMaaString &prop, const CMaaString &d) noexcept(noexcept_new)
 {
-    CMaaString f = d;
-    (f += prop) += d;
+    CMaaString f = d + prop + d;
     if (f.Length() != 2 * d.Length() + prop.Length())
     {
         return false;
@@ -18845,7 +18840,14 @@ bool CMaaString::ListRem(const CMaaString &prop, const CMaaString &d) noexcept(n
     }
     else if (!n)
     {
-        Empty();
+        if (Length() == f.Length())
+        {
+            Empty();
+        }
+        else
+        {
+            *this = RefMid(d.Length() + prop.Length());
+        }
         return true;
     }
     return false;
@@ -19523,7 +19525,7 @@ CMaaString GetTextSizeKBMBGB(_qword q, const char * m[] /*= nullptr*/) noexcept
 //-------------------------------------------------------------------------
 // F:\H-old\Inst_\L\Disks_Installs\200-3\D\13_3\d\4\Users\Andrey\1996_97\DOC.(_)
 //-------------------------------------------------------------------------
-static void copy_str(CMaaConcatString &txt, int &k, const CMaaString &text)
+static void copy_str(CMaaConcatString &txt, int &k, const CMaaString &text) noexcept(noexcept(txt += text))
 {
     txt += text;
     k += text.Length();
@@ -19638,7 +19640,7 @@ CMaaString NormalizeSummSpComma(const CMaaString &s)
     return good;
 }
 //-------------------------------------------------------------------------
-static int move_cop_rus(CMaaConcatString &txt, int &k, const char * c, const CMaaString& s1, const CMaaString& s2, const CMaaString& s3)
+static int move_cop_rus(CMaaConcatString &txt, int &k, const char * c, const CMaaString& s1, const CMaaString& s2, const CMaaString& s3) noexcept(noexcept(txt.Add(c, 2)) && noexcept(copy_str(txt, k, " ")))
 {
     txt.Add(c, 2); k += 2;
     copy_str(txt, k, " ");
@@ -19672,7 +19674,7 @@ static int move_cop_rus(CMaaConcatString &txt, int &k, const char * c, const CMa
     return 0;
 }
 //-------------------------------------------------------------------------
-static int move_num_rus(CMaaConcatString &txt, int &k, const char* num3, const CMaaString& s1, const CMaaString& s2, const CMaaString& s3, int need = 0, char t = 0)
+static int move_num_rus(CMaaConcatString &txt, int &k, const char* num3, const CMaaString& s1, const CMaaString& s2, const CMaaString& s3, int need = 0, char t = 0) noexcept(noexcept(CMaaString(" ")) && noexcept(copy_str(txt, k, " ")))
 {
     static const CMaaString number3[10] = { "", "сто", "двести", "триста", "четыреста", "пятьсот", "шестьсот", "семьсот", "восемьсот", "девятьсот" };
     static const CMaaString number2[10] = { "", "", "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто" };
@@ -19829,7 +19831,7 @@ CMaaString SummToTextSumm_rub(const CMaaString &s, bool bFullText, CMaaString *p
     return Ret;
 }
 //-------------------------------------------------------------------------
-static int move_cop_usd(CMaaConcatString &txt, int &k, const char * c, const CMaaString& s1, const CMaaString& s2, const CMaaString& s3)
+static int move_cop_usd(CMaaConcatString &txt, int &k, const char * c, const CMaaString& s1, const CMaaString& s2, const CMaaString& s3) noexcept(noexcept(txt.Add(c, 2)) && noexcept(copy_str(txt, k, " ")))
 {
     txt.Add(c, 2); k += 2;
     copy_str(txt, k, " ");
@@ -19863,7 +19865,7 @@ static int move_cop_usd(CMaaConcatString &txt, int &k, const char * c, const CMa
     return 0;
 }
 //-------------------------------------------------------------------------
-static int move_num_usd(CMaaConcatString &txt, int &k, const char* num3, const CMaaString& s1, const CMaaString& s2, const CMaaString& s3, int need = 0, char t = 0)
+static int move_num_usd(CMaaConcatString &txt, int &k, const char* num3, const CMaaString& s1, const CMaaString& s2, const CMaaString& s3, int need = 0, char t = 0) noexcept(noexcept(CMaaString(" ")) && noexcept(copy_str(txt, k, " ")))
 {
     static const CMaaString number3[10] = {"", "one hundred", "two hundreds", "three hundreds", "four hundreds", "five hundreds", "six hundreds", "seven hundreds", "eight hundreds", "nine hundreds"};
     static const CMaaString number2[10] = {"", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"};

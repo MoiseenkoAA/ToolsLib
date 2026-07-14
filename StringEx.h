@@ -1640,6 +1640,7 @@ public:
 
     constexpr_ bool IsEmpty() const noexcept { return m_pImp == sp_NullImp; /*!Length();*/ }
     constexpr_ bool IsNotEmpty() const noexcept { return m_pImp != sp_NullImp; /*Length();*/ }
+    //constexpr_ operator bool() const noexcept = delete; // { return m_pImp != sp_NullImp; /*Length();*/ }
 
     // inline fn:
     // 
@@ -1932,6 +1933,14 @@ public:
     //CMaaString operator + ( const char * pszStr );
     //CMaaString & operator += ( const char * pszStr );
     CMaaString & operator += (const CMaaString& That) noexcept(noexcept_new);
+    template <int x> CMaaString & operator += (const CMaaConcatString_<x, false>& str) noexcept(noexcept_new)
+    {
+        if (str.IsValid())
+        {
+            Add(str.const_ptr(), (int)str.Length());
+        }
+        return *this;
+    }
     CMaaString & operator -= (int n) noexcept(noexcept_new);
     CMaaString & Add(const void * pMem, int Len, _e1632 Flags = eUtf8Flag /*=0*/) noexcept(noexcept_new);
     CMaaString & AddLeftOf(const CMaaString& str, int nCount) noexcept(noexcept_new); // like  *this += str.Left(nCount);
@@ -2107,6 +2116,12 @@ public:
     Helper operator + (const char8_t* szString) const noexcept(noexcept_new) { return operator + ((const char*)szString); }
 #endif
     Helper operator + (const CMaaString& That) const noexcept(noexcept_new);
+    template <int x> Helper operator + (const CMaaConcatString_<x, false>& str) noexcept(noexcept_new)
+    {
+        TOOLSLIB_STR_HELPER_printf("H S::op+(c S&)\n");
+        CMaaString tmp(*this);
+        return (tmp += str);
+    }
     Helper operator - (int n) const noexcept(noexcept_new);
     //Helper operator - (const CMaaString&) const noexcept = delete;
     Helper operator - (const char *) const noexcept = delete;
@@ -3674,6 +3689,7 @@ private:
 
 template <> void CMaaSwap<CMaaString>(CMaaString& a, CMaaString& b) noexcept;
 
+//inline const char * operator+(int x, const CMaaString& str) { return x + (const char *)str; }
 //-----------------------------------------------------------------------------------------
 #if 0
 // for http req/resp: "GET / HTTP/1.1\r\nContent-Length: 0\r\n\r\n" / "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n", etc
@@ -4070,7 +4086,7 @@ public:
         txt._FormatV(-1, "unknown", format, list);
         va_end(list);
 
-        Add(txt, txt.Length());
+        Add((const char*)txt, txt.Length());
         return *this;
     }
 #if 0
@@ -4083,7 +4099,7 @@ public:
         txt._FormatV(-1, "unknown", format, list);
         va_end(list);
 
-        Add(txt, txt.Length());
+        Add((const char*)txt, txt.Length());
         return *this;
     }
 #ifdef TOOLSLIB_CHAR8T_SUPPORT
@@ -4096,7 +4112,7 @@ public:
         txt._FormatV(-1, "unknown", format, list);
         va_end(list);
 
-        Add(txt, txt.Length());
+        Add((const char*)txt, txt.Length());
         return *this;
     }
 #endif
@@ -4114,7 +4130,7 @@ public:
         txt._FormatV2(-1, "unknown", format, text, list);
         va_end(list);
 
-        Add(txt, txt.Length());
+        Add((const char*)txt, txt.Length());
         return *this;
     }
 #if 0
@@ -4128,7 +4144,7 @@ public:
         txt._FormatV2(-1, "unknown", format, text, list);
         va_end(list);
 
-        Add(txt, txt.Length());
+        Add((const char*)txt, txt.Length());
         return *this;
     }
 #ifdef TOOLSLIB_CHAR8T_SUPPORT
@@ -4142,7 +4158,7 @@ public:
         txt._FormatV2(-1, "unknown", format, text, list);
         va_end(list);
 
-        Add(txt, txt.Length());
+        Add((const char*)txt, txt.Length());
         return *this;
     }
 #endif
@@ -4156,12 +4172,12 @@ public:
     void operator += (const CMaaString& str) noexcept(xThrow <= 0 || bCountMode)
     {
         TOOLSLIB_STR_HELPER_printf("C::op+=(c S&)\n");
-        Add(str, str.Length());
+        Add((const char*)str, str.Length());
     }
 #if TOOLSLIB_USE_CMAASTRING64 == 2
     void operator += (const CMaaString32& str) noexcept(xThrow <= 0 || bCountMode)
     {
-        Add(str, str.Length());
+        Add((const char*)str, str.Length());
     }
 #endif
     void operator += (const CMaaConstStr& str) noexcept(xThrow <= 0 || bCountMode)
@@ -4214,7 +4230,7 @@ public:
         if (nCount > 0)
         {
             const int l = str.Length();
-            Add(str, nCount <= l ? nCount : l);
+            Add((const char*)str, nCount <= l ? nCount : l);
         }
     }
     void AddLeftOf(const CMaaConstStr& str, int nCount) noexcept(xThrow <= 0 || bCountMode)
@@ -4247,7 +4263,7 @@ public:
         if (First < 0 && nCount > -First)
         {
             nCount += First;
-            Add(str, nCount <= l ? nCount : l);
+            Add((const char*)str, nCount <= l ? nCount : l);
         }
         else if (First >= 0 && First < l)
         {

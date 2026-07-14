@@ -64,11 +64,22 @@
 //#include "fcgiapp.h"
 #include "temp.h"
 
+char * getenv8(const char * name)
+{
+#ifdef _WIN32
+    static thread_local_ CMaaString e;
+    e = my_getenv(name);
+    return e.IsNotEmpty() ? (char *)(const char *)e : nullptr;
+#else
+    return getenv(name);
+#endif
+}
+
 #ifdef _WIN32
 // returns utf8 env variable or nullptr
-char * my_getenv(const char * name)
+CMaaString my_getenv(const CMaaString& name)
 {
-    static thread_local_ CMaaString bb;
+    CMaaString bb;
     wchar_t Buffer[1024 + 1];
     CMaaString aa = Utf8ToUnicode(CMaaStringRO(name));
     //CMaaString bb = Utf8ToUnicode(value);
@@ -86,8 +97,7 @@ char * my_getenv(const char * name)
             x = GetEnvironmentVariableW((_WC_*)(const char*)aa, Buf2, (DWORD)(Buf2.Size() / sizeof(wchar_t)));
             if (x && x < Buf2.Size() / sizeof(wchar_t))
             {
-                bb = UnicodeToUtf8(CMaaString(Buf2, 2 * x));
-                return (char*)(const char*)bb;
+                return UnicodeToUtf8(CMaaString(Buf2, 2 * x));
             }
             else
             {
@@ -97,28 +107,27 @@ char * my_getenv(const char * name)
     }
     if (x)
     {
-        bb = UnicodeToUtf8(CMaaString(Buffer, 2 * x));
-        return (char*)(const char*)bb;
+        return UnicodeToUtf8(CMaaString(Buffer, 2 * x));
     }
-    return nullptr;
+    return CMaaStringZ;
 }
 // set utf8 envirinment string
-int my_setenv(const char* name, const char* value, int overwrite)
+int my_setenv(const CMaaString& name, const CMaaString& value, int overwrite)
 {
-    if (!overwrite && my_getenv(name))
+    if (!overwrite && my_getenv(name).IsNotEmpty())
     {
         SetLastError(ERROR_ALREADY_EXISTS);
         return 1;
     }
-    CMaaString aa = Utf8ToUnicode(CMaaStringRO(name));
-    CMaaString bb = Utf8ToUnicode(CMaaStringRO(value));
+    CMaaString aa = Utf8ToUnicode(name);
+    CMaaString bb = Utf8ToUnicode(value);
     SetEnvironmentVariableW((_WC_*)(const char*)aa, (_WC_*)(const char*)bb);
     return 0;
 }
 // unset utf8 envirinment string
-int my_unsetenv(const char* name)
+int my_unsetenv(const CMaaString& name)
 {
-    CMaaString aa = Utf8ToUnicode(CMaaStringRO(name));
+    CMaaString aa = Utf8ToUnicode(name);
     SetEnvironmentVariableW((_WC_*)(const char*)aa, nullptr);
     return 0;
 }
@@ -167,12 +176,12 @@ int CCGIHelper::SendIndependentReply(CMaaString Data, CMaaString Header = ""); /
 int CCGIHelper::SendIndependentReply(CMaaFile f, CMaaString Header = "");//, _qword Start = 0, _qword End = -1);
 */
 
-char * CCGIHelper::getenv(const char * name)
+CMaaString CCGIHelper::getenv(const CMaaString &name)
 {
     CMaaString *pval;
     if (m_phCgiParamOverride && (pval = (*m_phCgiParamOverride)[name]))
     {
-        return (char *)(const char *)*pval;
+        return *pval;
     }
 #ifdef FAST_CGI_SUPP
     if (m_pFastCgiRequest)
@@ -199,7 +208,7 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
     m_phCgiParamOverride = phCgiParamOverride;
     if (!pFastCgiRequest)
     {
-        if  (!gAllow_PATH_INFO && getenv("PATH_INFO") != nullptr)
+        if  (!gAllow_PATH_INFO && getenv("PATH_INFO").IsNotEmpty())
         {
             exit(1);
         }
@@ -286,15 +295,8 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
 
         for (int i = 0; envvarNames[i]; i++)
         {
-            const char * env_str = getenv(envvarNames[i]);
-            if  (env_str)
-            {
-                (*envVars[i]) = env_str;
-            }
-            else
-            {
-                (*envVars[i]).Empty();
-            }
+            (*envVars[i]) = getenv(envvarNames[i]);
+
             switch(pszConvertingType[i])
             {
             case 'u':
@@ -312,7 +314,7 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
             default:
                 (*destVars[i]) = (*envVars[i]);
             }
-            if  (!env_str && pszOnEmptySubstitution[i] == 'y')
+            if  ((*envVars[i]).IsEmpty() && pszOnEmptySubstitution[i] == 'y')
             {
                 (*destVars[i]) = strOnEmptySubstitution[i];
             }
@@ -335,7 +337,7 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
                 }
                 if  (StopPos >= 0 && txt[StopPos] == '-')
                 {
-                    mysscanf64(StopPos + 1 + txt, &m_End, -1, nullptr, ","); // , -1, nullptr, "," added 24.03.2022 - get first range only
+                    mysscanf64(StopPos + 1 + (const char*)txt, &m_End, -1, nullptr, ","); // , -1, nullptr, "," added 24.03.2022 - get first range only
                 }
             }
         }
@@ -385,7 +387,7 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
 #else
                 _dword x = fStdIn.Read(Buffer, cl - len >= (_qword)Buffer.Size() ? (_dword)Buffer.Size() : (_dword)(cl - len));
 #endif
-                if  (/*x < 0 ||*/ (x == 0 && 1==1))
+                if  ((_sdword)x <= 0)
                 {
                     break;
                 }
@@ -1072,25 +1074,17 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     time_t tims = 0;
     if  (0)
     {
-        const char * strIms = getenv("HTTP_IF_MODIFIED_SINCE");
-        if  (strIms)// && txt.Find("no-cache") < 0 && Pragma.Find("no-cache") < 0)
+        const CMaaString& strIms = getenv("HTTP_IF_MODIFIED_SINCE");
+        if  (strIms.IsNotEmpty())// && txt.Find("no-cache") < 0 && Pragma.Find("no-cache") < 0)
         {
-            if  (ConvertFromWebDateTime(CMaaStringRO(strIms), &tims))
+            if  (ConvertFromWebDateTime(strIms, &tims))
             {
                 // time is got
             }
         }
     }
 
-    CMaaString CacheControl, Pragma;
-    {
-        const char * p = getenv("HTTP_CACHE_CONTROL");
-        CacheControl = p ? p : "";
-    }
-    {
-        const char * p = getenv("HTTP_PRAGMA");
-        Pragma = p ? p : "";
-    }
+    CMaaString CacheControl = getenv("HTTP_CACHE_CONTROL"), Pragma = getenv("HTTP_PRAGMA");
     if  (CacheControl.FindCi("no-cache") >= 0)
     {
         CacheControl = "Cache-Control: no-cache\r\n";
@@ -1120,8 +1114,8 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     CMaaString Connection;// = "Connection: Keep-Alive\r\n"; //27.04.2024
     if  (Header.CgiGetValue("Connection: ").IsEmpty())
     {
-        const char * p = getenv("HTTP_CONNECTION");
-        if  (!p || *p == '\0')
+        const CMaaString p = getenv("HTTP_CONNECTION");
+        if  (p[0] == '\0')
         {
             Connection = "Connection: close\r\n";
             //Connection = "Connection: keep-alive\r\n";
@@ -1152,10 +1146,10 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     Start = m_Start, End = m_End;
     /*
     {
-	const char * p = getenv("HTTP_RANGE");
-	if  (p)
+	const CMaaString p = getenv("HTTP_RANGE");
+	if  (p.IsNotEmpty())
 	{
-	    CMaaString txt(p);
+	    CMaaString txt = p;
 	    if	(txt.IsLeftCi("bytes=", 6))
 	    {
 		txt = txt.Mid(6);
@@ -1180,8 +1174,8 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     CMaaString Method = m_Method;
     /*
     {
-	const char * RequestMethod = getenv("REQUEST_METHOD");
-	Method = RequestMethod ? RequestMethod : "GET";
+	const CMaaString RequestMethod = getenv("REQUEST_METHOD");
+	Method = RequestMethod.IsNotEmpty() ? RequestMethod : CMaaString("GET");
 	Method = Method.ToUpper(0);
     }
     */
@@ -1318,7 +1312,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     {
         ManualStatus.Empty();
     }
-    CMaaString rs(getenv("REQUEST_SCHEME") ? getenv("REQUEST_SCHEME") : "");
+    CMaaString rs = getenv("REQUEST_SCHEME");
     CMaaString txt;
     if  (t > 0 && t <= tims)
     {
@@ -1566,25 +1560,17 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
     //    if   (0)
     if  (!m_SubstOut) // can be commented : subst is not intened for file output
     {
-        const char * strIms = getenv("HTTP_IF_MODIFIED_SINCE");
-        if  (strIms)// && txt.Find("no-cache") < 0 && Pragma.Find("no-cache") < 0)
+        const CMaaString strIms = getenv("HTTP_IF_MODIFIED_SINCE");
+        if  (strIms.IsNotEmpty())// && txt.Find("no-cache") < 0 && Pragma.Find("no-cache") < 0)
         {
-            if  (ConvertFromWebDateTime(CMaaStringRO(strIms), &tims))
+            if  (ConvertFromWebDateTime(strIms, &tims))
             {
                 // time is got
             }
         }
     }
 
-    CMaaString CacheControl, Pragma;
-    {
-        const char * p = getenv("HTTP_CACHE_CONTROL");
-        CacheControl = p ? p : "";
-    }
-    {
-        const char * p = getenv("HTTP_PRAGMA");
-        Pragma = p ? p : "";
-    }
+    CMaaString CacheControl = getenv("HTTP_CACHE_CONTROL"), Pragma = getenv("HTTP_PRAGMA");
     if  (CacheControl.FindCi("no-cache") >= 0)
     {
         CacheControl = "Cache-Control: no-cache\r\n";
@@ -1604,8 +1590,8 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
     CMaaString Connection;
     if  (Header.CgiGetValue("Connection: ").IsEmpty())
     {
-        const char * p = getenv("HTTP_CONNECTION");
-        if  (!p || *p == '\0')
+        const CMaaString p = getenv("HTTP_CONNECTION");
+        if  (p[0] == '\0')
         {
             Connection = "Connection: close\r\n";
             //Connection = "Connection: keep-alive\r\n";
@@ -1760,7 +1746,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
         log.fprintf("fStart = %D, fEnd = %D\n", (_qword)fStart, (_qword)fEnd);
     }*/
 
-    CMaaString rs(getenv("REQUEST_SCHEME") ? getenv("REQUEST_SCHEME") : "");
+    CMaaString rs = getenv("REQUEST_SCHEME");
     CMaaString txt, Data;
     if  (t > 0 && t <= tims)
     {
@@ -1946,7 +1932,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
                 nn = m_fStdOut.Write(Buffer, x);
             }
         }
-        if  (nn == 0)
+        if  ((_sdword)nn <= 0)
         {
             break;
         }
@@ -2022,7 +2008,19 @@ static const char* spBotsSubStr[9] =
 static CMaaString::sFindNCalcData<9> sfBots(spBotsSubStr);
 bool CCGIHelper::ItIsABot(const char * p)
 {
-    CMaaString tmp(p ? p : (g_imp ? g_imp->getenv("HTTP_USER_AGENT") : ::getenv("HTTP_USER_AGENT")));
+    CMaaString tmp;
+    if (p)
+    {
+        tmp = p;
+    }
+    else if (g_imp)
+    {
+        tmp = g_imp->getenv("HTTP_USER_AGENT");
+    }
+    else
+    {
+        tmp = ::getenv("HTTP_USER_AGENT");
+    }
     const bool bItIsABot = tmp.FindNCi<9>(0, spBotsSubStr, sfBots.SubStrLen) >= 0
          || tmp.IsLeftCi("curl/", (StrInt)5) || tmp.IsLeftCi("java/", (StrInt)5) || tmp.IsLeftCi("python-", (StrInt)7)
          // || tmp.IsLeftCi("python-urllib/", (StrInt)14) || tmp.IsLeftCi("python-requests/", (StrInt)16)

@@ -3898,10 +3898,17 @@ unsigned C_os_StartProcess::Writer::Run()
     return 1;
 }
 //------------------------------------------------------------------------------
-C_os_StartProcess::Reader::Reader(CMaaString &Data, int fd)
+C_os_StartProcess::Reader::Reader(CMaaString &Data, int fd
+#ifdef FAST_CGI_SUPP
+    , FCGX_Request* pFastCgiRequest // for handles with a number of -4
+#endif
+)
 :   m_Data(Data),
     m_File(CMaaFile::FromHandle(fd, true, 1)),
     m_Buffer(128 * 1024)
+#ifdef FAST_CGI_SUPP
+    , m_pFastCgiRequest(pFastCgiRequest)
+#endif
 {
 }
 //------------------------------------------------------------------------------
@@ -3921,7 +3928,19 @@ unsigned C_os_StartProcess::Reader::Run()
             int x = m_File.Read(m_Buffer, (int)m_Buffer.Size());
             if  (x > 0)
             {
-                m_strData.Add(m_Buffer, (int)x);
+#ifdef FAST_CGI_SUPP
+                if (m_pFastCgiRequest) // for handles with a number of -4
+                {
+                    if (FCGX_PutStr(m_Buffer, (int)x, m_pFastCgiRequest->out) < 0)
+                    {
+                        break;
+                    }
+                }
+                else
+#endif
+                {
+                    m_strData.Add(m_Buffer, (int)x);
+                }
             }
             else
             {
@@ -4043,8 +4062,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
         CMaaString cmd(ExecFileName);
         if  (cmd[0] != '.' && cmd[0] != '/' && cmd.Find('/') < 0)
         {
-            const char * path = getenv("PATH");
-            CMaaString Path(path ? path : "");
+            CMaaString Path = getenv("PATH");
             while(Path.IsNotEmpty())
             {
                 CMaaString p = Path.GetWord(':', true, false);
@@ -4130,7 +4148,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
     int fd[3] =
     {
         m_fdStdIn  == -2 && stdin  ? dup(fileno(stdin))  : m_fdStdIn  < -3 || m_fdStdIn  >= 0 ? dup(m_fdStdIn)  : (int)m_fdStdIn,
-        m_fdStdOut == -2 && stdout ? dup(fileno(stdout)) : m_fdStdOut < -3 || m_fdStdOut >= 0 ? dup(m_fdStdOut) : (int)m_fdStdOut,
+        m_fdStdOut == -2 && stdout ? dup(fileno(stdout)) : m_fdStdOut < -4 || m_fdStdOut >= 0 ? dup(m_fdStdOut) : (int)m_fdStdOut,
         m_fdStdErr == -2 && stderr ? dup(fileno(stderr)) : m_fdStdErr < -3 || m_fdStdErr >= 0 ? dup(m_fdStdErr) : (int)m_fdStdErr
     };
     //static const char * fdnames[3] =
@@ -4158,7 +4176,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
     int i;
     for (i = 0; i < 3; i++)
     {
-        if  (fd[i] == -3)
+        if  (fd[i] == -3 || fd[i] == -4)
         {
             _ioe[i]->Create();
             //            _ioe[i]->SetHandleIsInherited(0, true, false);
@@ -4255,7 +4273,11 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
         {
             _ioe[1]->ItIsASide(0);
             //_ioe[1]->IgnoreSignals();
-            m_pRW[1] = TL_NEW Reader(m_StdOutRecv, _ioe[1]->GetHandle(0, true));
+            m_pRW[1] = TL_NEW Reader(m_StdOutRecv, _ioe[1]->GetHandle(0, true)
+#ifdef FAST_CGI_SUPP
+                , m_pFastCgiRequest
+#endif
+            );
             _ioe[1]->Close();
             m_pRW[1] && m_pRW[1]->Create();
         }
@@ -4493,8 +4515,7 @@ bool C_os_StartProcess::fork_and_StartProcess_old(int Flags, const char * ExecFi
         CMaaString cmd(ExecFileName);
         if  (cmd[0] != '.' && cmd[0] != '/' && cmd.Find('/') < 0)
         {
-            const char * path = getenv("PATH");
-            CMaaString Path(path ? path : "");
+            CMaaString Path = getenv("PATH");
             while(Path.IsNotEmpty())
             {
                 CMaaString p = Path.GetWord(':', true, false);
@@ -4573,7 +4594,7 @@ bool C_os_StartProcess::fork_and_StartProcess_old(int Flags, const char * ExecFi
     int fd[3] =
     {
         m_fdStdIn  == -2 && stdin  ? dup(fileno(stdin))  : m_fdStdIn  < -3 || m_fdStdIn  >= 0 ? dup(m_fdStdIn)  : (int)m_fdStdIn,
-        m_fdStdOut == -2 && stdout ? dup(fileno(stdout)) : m_fdStdOut < -3 || m_fdStdOut >= 0 ? dup(m_fdStdOut) : (int)m_fdStdOut,
+        m_fdStdOut == -2 && stdout ? dup(fileno(stdout)) : m_fdStdOut < -4 || m_fdStdOut >= 0 ? dup(m_fdStdOut) : (int)m_fdStdOut,
         m_fdStdErr == -2 && stderr ? dup(fileno(stderr)) : m_fdStdErr < -3 || m_fdStdErr >= 0 ? dup(m_fdStdErr) : (int)m_fdStdErr
     };
     //static const char * fdnames[3] =
@@ -4587,7 +4608,7 @@ bool C_os_StartProcess::fork_and_StartProcess_old(int Flags, const char * ExecFi
     int i;
     for (i = 0; i < 3; i++)
     {
-        if  (fd[i] == -3)
+        if  (fd[i] == -3 || fd[i] == -4)
         {
             _ioe[i]->Create();
             //            _ioe[i]->SetHandleIsInherited(0, true, false);
