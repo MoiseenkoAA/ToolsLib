@@ -64,6 +64,10 @@
 //#include "fcgiapp.h"
 #include "temp.h"
 
+#ifdef FAST_CGI_SUPP
+CMaaRWLockWp gFastCgiRWLock;
+#endif
+
 char * getenv8(const char * name)
 {
 #ifdef _WIN32
@@ -228,6 +232,12 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
     else
 #endif
     {
+#ifdef FAST_CGI_SUPP
+        if (pFastCgiRequest)
+        {
+            m_bFastCgiRLockable = true;
+        }
+#endif
         Initialize(MaxContentLength, /*phCgiParamOverride,*/ pFastCgiRequest, ProgressFn, ProgressFmt);
     }
     if  (!g_imp)
@@ -722,10 +732,12 @@ g_temp.Format("%S\npoint 1\n---%S---%S---\n", &g_temp, &p->m_ContentData.Right(c
             }
         }
     }
+    RLock();
 }
 
 CCGIHelper::~CCGIHelper()
 {
+    RWUnLock();
     //fprintf(stderr, "CCGIHelper::~CCGIHelper()\nm_Attr2List\n"); fflush(stderr);
     m_Attr2List.RemoveAll();
     //fprintf(stderr, "m_AttrList\n"); fflush(stderr);
@@ -1026,6 +1038,7 @@ CMaaString CCGIHelper::GetMethod() const noexcept
 }
 int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString FileName, CMaaString Header, const CMaaString &ErrorText, time_t t, bool bInline) //, CMaaFile fStdOut)
 {
+    RWUnLock();
     //ErrorText = ErrorText.ToHttpHtmlDisplayedText(true);
     if (!IsSubsted() && m_n100Count > 0)
     {
@@ -1513,6 +1526,7 @@ int CCGIHelper::SendReply(CMaaFile f, const CMaaString &Header, const CMaaString
 
 int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, time_t t, CMaaString ContentType, _qword fStart, _qword fEnd, bool bInline) //, CMaaFile fStdOut)
 {
+    RWUnLock();
     if (!IsSubsted() && m_n100Count > 0)
     {
         if (Header.IsLeft("HTTP/1.", 7))

@@ -2958,6 +2958,13 @@ int CMaaTcpSocket::Connect(const char * DnsName, _Port Port)
     return Connect(Ip, Port);
 }
 //---------------------------------------------------------------------------
+int CMaaTcpSocket::Connect(const CMaaString& DnsName, _Port Port)
+{
+    IfDebug(100) { DP(printf("CMaaTcpSocket::Connect(\"%s\", %d)\n", DnsName, Port);) }
+    const _IP Ip = GetHostByName((const char *)DnsName.Str0Copy(), &Port);
+    return Connect(Ip, Port);
+}
+//---------------------------------------------------------------------------
 int CMaaTcpSocket::AsyncConnect(_IP Ip, _Port Port)
 {
     //RemoveFdSocket ();
@@ -3117,11 +3124,19 @@ int CMaaTcpSocket::Connect6(const _byte * Ip6, _Port Port)
     return Ret;
 }
 //---------------------------------------------------------------------------
-int CMaaTcpSocket::Connect6(const char * DnsName, _Port Port)
+int CMaaTcpSocket::Connect6(const char* DnsName, _Port Port)
 {
     IfDebug(100) { DP(printf("CMaaTcpSocket::Connect ( \"%s\", %d )\n", DnsName, Port);) }
     _byte b[16];
-    _byte * Ip6 = GetHostByName6(b, DnsName, &Port);
+    _byte* Ip6 = GetHostByName6(b, DnsName, &Port);
+    return Connect6(Ip6, Port);
+}
+//---------------------------------------------------------------------------
+int CMaaTcpSocket::Connect6(const CMaaString& DnsName, _Port Port)
+{
+    IfDebug(100) { DP(printf("CMaaTcpSocket::Connect ( \"%s\", %d )\n", DnsName, Port);) }
+    _byte b[16];
+    _byte* Ip6 = GetHostByName6(b, (const char *)DnsName.Str0Copy(), &Port);
     return Connect6(Ip6, Port);
 }
 //---------------------------------------------------------------------------
@@ -3144,9 +3159,30 @@ int CMaaTcpSocket::AsyncConnect6(const char * DnsName, _Port Port)
     Connect6(DnsName, Port);
     return 1;
 }
+//---------------------------------------------------------------------------
+int CMaaTcpSocket::AsyncConnect6(const CMaaString& DnsName, _Port Port)
+{
+    ChangeFdModeEx(eConnect | eExept);
+#ifdef __unix__
+    SetNonBlockingMode();
+#endif
+    Connect6(DnsName, Port);
+    return 1;
+}
+//---------------------------------------------------------------------------
 #endif //#ifdef TOOLSLIB_USE_IPV6
 //---------------------------------------------------------------------------
-int CMaaTcpSocket::AsyncConnect(const char * DnsName, _Port Port)
+int CMaaTcpSocket::AsyncConnect(const char* DnsName, _Port Port)
+{
+    ChangeFdModeEx(eConnect | eExept);
+#ifdef __unix__
+    SetNonBlockingMode();
+#endif
+    Connect(DnsName, Port);
+    return 1;
+}
+//---------------------------------------------------------------------------
+int CMaaTcpSocket::AsyncConnect(const CMaaString& DnsName, _Port Port)
 {
     ChangeFdModeEx(eConnect | eExept);
 #ifdef __unix__
@@ -7824,6 +7860,68 @@ CMaaUnivServer::CMaaUnivServer(CMaaFdSockets * pFdSockets, CMaaString Port, cons
     ServerName = ServerName ? ServerName : "CMaaUniversalServer";
     m_ServerName.Format("%s on %S", ServerName, &Port);
     if  (Port[0] == '[')
+    {
+        //__utf8_printf("Bind6(%S)...\n", &Port);
+        Bind6(Port);
+    }
+    else
+    {
+        Bind(Port);
+    }
+    Listen();
+    AddFdSocket();
+}
+//---------------------------------------------------------------------------
+CMaaUnivServer::CMaaUnivServer(CMaaFdSockets* pFdSockets, int Port, const CMaaString& ServerName)
+:   CMaaTcpSocket(pFdSockets) //, AF_INET)
+{
+    if (ServerName.IsEmpty())
+    {
+        m_ServerName.Format("%s on port %d", "CMaaUniversalServer", Port);
+    }
+    else
+    {
+        m_ServerName.Format("%S on port %d", &ServerName, Port);
+    }
+    Bind(Port);
+    Listen();
+    AddFdSocket();
+}
+//---------------------------------------------------------------------------
+CMaaUnivServer::CMaaUnivServer(CMaaFdSockets* pFdSockets, int Port, int domain, const CMaaString& ServerName)
+:   CMaaTcpSocket(pFdSockets, domain)
+{
+    if (ServerName.IsEmpty())
+    {
+        m_ServerName.Format("%s on port %d", domain == AF_INET6 ? "CMaaUniversalServer (ipv6)" : "CMaaUniversalServer", Port);
+    }
+    else
+    {
+        m_ServerName.Format("%S on port %d", &ServerName, Port);
+    }
+    if (domain == AF_INET6)
+    {
+        Bind6(Port);
+    }
+    else
+    {
+        Bind(Port);
+    }
+    Listen();
+    AddFdSocket();
+}
+CMaaUnivServer::CMaaUnivServer(CMaaFdSockets* pFdSockets, CMaaString Port, const CMaaString& ServerName)
+:   CMaaTcpSocket(pFdSockets, Port[0] == '[' ? AF_INET6 : AF_INET)
+{
+    if (ServerName.IsEmpty())
+    {
+        m_ServerName.Format("%s on %S", "CMaaUniversalServer", &Port);
+    }
+    else
+    {
+        m_ServerName.Format("%S on %S", &ServerName, &Port);
+    }
+    if (Port[0] == '[')
     {
         //__utf8_printf("Bind6(%S)...\n", &Port);
         Bind6(Port);

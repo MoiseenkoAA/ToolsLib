@@ -4261,6 +4261,13 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
         err = 0;
         int errcode = 0;
 
+#ifdef FAST_CGI_SUPP
+        if (m_pHelperUnLock)
+        {
+            m_pHelperUnLock->RWUnLock();
+        }
+#endif
+
         if  (m_bFdPipe[0])
         {
             _ioe[0]->ItIsASide(1);

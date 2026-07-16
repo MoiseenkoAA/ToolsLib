@@ -70,13 +70,64 @@ int my_unsetenv(const CMaaString& name);
 #endif
 
 extern bool gAllow_PATH_INFO;
+#ifdef FAST_CGI_SUPP
+extern CMaaRWLockWp gFastCgiRWLock;
+#endif
 
 class CCGIHelper
 {
 public:
     CMaaString getenv(const CMaaString& name);
+    void RLock() noexcept
+    {
+#ifdef FAST_CGI_SUPP
+        if (m_bFastCgiRLockable && !m_bFastCgiRLocked)
+        {
+            gFastCgiRWLock.RLock(false);
+            m_bFastCgiRLocked = true;
+        }
+#endif
+    }
+    void RWUnLock() noexcept
+    {
+#ifdef FAST_CGI_SUPP
+        if (m_bFastCgiRLockable && m_bFastCgiRLocked)
+        {
+            gFastCgiRWLock.RUnLock();
+            m_bFastCgiRLocked = false;
+        }
+        if (m_bFastCgiRLockable && m_bFastCgiWLocked)
+        {
+            gFastCgiRWLock.WUnLock();
+            m_bFastCgiWLocked = false;
+        }
+#endif
+    }
+    void R2WLock() noexcept
+    {
+#ifdef FAST_CGI_SUPP
+        if (m_bFastCgiRLockable && m_bFastCgiRLocked && !m_bFastCgiWLocked)
+        {
+            gFastCgiRWLock.R2WLock();
+            m_bFastCgiRLocked = false;
+            m_bFastCgiWLocked = true;
+        }
+#endif
+    }
+    void W2RLock() noexcept
+    {
+#ifdef FAST_CGI_SUPP
+        if (m_bFastCgiRLockable && m_bFastCgiWLocked && !m_bFastCgiRLocked)
+        {
+            gFastCgiRWLock.W2RLock();
+            m_bFastCgiWLocked = false;
+            m_bFastCgiRLocked = true;
+        }
+#endif
+    }
 protected:
 #ifdef FAST_CGI_SUPP
+    bool m_bFastCgiRLockable = false, m_bFastCgiRLocked = false, m_bFastCgiWLocked = false, m_bFastCgiPadding = false;
     FCGX_Request * m_pFastCgiRequest;
 #endif
     CMaaUnivHash<CMaaString, CMaaString>* m_phCgiParamOverride = nullptr;

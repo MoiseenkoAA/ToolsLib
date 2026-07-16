@@ -1640,7 +1640,9 @@ public:
 
     constexpr_ bool IsEmpty() const noexcept { return m_pImp == sp_NullImp; /*!Length();*/ }
     constexpr_ bool IsNotEmpty() const noexcept { return m_pImp != sp_NullImp; /*Length();*/ }
-    //constexpr_ operator bool() const noexcept = delete; // { return m_pImp != sp_NullImp; /*Length();*/ }
+    //constexpr_ operator bool() const noexcept = delete; // { return m_pImp != sp_NullImp; }
+    //constexpr_ operator bool() const noexcept { return m_pImp != sp_NullImp; }
+    //constexpr_ operator bool() noexcept { return m_pImp != sp_NullImp; }
 
     // inline fn:
     // 
@@ -2052,6 +2054,12 @@ public:
             (*(CMaaString*)this) += txt;
             return *this;
         }
+        Helper& operator +(char *txt) noexcept(noexcept_new)
+        {
+            TOOLSLIB_STR_HELPER_printf("H& op+(char *)\n");
+            (*(CMaaString*)this) += (const char *)txt;
+            return *this;
+        }
         Helper& operator -=(int n) noexcept(noexcept_new)
         {
             TOOLSLIB_STR_HELPER_printf("H& op-=(n)\n");
@@ -2112,6 +2120,7 @@ public:
         return *this;
     }
     Helper operator + (const char * szString) const noexcept(noexcept_new);
+    Helper operator + (char* szString) const noexcept(noexcept_new) { return operator + ((const char*)szString); }
 #ifdef TOOLSLIB_CHAR8T_SUPPORT
     Helper operator + (const char8_t* szString) const noexcept(noexcept_new) { return operator + ((const char*)szString); }
 #endif
@@ -3100,7 +3109,9 @@ public:
     */
     // returns number of replacements, -1 on new[] error
     int ReplaceNN(char What, char By, int StartPos = 0, int EndPos = -1) noexcept(noexcept_new);
+    int ReplaceNN(const CMaa256Bits& What, char By, int StartPos = 0, int EndPos = -1) noexcept(noexcept_new);
     int ReplaceNN(char What, const CMaaString &By, int StartPos = 0, int EndPos = -1) noexcept(noexcept_new);
+    int ReplaceNN(const CMaa256Bits& What, const CMaaString &By, int StartPos = 0, int EndPos = -1) noexcept(noexcept_new);
     int ReplaceNN(char What, const char * strBy, int StartPos = 0, int EndPos = -1) noexcept(noexcept_new)
     {
         CMaaString By(strBy, eStrlenMemString);

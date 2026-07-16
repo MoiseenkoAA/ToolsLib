@@ -1071,17 +1071,21 @@ public:
     int RecvData(void * Buffer, int Size);
     int Connect(_IP Ip, _Port Port);
     int Connect(const char * DnsName, _Port Port = (_Port)-1); // DnsName can be as "www.ru:80"
+    int Connect(const CMaaString& DnsName, _Port Port = (_Port)-1); // DnsName can be as "www.ru:80"
 #ifdef TOOLSLIB_USE_IPV6
     int Connect6(const _byte * Ip6, _Port Port);
     int Connect6(const char * DnsName, _Port Port = (_Port)-1); // DnsName can be as "www.ru:80"
+    int Connect6(const CMaaString& DnsName, _Port Port = (_Port)-1); // DnsName can be as "www.ru:80"
 #endif
     int Detect64(const CMaaString &DnsName_Port, CMaaString *pDnsName_Port = nullptr) noexcept;
     int Detect46(const CMaaString &DnsName_Port, CMaaString *pDnsName_Port = nullptr) noexcept;
     int AsyncConnect(_IP Ip, _Port Port);
     int AsyncConnect(const char * DnsName, _Port Port = (_Port)-1); // DnsName can be as "www.ru:80"
+    int AsyncConnect(const CMaaString& DnsName, _Port Port = (_Port)-1); // DnsName can be as "www.ru:80"
 #ifdef TOOLSLIB_USE_IPV6
     int AsyncConnect6(const _byte * Ip6, _Port Port);
     int AsyncConnect6(const char * DnsName, _Port Port = (_Port)-1); // DnsName can be as "www.ru:80"
+    int AsyncConnect6(const CMaaString& DnsName, _Port Port = (_Port)-1); // DnsName can be as "www.ru:80"
 #endif
     int ConnectAgain(int fCallNotify); // for AsyncConnect, call it from fd_write
     int Bind(_Port Port, _IP Ip = 0, bool bReuse = true);              // 0 - ok
@@ -1566,6 +1570,9 @@ public:
     CMaaUnivServer(CMaaFdSockets * pFdSockets, int Port, const char * ServerName = nullptr );
     CMaaUnivServer(CMaaFdSockets * pFdSockets, int Port, int domain, const char * ServerName = nullptr );
     CMaaUnivServer(CMaaFdSockets * pFdSockets, CMaaString strIpPort, const char * ServerName = nullptr );
+    CMaaUnivServer(CMaaFdSockets* pFdSockets, int Port, const CMaaString& ServerName);
+    CMaaUnivServer(CMaaFdSockets* pFdSockets, int Port, int domain, const CMaaString& ServerName);
+    CMaaUnivServer(CMaaFdSockets* pFdSockets, CMaaString strIpPort, const CMaaString& ServerName);
     ~CMaaUnivServer();
 };
 //---------------------------------------------------------------------------

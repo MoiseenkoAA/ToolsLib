@@ -198,6 +198,36 @@ BOOL CMaaComPort::Open ( const char * Port )
     dsscanf ( p + 7, "%d", &m_PortNumber );
     return TRUE;
 }
+BOOL CMaaComPort::Open(CMaaString Port)
+{
+    Close();
+    if (Port.Length() > 30)
+    {
+        return CheckThrow(ERROR_INVALID_PARAMETER, "Bad Port name length: \"%S\"", &Port);
+    }
+    if (!Port.IsLeft("\\\\.\\", 4))
+    {
+        Port = CMaaString("\\\\.\\") + Port;
+    }
+    Port = Port.Str0Copy();
+    m_hCom = CreateFileA(
+        Port,        // file name
+        GENERIC_READ | GENERIC_WRITE, // access mode
+        0,        //FILE_SHARE_READ|FILE_SHARE_WRITE,  // share mode
+        nullptr,     // SD
+        OPEN_EXISTING,   // how to create
+        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,  // file attributes
+        nullptr   // handle to template file
+    );
+    if (m_hCom == INVALID_HANDLE_VALUE)
+    {
+        //return CheckThrow ( -1, "Error opening communication port \"%s\"", Port );
+        return CheckThrow(-1, "Error opening communication port \"%s\"", (Port.Length() > 4 ? 4 : 0) + (const char *)Port);
+    }
+    //m_PortNumber = 0;
+    dsscanf((Port.Length() > 7 ? 7 : 0) + (const char *)Port, "%d", &m_PortNumber);
+    return TRUE;
+}
 //---------------------------------------------------------------------------
 BOOL CMaaComPort::Configure ( const char * Settings )
 {

@@ -463,6 +463,13 @@ public:
     bool RLock(_dword ms, bool bForced) noexcept; // false on timeout
     bool WLock(_dword ms) noexcept; // false on timeout
 
+    void GetStat(int& r, int& w, int& ww) noexcept
+    {
+        _dword x = m_WriterReaders;
+        r = x & cMaxReaders;
+        w = (x >> (sizeof(_dword) * 8 - 6)) & cMaxWriterLocks;
+        ww = (x >> (sizeof(_dword) * 8 - 6 - 13)) & cMaxWaitingWriters;
+    }
 #ifdef CMaaRWLockWp_DBG
     int RCnt() const noexcept
     {

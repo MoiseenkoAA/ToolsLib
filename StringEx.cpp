@@ -8433,7 +8433,82 @@ int CMaaString::ReplaceNN(char What, char By, int StartPos, int EndPos) noexcept
     return n;
 }
 //--------------------------------------------------------------------------
+int CMaaString::ReplaceNN(const CMaa256Bits& What, char By, int StartPos, int EndPos) noexcept(noexcept_new)
+{
+    int pos = Find(StartPos, What, EndPos);
+    if (pos < 0)
+    {
+        return 0;
+    }
+    if (!m_pImp->IsRWSingleOwner())
+    {
+        *this = std::move(m_pImp->NewCopy());
+    }
+    char* p = GetBuffer();
+    char* e = p + Length();
+    e = EndPos < 0 ? e : p + EndPos < e ? p + EndPos : e;
+    if (e == p)
+    {
+        // TL_NEW[] error
+        return -1;
+    }
+    int n = 1;
+    p += pos;
+    *p++ = By;
+    for (; p < e; p++)
+    {
+        if (What.Test(*p))
+        {
+            *p = By;
+            n++;
+        }
+    }
+    return n;
+}
+//--------------------------------------------------------------------------
 int CMaaString::ReplaceNN(char What, const CMaaString &By, int StartPos, int EndPos) noexcept(noexcept_new)
+{
+    char Buffer[TOOLSLIB_CS_64K];
+
+    int p = Find(StartPos, What, EndPos);
+    if (p < 0)
+    {
+        return 0;
+    }
+    const int SrcLen = Length();
+    const int Len = EndPos < 0 || EndPos > SrcLen ? SrcLen : EndPos;
+    CMaaConcatString r(Buffer, sizeof(Buffer), SrcLen + 1024/*, 0, false /*bCountOnly*/);
+    int n = 1;
+    const char* ptr = *this;
+    r.Add(ptr, p);
+    r += By;
+    int pos = ++p;
+    while (pos < Len)
+    {
+        p = Find(pos, What, Len);
+        if (p < 0)
+        {
+            break;
+        }
+        n++;
+        r.Add(pos + ptr, p - pos);
+        r += By;
+        pos = ++p;
+    }
+    r.Add(pos + ptr, SrcLen - pos);
+    //if (!bCountOnly)
+    {
+        *this = (CMaaString)r;
+        if (!IsValid() && r.GetLength())
+        {
+            // TL_NEW[] error
+            return -1;
+        }
+    }
+    return n;
+}
+//--------------------------------------------------------------------------
+int CMaaString::ReplaceNN(const CMaa256Bits& What, const CMaaString& By, int StartPos, int EndPos) noexcept(noexcept_new)
 {
     char Buffer[TOOLSLIB_CS_64K];
 

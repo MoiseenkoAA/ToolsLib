@@ -96,7 +96,8 @@ public:
 
     void SetThrow ( BOOL fThrow = TRUE );
     BOOL Open ( int Port );
-    BOOL Open ( const char * Port );
+    BOOL Open(const char* Port);
+    BOOL Open(CMaaString Port);
     BOOL IsOpened ();
     int GetPortNumber ();
     void Close ();

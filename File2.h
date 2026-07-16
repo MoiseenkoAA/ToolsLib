@@ -1289,6 +1289,10 @@ int SendEmail(CMaaString txt, const char ** pargs, bool bThrow = true, bool * pR
 #ifdef __unix__
 bool unix_StartProcess(const char * ExecFileName, const char ** args = nullptr, const char ** envs = nullptr, bool bThrow = true, int Flags = 0 /*C_os_StartProcess::eCloseFds, C_os_StartProcess::eCloseAllFds*/, bool bEJudge = false, int MemLimit = -1, int TimeLimitMs = 30000);
 
+#ifdef FAST_CGI_SUPP
+class CCGIHelper;
+#endif
+
 class C_os_StartProcess
 {
     friend class CMaaToolsLibClassImpRefKeeper;
@@ -1341,6 +1345,7 @@ public:
     CMaaString m_StdInSend, m_StdOutRecv, m_StdErrRecv; // for handles with a number of -3
 #ifdef FAST_CGI_SUPP
     FCGX_Request* m_pFastCgiRequest = nullptr; // for handles with a number of -4
+    CCGIHelper* m_pHelperUnLock = nullptr;
 #endif
 
     bool m_bEJudge;
