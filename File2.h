@@ -881,7 +881,9 @@ public:
     _dword Write(const void * Buffer, _dword Size);
 
     CMaaString ReadAll();
-    CMaaString ReadAllSysFile() noexcept;
+#ifdef __unix__
+    static CMaaString ReadAllSysFile(const char * fn) noexcept;
+#endif
     CMaaString Read(_dword MaxLen = 30 * 1024 * 1024, int _Convert = 0 /*some unicode compatibility flag can be added later*/);
     _dword Write(const CMaaString &Txt);
 

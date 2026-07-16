@@ -4039,54 +4039,60 @@ int gCMaaToolLib_crt_Initializer() noexcept
 {
     if (!gCMaaToolLib_crt_Initialized)
     {
-        //if constexpr (!CMaaString::CheckRuntimeConditions() || sizeof(_word) != 2)
-        //{
-        //    exit(101);
-        //}
-        TL_DbgAlloc;
+        static constexpr CMaaAtomicFastMutex0W lk;
+        ((CMaaAtomicFastMutex0W&)lk).lock();
+        if (!gCMaaToolLib_crt_Initialized)
+        {
+            //gCMaaToolLib_crt_Initialized = true;
 
-        gCMaaToolLib_crt_Initialized = true;
+            //if constexpr (!CMaaString::CheckRuntimeConditions() || sizeof(_word) != 2)
+            //{
+            //    exit(101);
+            //}
+            TL_DbgAlloc;
 
-        __GLock__Atomic(true);
-        __GLock__Atomic2(true);
-        __GLock__lib(true);
-        __GLock__lib2(true);
-        __GLock__usr(true);
-        __GLock__usr2(true);
-        __GLock__usr3(true);
-        __GLock__AllocatorBasicLock(true);
-        //__GLock__sfnInitLock(true);
-        __GLock__SyncAssignLockUpperLock(true);
-        //CMaaString::Init_sp_NullImp();
+            __GLock__Atomic(true);
+            __GLock__Atomic2(true);
+            __GLock__lib(true);
+            __GLock__lib2(true);
+            __GLock__usr(true);
+            __GLock__usr2(true);
+            __GLock__usr3(true);
+            __GLock__AllocatorBasicLock(true);
+            //__GLock__sfnInitLock(true);
+            __GLock__SyncAssignLockUpperLock(true);
+            //CMaaString::Init_sp_NullImp();
 #if TOOLSLIB_USE_CMAASTRING64 == 2
-        //CMaaString64::Init_sp_NullImp();
+            //CMaaString64::Init_sp_NullImp();
 #endif
-        //CMaaString aaa = CMaaTLGlobalString(CMaaTLGlobalStrings::e_max/*, true*/);
+            //CMaaString aaa = CMaaTLGlobalString(CMaaTLGlobalStrings::e_max/*, true*/);
 //#if TOOLSLIB_USE_CMAASTRING64 == 2
-        //CMaaString64 ccc = CMaaTLGlobalString64(CMaaTLGlobalStrings64::e_max/*, true*/);
+            //CMaaString64 ccc = CMaaTLGlobalString64(CMaaTLGlobalStrings64::e_max/*, true*/);
 //#endif
-        //const CMaaString aaa2 = CMaaStringJsonFloat;
+            //const CMaaString aaa2 = CMaaStringJsonFloat;
 
-        CMaaTmpSprintfBuffer* pTmpBuffer;
-        CMaaTmpSprintfBuffer* pTmpFormatBuffer;
-        CMaaTmpSprintf2StringsArray* pStringsArray;
-        CMaaString::GetRetSprintfBuffers(0, pTmpBuffer, pTmpFormatBuffer); // init static CMaaDListAD 's
-        CMaaString::GetRetSprintf2Buffers(0, pTmpBuffer, pTmpFormatBuffer, pStringsArray); // init static CMaaDListAD 's
+            CMaaTmpSprintfBuffer* pTmpBuffer;
+            CMaaTmpSprintfBuffer* pTmpFormatBuffer;
+            CMaaTmpSprintf2StringsArray* pStringsArray;
+            CMaaString::GetRetSprintfBuffers(0, pTmpBuffer, pTmpFormatBuffer); // init static CMaaDListAD 's
+            CMaaString::GetRetSprintf2Buffers(0, pTmpBuffer, pTmpFormatBuffer, pStringsArray); // init static CMaaDListAD 's
 #if TOOLSLIB_USE_CMAASTRING64 == 2
-        CMaaTmpSprintf2StringsArray64 * pStringsArray64;
-        CMaaString64::GetRetSprintfBuffers(0, pTmpBuffer, pTmpFormatBuffer); // init static CMaaDListAD 's
-        CMaaString64::GetRetSprintf2Buffers(0, pTmpBuffer, pTmpFormatBuffer, pStringsArray64); // init static CMaaDListAD 's
+            CMaaTmpSprintf2StringsArray64* pStringsArray64;
+            CMaaString64::GetRetSprintfBuffers(0, pTmpBuffer, pTmpFormatBuffer); // init static CMaaDListAD 's
+            CMaaString64::GetRetSprintf2Buffers(0, pTmpBuffer, pTmpFormatBuffer, pStringsArray64); // init static CMaaDListAD 's
 #endif
 
-        //CMaaGetCpuCount();
-        
-        GetHRTime(true);
+            //CMaaGetCpuCount();
 
-        GetWsaErrorMessage(0);
+            GetHRTime(true);
 
-        //InitsCMaaXml256Bits();
+            GetWsaErrorMessage(0);
 
-        gCMaaToolLib_crt_Initialized = true;
+            //InitsCMaaXml256Bits();
+
+            gCMaaToolLib_crt_Initialized = true;
+        }
+        ((CMaaAtomicFastMutex0W&)lk).unlock();
     }
     return 0;
 }

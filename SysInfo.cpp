@@ -146,7 +146,7 @@ int CMaaGetCpuCount() noexcept
         }
 #endif
 #ifdef __linux__
-        CMaaString All = CMaaFile("/proc/cpuinfo", CMaaFile::eR_SrSw, eNoExcept).ReadAllSysFile();
+        CMaaString All = CMaaFile::ReadAllSysFile("/proc/cpuinfo");
         int n = 0;
         while(All.Length())
         {
@@ -661,7 +661,7 @@ _qword MaaGetMemoryUsage(_qword* pPeak) noexcept
         fclose(f);
     }
 #else
-    CMaaString All = CMaaFile("/proc/self/status", CMaaFile::eR_SrSw, eNoExcept).ReadAllSysFile();
+    CMaaString All = CMaaFile::ReadAllSysFile("/proc/self/status");
 
     int flag = 0;
     while(All.IsNotEmpty() && flag != 3)

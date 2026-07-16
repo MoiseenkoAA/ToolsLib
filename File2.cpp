@@ -7536,17 +7536,33 @@ CMaaString CMaaFile::ReadAll()
     return CMaaStringZ;
 }
 //---------------------------------------------------------------------------
-CMaaString CMaaFile::ReadAllSysFile() noexcept
+#ifdef __unix__
+CMaaString CMaaFile::ReadAllSysFile(const char * fn) noexcept
 {
     CMaaString r;
+    int fd = open64(fn, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     try
     {
-        if (IsOpen())
+        if (fd >= 0)
         {
             while (1)
             {
                 char Buffer[TOOLSLIB_CS_64K];
-                int len = (int)Read(Buffer, TOOLSLIB_CS_64K);
+                _dword NumberOfBytesRead;
+                while(1)
+                {
+                    NumberOfBytesRead = read(fd, Buffer, (int)sizeof(Buffer));
+                    if  (NumberOfBytesRead == (_dword)-1)
+                    {
+                        if  (errno == EINTR)
+                        {
+                            continue;
+                        }
+                        NumberOfBytesRead = 0;
+                    }
+                    break;
+                }
+                int len = (int)NumberOfBytesRead;
                 if (!len)
                 {
                     break;
@@ -7558,8 +7574,13 @@ CMaaString CMaaFile::ReadAllSysFile() noexcept
     catch (...)
     {
     }
+    if (fd >= 0)
+    {
+        close(fd);
+    }
     return r;
 }
+#endif
 //---------------------------------------------------------------------------
 CMaaString CMaaFile::Read(_dword MaxLen, int _Convert)
 {
