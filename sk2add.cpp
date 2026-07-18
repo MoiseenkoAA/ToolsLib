@@ -471,7 +471,7 @@ void CMaaWaitSk0::OnTimer(int f)
 }
 //===============================================================================
 
-#define _Set Set(); Locker_Lock; if (gpMaaWaitSk0) {gpMaaWaitSk0->m_Timer1.Start(1);} Locker_UnLock
+#define _Set Set(); Locker_Lock; if (gpMaaWaitSk0) {gpMaaWaitSk0->m_Timer1.StartExt(1);} Locker_UnLock
 
 class CMaaFileSockThread;
 CMaaDList < CMaaDLink_pItem < CMaaFileSockThread > > gTcpFileThreadsList;
@@ -853,7 +853,7 @@ CMaaTcpFileConnection::CMaaTcpFileConnection(CMaaFdSockets * pFdSockets, SOCKET 
     Locker_UnLock;
 #endif
 
-    m_Timer2.Start(1);
+    m_Timer2.Start1(1);
     EnableInterruptEvent();
     //g_____socket = GetSocket();
 }
@@ -950,7 +950,7 @@ int CMaaTcpFileConnection::Notify_Read()
     m_pos += r;
     if  (r && m_AdoptiveReadTimeOutMs != (_dword)-1)
     {
-        m_Timer33.Start(m_AdoptiveReadTimeOutMs * 1000, false);
+        m_Timer33.Start1(m_AdoptiveReadTimeOutMs * 1000);
     }
     if  (r && (m_pos >= m_len || m_ReadTimeOutMs == (_dword)-2 || (m_ReadTimeOutMs < (_dword)-2 && (m_ReadTimeOutMs & 0x80000000))))
     {
@@ -981,7 +981,7 @@ int CMaaTcpFileConnection::Notify_Write()
         m_wpos += w;
         if  (w && m_AdoptiveWriteTimeOutMs != (_dword)-1)
         {
-            m_Timer44.Start(m_AdoptiveWriteTimeOutMs * 1000, false);
+            m_Timer44.Start1(m_AdoptiveWriteTimeOutMs * 1000);
         }
         CheckInterruptEvent(eWrite);
         if  (!w || m_WriteTimeOutMs == (_dword)-2)
@@ -1014,7 +1014,7 @@ bool CMaaTcpFileConnection::AddSendData(CMaaString Data, _dword TimeOutMs, _dwor
         m_Mode |= CMaaTcpFile::eWrite;
         m_wlen = (warning_int)m_SendData.Length();
         m_Timer4.Stop();
-        m_Timer11.Start(1);
+        m_Timer11.StartExt(1);
     }
     Locker_UnLock;
     return true;
@@ -1044,7 +1044,7 @@ bool CMaaTcpFileConnection::SetRead(void * ptr, int len, _dword ReadTimeOutMs, _
         m_ReadTimeOutMs = ReadTimeOutMs;
         m_AdoptiveReadTimeOutMs = AdoptiveTimeOutMs;
         m_Timer3.Stop();
-        m_Timer1.Start(1);
+        m_Timer1.StartExt(1);
         Ret = true;
     }
     Locker_UnLock;
@@ -1239,7 +1239,7 @@ void CMaaTcpFileConnection::EnableInterruptEvent()
         int Period = m_pHandler->m_InterruptCheckingTime * 1000;
         if  (!m_InterruptTimer.IsStarted() || m_InterruptTimer.GetPeriod() != Period)
         {
-            m_InterruptTimer.Start(Period);
+            m_InterruptTimer.StartExt(Period);
         }
     }
     else
@@ -1304,11 +1304,11 @@ void CMaaTcpFileConnection::OnTimer(int f)
                 {
                     if  (m_ReadTimeOutMs < (_dword)-2)
                     {
-                        m_Timer3.Start((m_ReadTimeOutMs & ~0x80000000) * 1000);
+                        m_Timer3.Start1((m_ReadTimeOutMs & ~0x80000000) * 1000);
                     }
                     if  (m_AdoptiveReadTimeOutMs != (_dword)-1)
                     {
-                        m_Timer33.Start(m_AdoptiveReadTimeOutMs * 1000);
+                        m_Timer33.Start1(m_AdoptiveReadTimeOutMs * 1000);
                     }
                     m_flg1 = 2;
                     ChangeFdMode(eRead);
@@ -1351,11 +1351,11 @@ void CMaaTcpFileConnection::OnTimer(int f)
                 {
                     if  (m_WriteTimeOutMs < (_dword)-2)
                     {
-                        m_Timer4.Start(m_WriteTimeOutMs * 1000);
+                        m_Timer4.Start1(m_WriteTimeOutMs * 1000);
                     }
                     if  (m_AdoptiveWriteTimeOutMs != (_dword)-1)
                     {
-                        m_Timer44.Start(m_AdoptiveWriteTimeOutMs * 1000);
+                        m_Timer44.Start1(m_AdoptiveWriteTimeOutMs * 1000);
                     }
                     ChangeFdMode(eWrite);
                 }
@@ -2308,7 +2308,7 @@ bool CMaaTcpFile::Close()
     {
         m_EvType &= ~eDestroyed;
         m_ev.Reset();
-        m_pConn->m_Timer0.Start(1);
+        m_pConn->m_Timer0.StartExt(1);
         Locker_UnLock;
         for (;;)
         {
@@ -2332,7 +2332,7 @@ bool CMaaTcpFile::Close()
     {
         m_EvType &= ~eDestroyed;
         m_ev.Reset();
-        m_pServer->m_Timer0.Start(1);
+        m_pServer->m_Timer0.StartExt(1);
         Locker_UnLock;
         for (;;)
         {
@@ -2999,7 +2999,7 @@ CMaaTcpFileServer::CMaaTcpFileServer(CMaaFdSockets * pFdSockets, int Port, _IP6 
     AddFdSocket();
     //ChangeFdMode(eDisableRead); // orig - local ftp client PORT connect to srv err
     //ChangeFdMode(eRead);
-    m_Timer2.Start(1);
+    m_Timer2.Start1(1);
 }
 //---------------------------------------------------------------------------
 void CMaaTcpFileServer::EnableInterruptEvent()
@@ -3012,7 +3012,7 @@ void CMaaTcpFileServer::EnableInterruptEvent()
         int Period = m_pHandler->m_InterruptCheckingTime * 1000;
         if  (!m_InterruptTimer.IsStarted() || m_InterruptTimer.GetPeriod() != Period)
         {
-            m_InterruptTimer.Start(Period);
+            m_InterruptTimer.StartExt(Period);
         }
     }
     else
@@ -3215,7 +3215,7 @@ void CMaaTcpFileServer::OnTimer(int f)
                 m_IpFrom6.Zero();
                 if  (m_AcceptTimeOutMs < (_dword)-2)
                 {
-                    m_Timer3.Start(m_AcceptTimeOutMs * 1000);
+                    m_Timer3.Start1(m_AcceptTimeOutMs * 1000);
                 }
                 m_Accepting = 1;
                 ChangeFdMode(eRead);
@@ -3275,7 +3275,7 @@ bool CMaaTcpFileServer::AcceptSocket(SOCKET * s, _IP * IpFrom, _Port * PortFrom,
         m_Mode |= CMaaTcpFile::eRead;
         m_AcceptTimeOutMs = TimeOutMs;
         m_Timer3.Stop();
-        m_Timer1.Start(1);
+        m_Timer1.Start1(1);
         Ret = true;
     }
     Locker_UnLock;
@@ -3298,7 +3298,7 @@ bool CMaaTcpFileServer::AcceptSocket6(SOCKET * s, _byte * IpFrom6, _Port * PortF
         m_Mode |= CMaaTcpFile::eRead;
         m_AcceptTimeOutMs = TimeOutMs;
         m_Timer3.Stop();
-        m_Timer1.Start(1);
+        m_Timer1.Start1(1);
         Ret = true;
     }
     Locker_UnLock;

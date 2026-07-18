@@ -284,7 +284,7 @@ CMaaEvent2::~CMaaEvent2()
             gpMaaWaitSk && gpMaaWaitSk->m_SeTimers.Find(Id + 1000 + 500000000, &pt2);
             if  (pt2)
             {
-                pt2->Start(1);
+                pt2->StartExt(1);
             }
         }
     }
@@ -325,7 +325,7 @@ bool CMaaEvent2::SetEvent()
                 gpMaaWaitSk && gpMaaWaitSk->m_SeTimers.Find(Id + 1000 + 500000000, &pt2);
                 if  (pt2)
                 {
-                    pt2->Start(1);
+                    pt2->StartExt(1);
                     if  (!m_ManualReset)
                     {
                         break;
@@ -495,7 +495,7 @@ CMaaEventsWait::~CMaaEventsWait()
             }
             if  (gpMaaWaitSk && !gpMaaWaitSk->m_Timer0.IsStarted())
             {
-                gpMaaWaitSk->m_Timer0.Start(1);
+                gpMaaWaitSk->m_Timer0.StartExt(1);
             }
             usleep(1000);
         }
@@ -531,7 +531,7 @@ CMaaEventsTask * CMaaEventsWait::CreateWaitTask(_dword nCount, const HANDLE *lpH
     DBG_PRINTF(__utf8_printf("*l = [%d]\n", m_b);)
     if  (gpMaaWaitSk)
     {
-        gpMaaWaitSk->m_Timer1.Start(1);
+        gpMaaWaitSk->m_Timer1.StartExt(1);
     }
     return t;
 }
@@ -589,9 +589,9 @@ CMaaWaitSk::CMaaWaitSk(CMaaFdSockets * pFdSockets)
     m_Timer0.Attach(pFdSockets);
     m_Timer1.Attach(pFdSockets);
     m_Timer3.Attach(pFdSockets);
-    m_Timer1.Start(1);
-    //m_Timer3.Start(1800000); // test
-    //m_Timer3.Start(2800000); // test
+    m_Timer1.Start1(1);
+    //m_Timer3.Start1(1800000); // test
+    //m_Timer3.Start1(2800000); // test
 }
 
 CMaaWaitSk::~CMaaWaitSk()
@@ -676,7 +676,7 @@ void CMaaWaitSk::OnTimer(int f)
             {
                 m_ToTimers.Add(t->m_Id + 1000, pt);
                 pt->Attach(m_pFdSockets);
-                pt->Start(t->m_TimeOut);
+                pt->StartExt(t->m_TimeOut);
             }
             m_SeTimers.Add(t->m_Id + 1000 + 500000000, pt2);
             pt2->Attach(m_pFdSockets);
@@ -957,7 +957,7 @@ void CMaaEvents2Initializer::StartClose()
     gLock.LockM();
     if  (gpMaaWaitSk)
     {
-        gpMaaWaitSk->m_Timer0.Start(1);
+        gpMaaWaitSk->m_Timer0.StartExt(1);
     }
     gLock.UnLockM();
 }
@@ -993,9 +993,9 @@ CMaaUserSk::CMaaUserSk(CMaaFdSockets * pFdSockets, HANDLE h, HANDLE e)
     m_Timer0.Attach(pFdSockets);
     m_Timer1.Attach(pFdSockets);
     m_Timer3.Attach(pFdSockets);
-    m_Timer1.Start(100000);
-    //m_Timer3.Start(1800000); // test
-    //m_Timer3.Start(2800000); // test
+    m_Timer1.Start1(100000);
+    //m_Timer3.Start1(1800000); // test
+    //m_Timer3.Start1(2800000); // test
 }
 
 CMaaUserSk::~CMaaUserSk()
@@ -1019,7 +1019,7 @@ void CMaaUserSk::OnTimer(int f)
         _dword dw = WaitForSingleObject(m_h, 10000);
         //_dword dw = WaitForMultipleObjects(1, &m_h, true, 10000);
         __utf8_printf("CMaaUserSk::dw = 0x%x\n", dw);
-        m_Timer3.Start(1000000);
+        m_Timer3.Start1(1000000);
     }
     else if (f == 3)
     {
@@ -1122,7 +1122,7 @@ int main_sample1(int argn, char * args[])
         /*
         if (gpMaaWaitSk)
         {
-            gpMaaWaitSk->m_Timer3.Start(1);
+            gpMaaWaitSk->m_Timer3.StartExt(1);
         }
         */
         wii.StartClose();

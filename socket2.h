@@ -875,22 +875,82 @@ public:
     CMaaSocketTimer(int PeriodUs = 0) noexcept;
     virtual ~CMaaSocketTimer();
     void Attach(CMaaFdSockets * pFdSockets) noexcept;
-    bool Start(_qword PeriodUs, int iWakeUp) noexcept;
+    bool Start2(_qword PeriodUs, int iWakeUp) noexcept;
+    bool Start1(_qword PeriodUs = 0) noexcept
+    {
+        return Start2(PeriodUs, 0);
+    }
+    bool StartExt(_qword PeriodUs = 0) noexcept
+    {
+        return Start2(PeriodUs, 1);
+    }
+    bool Start_(_qword PeriodUs = 0) noexcept // if doubt
+    {
+        return Start2(PeriodUs, 1);
+    }
+    /*
     bool Start(_qword PeriodUs = 0, bool bWakeUp = true) noexcept
     {
         return Start(PeriodUs, bWakeUp ? 1 : 0);
     }
     bool WeakStart(_qword PeriodUs = 0, bool bWakeUp = true) noexcept // не синхронный мягкий старт: если таймер не запущен или период другой, запустить его
     {
-        if  (GetPeriod() != PeriodUs || !IsStarted())
+        if (GetPeriod() != PeriodUs || !IsStarted())
         {
             return Start(PeriodUs, bWakeUp ? 1 : 0);
         }
         return true;
     }
+    */
+    bool WeakStart2(_qword PeriodUs = 0, bool bWakeUp = false) noexcept // не синхронный мягкий старт: если таймер не запущен или период другой, запустить его
+    {
+        if (GetPeriod() != PeriodUs || !IsStarted())
+        {
+            return Start2(PeriodUs, bWakeUp ? 1 : 0);
+        }
+        return true;
+    }
+    bool WeakStart1(_qword PeriodUs = 0) noexcept // не синхронный мягкий старт: если таймер не запущен или период другой, запустить его
+    {
+        if (GetPeriod() != PeriodUs || !IsStarted())
+        {
+            return Start2(PeriodUs, 0);
+        }
+        return true;
+    }
+    bool WeakStart_(_qword PeriodUs = 0) noexcept // не синхронный мягкий старт: если таймер не запущен или период другой, запустить его
+    {
+        if (GetPeriod() != PeriodUs || !IsStarted())
+        {
+            return Start2(PeriodUs, 1);
+        }
+        return true;
+    }
+    bool WeakStartExt(_qword PeriodUs = 0) noexcept // не синхронный мягкий старт: если таймер не запущен или период другой, запустить его
+    {
+        if (GetPeriod() != PeriodUs || !IsStarted())
+        {
+            return Start2(PeriodUs, 1);
+        }
+        return true;
+    }
+    /*
     void ReStart() noexcept
     {
         Start(m_PeriodUs);
+    }
+    */
+    void ReStart0() noexcept
+    {
+        Start2(m_PeriodUs, 0);
+    }
+    void ReStart1() noexcept
+    {
+        Start2(m_PeriodUs, 0);
+    }
+    void ReStart_() noexcept // if doubt
+    {
+        Start2(m_PeriodUs, 1);
     }
     void Stop() noexcept;
     void Detach() noexcept;

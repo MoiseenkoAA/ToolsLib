@@ -5322,7 +5322,7 @@ int CMaaFdSockets::Select()
                                     CMaaTcpSocket* p = (CMaaTcpSocket*)pSock;
                                     if (p->m_CloseTimer.IsStarted() && p->m_CloseTimer.GetPeriod() > 2000)
                                     {
-                                        p->m_CloseTimer.Start(2000);
+                                        p->m_CloseTimer.Start1(2000);
                                     }
                                 }
                                 // bReadIsCalled = true;
@@ -5967,7 +5967,7 @@ int CMaaFdSockets::Select()
                                         CMaaTcpSocket* p = (CMaaTcpSocket*)pSock;
                                         if (p->m_CloseTimer.IsStarted() && p->m_CloseTimer.GetPeriod() > 2000)
                                         {
-                                            p->m_CloseTimer.Start(2000);
+                                            p->m_CloseTimer.Start1(2000);
                                         }
                                     }
                                     // bReadIsCalled = true;
@@ -6158,7 +6158,7 @@ int CMaaFdSockets::Select()
                                                 CMaaTcpSocket* p = (CMaaTcpSocket*)pSock;
                                                 if (p->m_CloseTimer.IsStarted() && p->m_CloseTimer.GetPeriod() > 2000)
                                                 {
-                                                    p->m_CloseTimer.Start(2000);
+                                                    p->m_CloseTimer.Start1(2000);
                                                 }
                                             }
                                             // bReadIsCalled = true;
@@ -6766,7 +6766,7 @@ int CMaaFdSockets::Select ()
                                     CMaaTcpSocket* p = (CMaaTcpSocket*)pSock;
                                     if (p->m_CloseTimer.IsStarted() && p->m_CloseTimer.GetPeriod() > 2000)
                                     {
-                                        p->m_CloseTimer.Start(2000);
+                                        p->m_CloseTimer.Start1(2000);
                                     }
                                 }
                                 // bReadIsCalled = true;
@@ -6928,7 +6928,7 @@ int CMaaFdSockets::Select ()
                                             CMaaTcpSocket* p = (CMaaTcpSocket*)pSock;
                                             if (p->m_CloseTimer.IsStarted() && p->m_CloseTimer.GetPeriod() > 2000)
                                             {
-                                                p->m_CloseTimer.Start(2000);
+                                                p->m_CloseTimer.Start1(2000);
                                             }
                                         }
                                         // bReadIsCalled = true;
@@ -8279,7 +8279,7 @@ int CMaaTcpProxy::Notify_Read()
         {
             pOtherSide -> pOtherSide = nullptr;
             pOtherSide -> fNeedToClose = 1;
-            pOtherSide->m_Timer0.Start(1);
+            pOtherSide->m_Timer0.Start1(1);
             pOtherSide = nullptr;
         }
         return CloseByException ( "closing connection" );
@@ -9135,7 +9135,7 @@ bool CMaaSocketTimer::IsStarted() const noexcept
     return m_bActive;
 }
 
-bool CMaaSocketTimer::Start(_qword PeriodUs, int iWakeUp) noexcept
+bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
 {
     if  (m_pFdSockets)
     {
@@ -10135,7 +10135,7 @@ void CMaaTcpSocket::CCloseTimer::OnTimer()
 #endif
         if (GetPeriod() == 2)
         {
-            Start(2000, false);
+            Start2(2000, 0);
         }
         if  (l == 0) // 28.04.2024
         {
@@ -10205,7 +10205,7 @@ void CMaaTcpSocket::CCloseTimer::OnClose(CMaaTcpSocket * pSocket, bool bShortPer
 {
     m_pSocket = pSocket;
     Attach(pSocket->m_pFdSockets);
-    Start(2); // bShortPeriod ? 2000 : 2 /*200000/100*/); //pSocket->GetFdMode());
+    Start1(2); // bShortPeriod ? 2000 : 2 /*200000/100*/); //pSocket->GetFdMode());
 }
 
 void CMaaFdSockets::WakeUp(unsigned char flags) noexcept
