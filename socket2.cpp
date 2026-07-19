@@ -4646,8 +4646,7 @@ int CMaaFdSockets::Select()
 
         WSASetLastError(0);
         {
-            int us = Timeval.tv_sec * 1000000 + Timeval.tv_usec;
-            GetWaitForTime(&us);
+            int us = GetWaitForTime(Timeval.tv_sec * 1000000 + Timeval.tv_usec);
             if  (m_bForceMode)
             {
                 us = 0;
@@ -5604,8 +5603,7 @@ int CMaaFdSockets::Select()
         errno = 0;
         int us;
         {
-            us = Timeval.tv_sec * 1000000 + Timeval.tv_usec;
-            GetWaitForTime(&us);
+            us = GetWaitForTime(Timeval.tv_sec * 1000000 + Timeval.tv_usec);
             if  (ev)
             {
                 us = 0;
@@ -6391,8 +6389,7 @@ int CMaaFdSockets::Select ()
                     {
                         int us;
                         {
-                            us = Timeval.tv_sec * 1000000 + Timeval.tv_usec;
-                            GetWaitForTime(&us);
+                            us = GetWaitForTime(Timeval.tv_sec * 1000000 + Timeval.tv_usec);
                             Timeval.tv_sec = us / 1000000;
                             Timeval.tv_usec = us % 1000000;
                         }
@@ -6557,8 +6554,7 @@ int CMaaFdSockets::Select ()
         errno = 0;
         int us;
         {
-            us = Timeval.tv_sec * 1000000 + Timeval.tv_usec;
-            GetWaitForTime(&us);
+            us = GetWaitForTime(Timeval.tv_sec * 1000000 + Timeval.tv_usec);
             if  (ev)
             {
                 us = 0;
@@ -9141,17 +9137,14 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
     {
         m_pFdSockets->m_TimerMutex.LockM();
     }
-    const bool bSkipWakeUp = m_bActive && (PeriodUs == 0 || (PeriodUs >= m_PeriodUs && PeriodUs > 0));
-    //m_bActive = false;
+
+    const bool bActiveOld = m_bActive;
+
     if  (PeriodUs)
     {
         m_PeriodUs = PeriodUs;
     }
-#ifdef __unix__
     if  (m_PeriodUs <= 0)
-#else
-    if  (m_PeriodUs <= 0) //1000)
-#endif
     {
         m_bActive = false;
         if  (m_pFdSockets)
@@ -9166,31 +9159,34 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
 #ifndef __SOCK_NEW_TIMERS
 
 #ifdef __unix__
+    const _qword NextOld = 1000000 * m_Next.tv_sec + m_Next.tv_usec;
     gettimeofday(&m_Next, nullptr);
-    _qword q = m_PeriodUs + m_Next.tv_usec;
-    m_Next.tv_usec = q % 1000000;
-    m_Next.tv_sec += q / 1000000;
-    /*
-     if   (m_Next.tv_usec > 1000000)
-     {
-          m_Next.tv_sec += m_Next.tv_usec / 1000000;
-          m_Next.tv_usec %= 1000000;
-     }
-     */
+    const _qword Next = 1000000 * m_Next.tv_sec + m_Next.tv_usec + m_PeriodUs;
+    m_Next.tv_usec = Next % 1000000;
+    m_Next.tv_sec = Next / 1000000;
 #else
+    const _qword NextOld = m_Next;
     m_Next = GetTickCount() + (_dword)(m_PeriodUs / 1000);
-    if  (m_PeriodUs / 1000 == 0)
-    {
-        //m_Next++;
-    }
+    const _qword Next = m_Next;
+    //if  (m_PeriodUs / 1000 == 0)
+    //{
+    //    m_Next++;
+    ///}
 #endif
     m_bActive = true;
 
 #else
 
+    _qword NextOld, Next;
     if  (m_pFdSockets)
     {
-        m_Next = m_pFdSockets->GetTime() + m_PeriodUs;
+        CMaaSocketTimer* t;
+        if (!m_pFdSockets->HeapLook(&NextOld, &t) || !t->IsStarted())
+        {
+            NextOld = m_Next;
+        }
+
+        Next = m_Next = m_pFdSockets->GetTime() + m_PeriodUs;
         if  (gpSockStartup)
         {
             //gpSockStartup->m_TimerMutex.LockM();
@@ -9227,8 +9223,10 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
     }
     else
     {
+        //NextOld = Next = 0;
         m_Next = -1;
         m_bActive = true;
+        iWakeUp = 0;
     }
 
 #endif
@@ -9238,7 +9236,7 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
         m_pFdSockets->m_TimerMutex.UnLockM();
     }
 
-    if  (iWakeUp > 1 || (iWakeUp == 1 && !bSkipWakeUp))
+    if  (iWakeUp > 1 || (iWakeUp == 1 && (!bActiveOld || Next < NextOld)))
     {
         if  (m_pFdSockets && m_pFdSockets->m_pThread)
         {
@@ -9351,11 +9349,11 @@ void CMaaSocketTimer::PreTimer(timeval * t)
     }
 }
 
-void CMaaSocketTimer::GetWaitForTime(int *us, timeval *t)
+int CMaaSocketTimer::GetWaitForTime(int us, timeval *t)
 {
     if  (!m_bActive)
     {
-        return;
+        return us;
     }
     timeval tv;
     if  (!t)
@@ -9364,16 +9362,9 @@ void CMaaSocketTimer::GetWaitForTime(int *us, timeval *t)
     }
     _qword q = (_qword)(m_Next.tv_sec - t->tv_sec) * 1000000 + (m_Next.tv_usec - t->tv_usec);
     //_qword max_dword = (((1 << 30) - 1) << 1) + 1;
-    _qword max_dword = ((1 << 30) - 1);
-    int u = (int)(q < max_dword ? q : max_dword);
-    if  (u < *us)
-    {
-        if  (u < 0)
-        {
-            u = 0;
-        }
-        *us = u;
-    }
+    static constexpr _qword max_dword = ((1 << 30) - 1);
+    const int u = (int)(q < max_dword ? q : max_dword);
+    return us <= u ? us : u < 0 ? 0 : u;
 }
 #else
 void CMaaSocketTimer::PreTimer(DWORD * t)
@@ -9399,11 +9390,11 @@ void CMaaSocketTimer::PreTimer(DWORD * t)
     }
 }
 
-void CMaaSocketTimer::GetWaitForTime(int *us, DWORD *t) noexcept
+int CMaaSocketTimer::GetWaitForTime(int us, DWORD *t) noexcept
 {
     if  (!m_bActive)
     {
-        return;
+        return us;
     }
     DWORD tv;
     if  (!t)
@@ -9413,16 +9404,9 @@ void CMaaSocketTimer::GetWaitForTime(int *us, DWORD *t) noexcept
     }
     _qword q = (_qword)(m_Next - *t) * 1000;
     //_qword max_dword = (((1 << 30) - 1) << 1) + 1;
-    const _qword max_dword = ((1 << 30) - 1);
-    int u = (int)(q < max_dword ? q : max_dword);
-    if  (u < *us)
-    {
-        if  (u < 0)
-        {
-            u = 0;
-        }
-        *us = u;
-    }
+    static constexpr _qword max_dword = ((1 << 30) - 1);
+    const int u = (int)(q < max_dword ? q : max_dword);
+    return us <= u ? us : u < 0 ? 0 : u;
 }
 #endif
 
@@ -9491,11 +9475,11 @@ void CMaaSocketTimer::PreTimer(_qword t)
     }
 }
 
-void CMaaSocketTimer::GetWaitForTime(int *us, _qword t) const noexcept
+int CMaaSocketTimer::GetWaitForTime(int us, _qword t) const noexcept
 {
     if  (!m_bActive)
     {
-        return;
+        return us;
     }
     /*
     _qword tv;
@@ -9517,16 +9501,9 @@ void CMaaSocketTimer::GetWaitForTime(int *us, _qword t) const noexcept
         q = (_qword)(m_Next - t);
     }
     //_qword max_dword = (((1 << 30) - 1) << 1) + 1;
-    const _qword max_dword = ((1 << 30) - 1);
-    int u = (int)(q < max_dword ? q : max_dword);
-    if  (u < *us)
-    {
-        if  (u < 0)
-        {
-            u = 0;
-        }
-        *us = u;
-    }
+    static constexpr _qword max_dword = ((1 << 30) - 1);
+    const int u = (int)(q < max_dword ? q : max_dword);
+    return us <= u ? us : u < 0 ? 0 : u;
 }
 #endif
 
@@ -9645,7 +9622,7 @@ void CMaaFdSockets::PreTimer() noexcept
 #endif
 }
 
-void CMaaFdSockets::GetWaitForTime(int * us) noexcept
+int CMaaFdSockets::GetWaitForTime(int us) noexcept
 {
 #ifndef __SOCK_NEW_TIMERS
 #ifdef __unix__
@@ -9656,14 +9633,14 @@ void CMaaFdSockets::GetWaitForTime(int * us) noexcept
 #endif
     for (CMaaSocketTimer * t = m_Timers.LookAtFront(); t; t = m_Timers.Next(t))
     {
-        t->GetWaitForTime(us, &tv);
+        us = t->GetWaitForTime(us, &tv);
     }
 #else
     // __utf8_printf("us: %,D\n", (_qword)*us);
-    DP(printf("us: %D\n", (_qword)*us);)
+    DP(printf("us: %D\n", (_qword)us);)
     if  (!gpSockStartup)
     {
-        return;
+        return us;
     }
     const _qword tv = GetTime();
     CMaaSocketTimer * t;
@@ -9689,24 +9666,22 @@ void CMaaFdSockets::GetWaitForTime(int * us) noexcept
     m_TimerMutex.UnLockM();
     if  (t)
     {
-        int us2 = *us;
+        int us2 = us;
 #ifdef _WIN32
         if  ((us2 -= 998) < 0) // 1 ms round next
         {
             us2 = 0;
         }
 #endif
-        t->GetWaitForTime(&us2, tv);
+        us2 = t->GetWaitForTime(us2, tv);
 #ifdef _WIN32
         us2 += 998; // 1 ms (-1 us) round next
 #endif
         // printf("us2 < us: %,D < %,D ?\n", (_qword)us2, (_qword)*us);
-        if  (us2 < *us)
-        {
-            *us = us2;
-        }
+        us = us2 < us ? us2 : us;
     }
 #endif
+    return us;
 }
 
 void CMaaSockThread::Process()

@@ -958,14 +958,14 @@ public:
 #ifndef __SOCK_NEW_TIMERS
 #ifdef __unix__
     void PreTimer(timeval *t = nullptr);
-    void GetWaitForTime(int *us, timeval *t = nullptr);
+    int GetWaitForTime(int us, timeval *t = nullptr);
 #else
     void PreTimer(DWORD *t = nullptr);
-    void GetWaitForTime(int *us, DWORD *t = nullptr) noexcept;
+    int GetWaitForTime(int us, DWORD *t = nullptr) noexcept;
 #endif
 #else
     void PreTimer(_qword t);
-    void GetWaitForTime(int *us, _qword t) const noexcept;
+    int GetWaitForTime(int us, _qword t) const noexcept;
 #endif
     virtual void OnTimer() = 0;
 
@@ -1493,6 +1493,7 @@ public:
 protected:
     CMaaHeap<_qword, CMaaSocketTimer *> m_TimerHeap;
 public:
+    bool HeapLook(_qword* k = nullptr, CMaaSocketTimer** d = nullptr) const noexcept { return m_TimerHeap.Look(k, d); }
     CMaaHeap<_qword, CMaaSocketTimer *>::Handle HeapAdd(_qword nxt, CMaaSocketTimer * t) noexcept
     {
         //try
@@ -1567,7 +1568,7 @@ public:
     //void Attach(CMaaSocketTimer * t);
     //void Detach(CMaaSocketTimer * t);
     void PreTimer() noexcept;
-    void GetWaitForTime(int *us) noexcept;
+    int GetWaitForTime(int us) noexcept;
 
     int GetSockCount() const noexcept;
     int GetSockets(CMaaSocket ** m, int * pModes, int n) const noexcept;
