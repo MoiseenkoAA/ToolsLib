@@ -672,7 +672,7 @@ public:
     CMaaXmlDocument(CMaaXmlDocument & That, bool bCopy/* = false*/, bool bCopyHiddenPtrs/* = false*/, void* (*copyref)(int, void*, void**, void (*deref)(int, void*, void*) noexcept)/* = nullptr*/, void* (*copyref_)(const CMaaString&, void*, void**, void (*deref_)(const CMaaString&, void*, void*) noexcept)/* = nullptr*/) noexcept(noexcept_new);
 #endif
     ~CMaaXmlDocument();
-    CMaaXmlProcessingInstruction CreateProcessingInstruction(CMaaString xml = "xml") noexcept(noexcept_new);
+    CMaaXmlProcessingInstruction CreateProcessingInstruction(const CMaaString& xml = CMaaStringXml) noexcept(noexcept_new);
     CMaaXmlElement CreateElement(const CMaaString &Name) noexcept(noexcept_new);
 #ifndef TOOLSLIB_FORCE_TRY_AND_CHECK_ConstStr
     template <int N> CMaaXmlElement CreateElement(char (&Name)[N]) = delete;
@@ -699,7 +699,7 @@ public:
     int UpdateFromFile(const CMaaString& FileName, CMaaUnivHash<CMaaString, CMaaString>& hStringsCache, int ms = 1000, bool bThrow = false, CMaaString* errorMsg = nullptr, int* errorLine = nullptr, int* errorColumn = nullptr, int iFeatures = /*eAcceptStrings | eCachedOpts * 0 | eContinedBuffer * 0 | eMainRefString2*/ eDefault);
     int UpdateFromFile(const CMaaString& FileName, const CMaaUnivHash<CMaaString, CMaaString>& hStringsCache, int ms = 1000, bool bThrow = false, CMaaString* errorMsg = nullptr, int* errorLine = nullptr, int* errorColumn = nullptr, int iFeatures = /*eAcceptStrings | eCachedROAll*/ eDefaultRO);
     int UpdateFromFile(const CMaaString& FileName, int ms = 1000, bool bThrow = false, CMaaString* errorMsg = nullptr, int* errorLine = nullptr, int* errorColumn = nullptr, int iFeatures = /*eTreatEmptyNodeAsAString * 0 + eAcceptStrings + eCachedOpts*/ eDefault1);
-    void AddReplaceProcessingInstruction(CMaaString Encoding = "utf-8", CMaaString Version = "1.0", _dword ToUtf8Cp = -1) noexcept(noexcept_new); // -2 - не перекодировать строки
+    void AddReplaceProcessingInstruction(CMaaString Encoding = CMaaStringUtf8, CMaaString Version = CMaaString1_0, _dword ToUtf8Cp = -1) noexcept(noexcept_new); // -2 - не перекодировать строки
     void ConvertToUtf8(_dword cp = -1) noexcept(noexcept_new); // CP_ACP /*0*/ / 1251
 };
 //-------------------------------------------------------------------------------------------------

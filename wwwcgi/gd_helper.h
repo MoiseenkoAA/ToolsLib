@@ -194,7 +194,7 @@ public:
     int GenerateImage(int Type, CMaaString &Data, CMaaString &ContentType, int JpegQuality = 70);
     bool Load(CMaaString FileName, bool bThrow = false, int Type = -1, bool bAutoDestroy = false);
     bool LoadFromMemory(CMaaString Data, CMaaString Ext, bool bThrow = false, int Type = -1, bool bAutoDestroy = false);
-    bool Save(CMaaString FileName, CMaaString Mode = "WCD|SrSw", bool bThrow = false, int Type = -1, int JpegQuality = -1);
+    bool Save(CMaaString FileName, CMaaFile::eMode Mode = CMaaFile::eWCD_SrSw, bool bThrow = false, int Type = -1, int JpegQuality = -1);
     CMaaString GetInMemory(CMaaString Ext, bool bThrow = false, int Type = -1, int JpegQuality = -1);
     int GetTypeByFileNameExtention(CMaaString FileName);
     int GetTypeByExtention(CMaaString ext);

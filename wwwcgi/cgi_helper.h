@@ -130,7 +130,10 @@ protected:
     bool m_bFastCgiRLockable = false, m_bFastCgiRLocked = false, m_bFastCgiWLocked = false, m_bFastCgiPadding = false;
     FCGX_Request * m_pFastCgiRequest;
 #endif
+    CMaaUnivHash<CMaaString, CMaaString> m_hSubstCgiParamOverride;
     CMaaUnivHash<CMaaString, CMaaString>* m_phCgiParamOverride = nullptr;
+    CMaaString m_ReinitQS;
+    bool m_bReinitQS = false;
 public:
     CMaaFile m_fStdOut; // = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true) for CGI, = {} for FastCGI
 protected:
@@ -222,26 +225,26 @@ public:
      const CMaaString &ProgressFn = gsCMaaStringZ, const CMaaString &ProgressFmt = gsCMaaStringZ);
     ~CCGIHelper();
     int GetErrorCode() const noexcept { return m_Error; }
-    void ReinitializeGetQS();
+    void ReinitializeGetQS(bool bSetNewQS, const CMaaString& NewQS = CMaaStringZ);
     int GetParam(const CMaaString &Name, int defvalue = 0, bool *isexists = nullptr) const noexcept;
     int GetParam(const CMaaString &Name, CMaaString *val = nullptr) const noexcept;
     bool GetParamByNum(int num, CMaaString &Attr, CMaaString &Val) const noexcept;
     int SetParam(const CMaaString &Name, const CMaaString &Val); // for GetParam() only
     int SendReply(CMaaString Data, CMaaString ContentType, CMaaString FileName, CMaaString Header, const CMaaString& ErrorText, time_t t, bool bInline); // , CMaaFile fStdOut = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true));
-    int SendReply(const CMaaString& Data, const CMaaString& ContentType = "text/plain", const CMaaString& FileName = gsCMaaStringZ, const CMaaString& Header = gsCMaaStringZ, const CMaaString& ErrorText = gsCMaaStringZ, time_t t = time(nullptr)); // , CMaaFile fStdOut = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true));
+    int SendReply(const CMaaString& Data, const CMaaString& ContentType = CMaaStringTextPlain, const CMaaString& FileName = gsCMaaStringZ, const CMaaString& Header = gsCMaaStringZ, const CMaaString& ErrorText = gsCMaaStringZ, time_t t = time(nullptr)); // , CMaaFile fStdOut = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true));
     //int SendReply(CMaaString Data, CMaaString Header = CMaaStringZ);
     int SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, time_t t, CMaaString ContentType, _qword Start, _qword End, bool bInline); // , CMaaFile fStdOut = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true));
     int SendReply(CMaaFile f, const CMaaString& Header = gsCMaaStringZ, const CMaaString& FileName = gsCMaaStringZ, time_t t = time(nullptr), const CMaaString& ContentType = gsCMaaStringZ, _qword Start = 0, _qword End = -1); // , CMaaFile fStdOut = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true));
     int SendIndependentReply(CMaaString Data, CMaaString Header = CMaaStringZ); // with no if-mofified-since, partial responce and so on conversions
     int SendIndependentReply(CMaaFile f, CMaaString Header = CMaaStringZ);//, _qword Start = 0, _qword End = -1);
     int Send100Continue(); // (CMaaFile fStdOut = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true));
-    static CMaaString GetContentTypeByFileName(const CMaaString &FileName, const CMaaString &DefaultContentType = "application/octet-stream");
-    static CMaaString GetContentTypeByFileExtention(const CMaaString &Ext, const CMaaString &DefaultContentType = "application/octet-stream");
-    static CMaaString GetContentTypeByExtention(CMaaString Ext, const CMaaString &DefaultContentType = "application/octet-stream");
+    static CMaaString GetContentTypeByFileName(const CMaaString& FileName, const CMaaString& DefaultContentType = CMaaStringApplicationOctet_stream); // "application/octet-stream"
+    static CMaaString GetContentTypeByFileExtention(const CMaaString &Ext, const CMaaString &DefaultContentType = CMaaStringApplicationOctet_stream);
+    static CMaaString GetContentTypeByExtention(CMaaString Ext, const CMaaString &DefaultContentType = CMaaStringApplicationOctet_stream);
     int GetReplySentStatus() const noexcept;
     bool IsEndFileSent() const noexcept;
     static bool ItIsABot(const char * p = nullptr);
-    static void SetSubst(bool bIn, bool bOut, const CMaaString &Qs = gsCMaaStringZ, CMaaString Fn = "script.cgi", const CMaaString &Method = "GET");
+    static void SetSubst(bool bIn, bool bOut, const CMaaString& Qs = gsCMaaStringZ, CMaaString Fn = "script.cgi", const CMaaString& Method = CMaaStringGET); // "GET"
     static void ResetSubst() noexcept
     {
         s_SubstIn = s_SubstOut = false;
@@ -272,7 +275,7 @@ public:
 
     public:
         iterator();
-        iterator(const CCGIHelper &h, CMaaString Mask = "*", bool bFilesOnly = true);
+        iterator(const CCGIHelper &h, CMaaString Mask = CMaaStringAsterisk, bool bFilesOnly = true); // "*"
         bool Next(bool bInit = false);
         iterator(const iterator &That) noexcept;
         ~iterator();
@@ -283,7 +286,7 @@ public:
         iterator operator++(int);
         iterator operator++();
     };
-    iterator it(CMaaString Mask = "*", bool bFilesOnly = true)
+    iterator it(CMaaString Mask = CMaaStringAsterisk, bool bFilesOnly = true) // "*"
     {
         return iterator (*this, Mask, bFilesOnly);
     }

@@ -85,7 +85,7 @@ int gToolsLib_FileFlags = TOOLSLIB_SKIP_LN_PROC;
 
 constexpr_ CMaaFile::CE::CE() noexcept
 :
-    snStdin{ "stdin" }, snStdout{ "stdout" }, snStderr{ "stderr" }, snNul{ "nul" }, snNull{ "null" }, snDevNull{ "/dev/null" }, snSlash(szFILESYSTEM_SLASH), snOtherSlash(szOTHER_FILESYSTEM_SLASH),
+    snStdin{ pszCMaaFileStdin }, snStdout{ pszCMaaFileStdout }, snStderr{ pszCMaaFileStderr }, snNul{ pszCMaaFileNul }, snNull{ pszCMaaFileNull }, snDevNull{ pszCMaaFileDevNull }, snSlash(szFILESYSTEM_SLASH), snOtherSlash(szOTHER_FILESYSTEM_SLASH),
     snPfxUtf8{ "\xEF\xBB\xBF" }, snUnicode{ "\xFF\xFE" }, snUnicodeBigEndian{ "\xFE\xFF" },
 
     sStdin{ &snStdin }, sStdout{ &snStdout }, sStderr{ &snStderr },
@@ -3083,12 +3083,12 @@ bool CMaaFile::Open(const CMaaString &Name1, int /*eMode*/ fMode0, const CMaaStr
         .Str0Copy()
 #endif
         :
-        (s_strThreadLocalPath.IsNotEmpty() && Mode.Find(0, "|notstdhandle", 13) < 0 && (Name1 == CMaaFileStdout || Name1 == CMaaFileStdin || Name1 == CMaaFileStderr
+        (s_strThreadLocalPath.IsNotEmpty() && Mode.Find(0, "|notstdhandle", 13) < 0 && (Name1 == pszCMaaFileStdout || Name1 == pszCMaaFileStdin || Name1 == pszCMaaFileStderr
 #ifdef _WIN32
-            // || Name1 == CMaaFileNul
+            // || Name1 == pszCMaaFileNul
 #endif
 #ifdef __unix__
-            || Name1 == CMaaFileNull
+            || Name1 == pszCMaaFileNull
 #endif
             )
         ) ? Name1
@@ -3227,7 +3227,7 @@ bool CMaaFile::Open(const CMaaString &Name1, int /*eMode*/ fMode0, const CMaaStr
 #endif
 #ifdef __unix__
             flags |= O_CREAT;// | O_TRUNC; //!!! "N" feature
-            if  (Name != CMaaFileDevNull) // "/dev/null"
+            if  (Name != pszCMaaFileDevNull) // "/dev/null"
 #endif
             {
                 bTruncate = true;
@@ -3258,12 +3258,12 @@ bool CMaaFile::Open(const CMaaString &Name1, int /*eMode*/ fMode0, const CMaaStr
     bool bStdHandle = false;
     if  (Mode.Find(0, "|notstdhandle", 13) < 0)
     {
-        if  (Name == CMaaFileStdin)
+        if  (Name == pszCMaaFileStdin)
         {
             hFile = GetStdHandle(STD_INPUT_HANDLE);
             bStdHandle = true;
         }
-        else if (Name == CMaaFileStdout)
+        else if (Name == pszCMaaFileStdout)
         {
             hFile = GetStdHandle(STD_OUTPUT_HANDLE);
             if  (Mode.Find(0, "+autofileformatinfo", 19) >= 0)
@@ -3274,7 +3274,7 @@ bool CMaaFile::Open(const CMaaString &Name1, int /*eMode*/ fMode0, const CMaaStr
             }
             bStdHandle = true;
         }
-        else if (Name == CMaaFileStderr)
+        else if (Name == pszCMaaFileStderr)
         {
             hFile = GetStdHandle(STD_ERROR_HANDLE);
             bStdHandle = true;
@@ -3318,14 +3318,14 @@ bool CMaaFile::Open(const CMaaString &Name1, int /*eMode*/ fMode0, const CMaaStr
     bool bStdHandle = false;
     if  (Mode.Find(0, "|notstdhandle", 13) < 0)
     {
-        if  (Name == CMaaFileStdin)
+        if  (Name == pszCMaaFileStdin)
         {
             //fd = open("/dev/stdin", flags, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
             //fd = open("/dev/stdin", flags, S_IRUSR|S_IRGRP|S_IROTH);
             fd = stdin ? dup(fileno(stdin)) : -1;
             bStdHandle = true;
         }
-        else if (Name == CMaaFileStdout)
+        else if (Name == pszCMaaFileStdout)
         {
             //printf("opening file /dev/stdout mode %d(0x%0x)\n", flags);
             //fd = open("/dev/stdout", flags, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
@@ -3335,14 +3335,14 @@ bool CMaaFile::Open(const CMaaString &Name1, int /*eMode*/ fMode0, const CMaaStr
             fd = stdout ? dup(fileno(stdout)) : -1;
             bStdHandle = true;
         }
-        else if (Name == CMaaFileStderr)
+        else if (Name == pszCMaaFileStderr)
         {
             //fd = open("/dev/stderr", flags, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
             //fd = open("/dev/stderr", flags, S_IWUSR|S_IWGRP|S_IWOTH);
             fd = stderr ? dup(fileno(stderr)) : -1;
             bStdHandle = true;
         }
-        else if (Name == CMaaFileNull) // "null"
+        else if (Name == pszCMaaFileNull) // "null"
         {
             //fd = open("/dev/stderr", flags, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
             //fd = open("/dev/stderr", flags, S_IWUSR|S_IWGRP|S_IWOTH);

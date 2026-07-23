@@ -73,7 +73,7 @@ char * getenv8(const char * name)
 #ifdef _WIN32
     static thread_local_ CMaaString e;
     e = my_getenv(name);
-    return e.IsNotEmpty() ? (char *)(const char *)e : nullptr;
+    return (char *)e.c0();
 #else
     return getenv(name);
 #endif
@@ -183,7 +183,7 @@ int CCGIHelper::SendIndependentReply(CMaaFile f, CMaaString Header = "");//, _qw
 CMaaString CCGIHelper::getenv(const CMaaString &name)
 {
     CMaaString *pval;
-    if (m_phCgiParamOverride && (pval = (*m_phCgiParamOverride)[name]))
+    if ((m_subst_imp && (pval = m_subst_imp->m_hSubstCgiParamOverride[name])) || (m_phCgiParamOverride && (pval = (*m_phCgiParamOverride)[name])))
     {
         return *pval;
     }
@@ -203,8 +203,10 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
     void *
 #endif
         pFastCgiRequest, CMaaUnivHash<CMaaString, CMaaString> *phCgiParamOverride, const CMaaString &ProgressFn, const CMaaString &ProgressFmt)
-//:   m_fProgress((const char *)nullptr, CMaaFile::eNoMode, false)
+:   m_hSubstCgiParamOverride(0)
+    //, m_fProgress((const char *)nullptr, CMaaFile::eNoMode, false)
 {
+    m_subst_imp = g_imp;
     m_Send500 = false;
 #ifdef FAST_CGI_SUPP
     m_pFastCgiRequest = pFastCgiRequest;
@@ -218,7 +220,6 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
         }
         m_fStdOut = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true);
     }
-    m_subst_imp = g_imp;
     m_SubstOut = s_SubstOut;
 
     m_EndFileSent = false;
@@ -240,7 +241,7 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
 #endif
         Initialize(MaxContentLength, /*phCgiParamOverride,*/ pFastCgiRequest, ProgressFn, ProgressFmt);
     }
-    if  (!g_imp)
+    //if  (!g_imp)
     {
         g_imp = this;
     }
@@ -250,10 +251,12 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
 
 //#define __log(x) { {CMaaFile f("__log___.txt", CMaaFile::eAC_SrSw, eNoExcept); f.fprintf("%S\n", x);}
 
-void CCGIHelper::ReinitializeGetQS()
+void CCGIHelper::ReinitializeGetQS(bool bNewQS, const CMaaString &NewQS)
 {
     if  (!m_Method.IsCi0("POST", 0))
     {
+        m_ReinitQS = NewQS;
+        m_bReinitQS = bNewQS;
         Initialize(-1
 #ifdef FAST_CGI_SUPP
             , m_pFastCgiRequest
@@ -300,7 +303,7 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
         CMaaString Empty;
         /*static*/ CMaaString strOnEmptySubstitution[] =
         {
-            CMaaString("GET"), Empty, Empty, Empty, Empty
+            CMaaStringGET, Empty, Empty, Empty, Empty
         };
 
         for (int i = 0; envvarNames[i]; i++)
@@ -329,6 +332,10 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
                 (*destVars[i]) = strOnEmptySubstitution[i];
             }
         }
+        if (m_bReinitQS)
+        {
+            (*destVars[3]) = (*envVars[3]) = m_ReinitQS;
+        }
         m_Start = 0, m_End = -1;
         if  (m_Range.IsNotEmpty())
         {
@@ -353,7 +360,7 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
         }
     }
     //m_cl = m_rl = -1234;
-    if  (m_Method == "POST")
+    if  (m_Method == pszCMaaStringPOST)
     {
         m_Last100Cont = time(nullptr) - 3600;
         _qword cl = 0;
@@ -534,7 +541,7 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
     }
     else if (m_ContentType.Find("multipart/form-data") >= 0)
     {
-        /*
+/*
     g_temp += "\n";
     g_temp += m_ContentType;
     g_temp += "\n";
@@ -603,7 +610,7 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
             }
 
             p->m_ContentData = Data.RefMid(0, n);
-            /*
+/*
 CMaaFile log("log.txt", CMaaFile::eAC_SrSw, eNoExcept);
 if (!log.IsOpen())
 {
@@ -677,17 +684,17 @@ g_temp.Format("%S\npoint 1\n---%S---%S---\n", &g_temp, &p->m_ContentData.Right(c
                 {
                     AttrName = p->m_ContentDisposition.Mid(n, x2 - n);
                     n = x2 + 1;
-                    if  (AttrName == "form-data")
+                    if  (AttrName == pszCMaaStringFormData) // "form-data"
                     {
                         nFormData = 1;
                     }
                 }
                 //g_temp.Format("%S\n%S=%S\n", &g_temp, &AttrName, &AttrValue);
-                if  (AttrName == "name")
+                if  (AttrName == pszCMaaStringName) // "name"
                 {
                     p->m_Name = AttrValue;
                 }
-                else if (AttrName == "filename")
+                else if (AttrName == pszCMaaStringFilename) // "filename"
                 {
                     p->m_FileName = AttrValue;
                     //g_temp.Format("%S\nFileName=%S\n", &g_temp, &p->m_FileName);
@@ -745,10 +752,10 @@ CCGIHelper::~CCGIHelper()
     //fprintf(stderr, "m_srcAttrList\n"); fflush(stderr);
     m_srcAttrList.RemoveAll();
     //fprintf(stderr, "CCGIHelper::~CCGIHelper() - ret\n"); fflush(stderr);
-    if  (g_imp == this)
+    //if  (g_imp == this)
     {
-        g_imp = nullptr;
-        if  (m_SubstOut)
+        //g_imp = nullptr;
+        //if  (m_SubstOut)
         {
             g_imp = m_subst_imp;
             m_subst_imp = nullptr;
@@ -1100,7 +1107,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     CMaaString CacheControl = getenv("HTTP_CACHE_CONTROL"), Pragma = getenv("HTTP_PRAGMA");
     if  (CacheControl.FindCi("no-cache") >= 0)
     {
-        CacheControl = "Cache-Control: no-cache\r\n";
+        CacheControl = CMaaStringCacheControlNoCacheCrLf; // "Cache-Control: no-cache\r\n"
         Pragma.Empty();
     }
     else
@@ -1108,7 +1115,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
         CacheControl.Empty();
         if  (Pragma.FindCi("no-cache") >= 0)
         {
-            CacheControl = "Pragma: no-cache\r\n";
+            CacheControl = CMaaStringPragmaNoCacheCrLf; // "Pragma: no-cache\r\n"
         }
         Pragma.Empty();
     }
@@ -1130,8 +1137,8 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
         const CMaaString p = getenv("HTTP_CONNECTION");
         if  (p[0] == '\0')
         {
-            Connection = "Connection: close\r\n";
-            //Connection = "Connection: keep-alive\r\n";
+            Connection = CMaaStringConnectionCloseCrLf; // "Connection: close\r\n"
+            //Connection = CMaaStringConnectionKeepAliveCrLf; // "Connection: keep-alive\r\n"
         }
     }
     if  (CacheControl.IsNotEmpty())
@@ -1193,7 +1200,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     }
     */
 
-    if  (Method == "HEAD")
+    if  (Method == pszCMaaStringHEAD)
     {
         Start = 0;
         End = -1;
@@ -1202,7 +1209,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     if  (ErrorText.IsNotEmpty())
     {
         Data = ErrorText.ToHttpHtmlDisplayedText(true);
-        ContentType = "text/plain";
+        ContentType = CMaaStringTextPlain; // "text/plain"
         FileName.Empty();
         //Start = 0;
         //End = Data.Length() - 1;
@@ -1210,7 +1217,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
         End = -1;
         if  (Data.FindCi("<html>") < 0)
         {
-            ContentType = "text/html";
+            ContentType = CMaaStringTextHtml; // "text/html"
             Data.Format2("%S",
        "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n"
        "\n"
@@ -1232,7 +1239,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
 
     //CMaaFile m_fStdOut(CMaaFileStdout, CMaaFile::eW_SrSw, eNoExcept);
 
-    if  (Method != "HEAD" && Method != "GET" && Method != "POST")
+    if  (Method != pszCMaaStringHEAD && Method != pszCMaaStringGET && Method != pszCMaaStringPOST)
     {
         CMaaString txt;
         txt.Format(
@@ -1284,7 +1291,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     {
         if  (ContentType.IsEmpty())
         {
-            ContentType = GetContentTypeByFileName(FileName, "application/octet-stream");
+            ContentType = GetContentTypeByFileName(FileName, CMaaStringApplicationOctet_stream); // "application/octet-stream"
         }
         if  (!bInline)
         {
@@ -1298,7 +1305,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
     }
     if  (ContentType.IsEmpty())
     {
-        ContentType = "application/octet-stream";
+        ContentType = CMaaStringApplicationOctet_stream; // "application/octet-stream"
     }
 
     CMaaString LastModified;
@@ -1394,7 +1401,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
             "%S"
             "\r\n",
             &ManualStatus,
-            &ContentType, rs == "https" ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER, &FileName, &LastModified,
+            &ContentType, rs == pszCMaaStringHttps ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER, &FileName, &LastModified,
             len, //Start, End, len,
             &Connection, &Header);
             bEndFileSent = true;
@@ -1433,14 +1440,14 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
             "%S"
             "%S"
             "\r\n",
-            &ContentType, rs == "https" ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER, &FileName, &LastModified,
+            &ContentType, rs == pszCMaaStringHttps ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER, &FileName, &LastModified,
             _len, Start, End, len,
             &Connection, &Header);
         }
         else
     {
         m_ReplySentStatus = 0x100000;
-        ContentType = "text/plain";
+        ContentType = CMaaStringTextPlain; // "text/plain"
         t = time(nullptr);
         Data.Format("unknown error at point 1");
         txt.Format(
@@ -1466,7 +1473,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
             "%S"
             "\r\n",
             &ContentType,
-            rs == "https" ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER,
+            rs == pszCMaaStringHttps ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER,
             // &FileName,
             //(const char *)GetDateWebFormat(t),
             (_qword)Data.Length(),
@@ -1494,7 +1501,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
                 m_fStdOut.Write(Data);
             }
         }
-        m_EndFileSent = m_Method != "HEAD" && bEndFileSent;
+        m_EndFileSent = m_Method != pszCMaaStringHEAD && bEndFileSent;
     }
     catch(...)
     {
@@ -1587,7 +1594,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
     CMaaString CacheControl = getenv("HTTP_CACHE_CONTROL"), Pragma = getenv("HTTP_PRAGMA");
     if  (CacheControl.FindCi("no-cache") >= 0)
     {
-        CacheControl = "Cache-Control: no-cache\r\n";
+        CacheControl = CMaaStringCacheControlNoCacheCrLf; // "Cache-Control: no-cache\r\n"
         Pragma.Empty();
     }
     else
@@ -1595,7 +1602,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
         CacheControl.Empty();
         if  (Pragma.FindCi("no-cache") >= 0)
         {
-            CacheControl = "Pragma: no-cache\r\n";
+            CacheControl = CMaaStringPragmaNoCacheCrLf; // "Pragma: no-cache\r\n"
         }
         Pragma.Empty();
     }
@@ -1607,8 +1614,8 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
         const CMaaString p = getenv("HTTP_CONNECTION");
         if  (p[0] == '\0')
         {
-            Connection = "Connection: close\r\n";
-            //Connection = "Connection: keep-alive\r\n";
+            Connection = CMaaStringConnectionCloseCrLf; // "Connection: close\r\n"
+            //Connection = CMaaStringConnectionKeepAliveCrLf; // "Connection: keep-alive\r\n"
         }
     }
     if  (CacheControl.IsNotEmpty())
@@ -1655,7 +1662,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
 
     CMaaString Method = m_Method;
 
-    if  (Method == "HEAD")
+    if  (Method == pszCMaaStringHEAD)
     {
         Start = 0;
         End = -1;
@@ -1665,7 +1672,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
     if   (ErrorText.IsNotEmpty())
     {
         Data = ErrorText;
-        ContentType = "text/plain";
+        ContentType = CMaaStringTextPlain; // "text/plain"
         FileName.Empty();
         //Start = 0;
         //End = Data.Length() - 1;
@@ -1685,7 +1692,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
 
     f.Seek(fStart);
 
-    if  (Method != "HEAD" && Method != "GET" && Method != "POST")
+    if  (Method != pszCMaaStringHEAD && Method != pszCMaaStringGET && Method != pszCMaaStringPOST)
     {
         CMaaString txt;
         txt.Format(
@@ -1730,7 +1737,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
     {
         if  (ContentType.IsEmpty())
         {
-            ContentType = GetContentTypeByFileName(FileName, "application/octet-stream");
+            ContentType = GetContentTypeByFileName(FileName, CMaaStringApplicationOctet_stream); // "application/octet-stream"
         }
         if  (!bInline)
         {
@@ -1744,7 +1751,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
     }
     if  (ContentType.IsEmpty())
     {
-        ContentType = "application/octet-stream";
+        ContentType = CMaaStringApplicationOctet_stream; // "application/octet-stream"
     }
 
     CMaaString LastModified;
@@ -1808,7 +1815,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
                 "%S"
                 "%S"
                 "\r\n",
-                &ContentType, rs == "https" ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER, &FileName, &LastModified,
+                &ContentType, rs == pszCMaaStringHttps ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER, &FileName, &LastModified,
                 len, //Start, End, len,
                 &Connection, &Header);
         }
@@ -1827,7 +1834,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
                 "%S"
                 "%S"
                 "\r\n",
-                &ContentType, rs == "https" ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER, &FileName, &LastModified,
+                &ContentType, rs == pszCMaaStringHttps ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER, &FileName, &LastModified,
                 len, //Start, End, len,
                 &Connection, &Header);
         }
@@ -1852,7 +1859,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
             "%S"
             "%S"
             "\r\n",
-            &ContentType, rs == "https" ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER, &FileName, &LastModified,
+            &ContentType, rs == pszCMaaStringHttps ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER, &FileName, &LastModified,
             _len, Start, End, len,
             &Connection, &Header);
         len = _len;
@@ -1860,11 +1867,11 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
     else
     {
         m_ReplySentStatus = 0x100000;
-        ContentType = "text/plain";
+        ContentType = CMaaStringTextPlain; // "text/plain"
         t = time(nullptr);
         Data.Format("unknown error at point 1");
 
-        ContentType = "text/html";
+        ContentType = CMaaStringTextHtml; // "text/html"
         Data =
         "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n"
         "<html><head>\n"
@@ -1888,14 +1895,14 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
             "%S"
             "\r\n",
             &ContentType,
-            rs == "https" ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER,
+            rs == pszCMaaStringHttps ? szHTTPS_ADD_HEADER : szHTTP_ADD_HEADER,
             // &FileName,
             //(const char *)GetDateWebFormat(t),
             (_qword)Data.Length(),
             &Connection);
         len = 0;
     }
-    if  (Method == "HEAD")
+    if  (Method == pszCMaaStringHEAD)
     {
         m_ReplySentStatus |= 0x10;
     }
@@ -1913,7 +1920,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
     }
     if  (!len && f.Length() == 0)
     {
-        m_EndFileSent = m_Method != "HEAD" && true;
+        m_EndFileSent = m_Method != pszCMaaStringHEAD && true;
     }
     while(len > 0)
     {
@@ -1953,7 +1960,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
         len -= nn;
         if  (!len && f.GetCurPos() == f.Length())
         {
-            m_EndFileSent = m_Method != "HEAD" && true;
+            m_EndFileSent = m_Method != pszCMaaStringHEAD && true;
         }
     }
     return len ? 1 : 0;
@@ -2069,6 +2076,7 @@ void CCGIHelper::SetSubst(bool bIn, bool bOut, const CMaaString &Qs, CMaaString 
 //#define setenv(a,b,c) { CMaaString aa = Utf8ToUnicode(a); CMaaString bb = Utf8ToUnicode(b); SetEnvironmentVariableW((_WC_*)(const char *)aa, (_WC_*)(const char *)bb); }
 //#define unsetenv(a) { CMaaString aa = Utf8ToUnicode(a); SetEnvironmentVariableW((_WC_*)(const char *)aa, nullptr); }
 //#endif
+#if 0
         setenv("REQUEST_METHOD", Method, 1);
         setenv("QUERY_STRING", Qs, 1);
         if  (Fn[0] == '/')
@@ -2079,6 +2087,18 @@ void CCGIHelper::SetSubst(bool bIn, bool bOut, const CMaaString &Qs, CMaaString 
         setenv("REQUEST_URI", e, 1);
         setenv("SCRIPT_NAME", Fn, 1);
         unsetenv("HTTP_RANGE");
+#else
+        g_imp->m_hSubstCgiParamOverride.AddOver("REQUEST_METHOD", Method);
+        g_imp->m_hSubstCgiParamOverride.AddOver("QUERY_STRING", Qs);
+        if  (Fn[0] == '/')
+        {
+            Fn = Fn.RefMid(1);
+        }
+        e.Format(Qs.IsNotEmpty() ? "/%S?%S" : "/%S", &Fn, &Qs);
+        g_imp->m_hSubstCgiParamOverride.AddOver("REQUEST_URI", e);
+        g_imp->m_hSubstCgiParamOverride.AddOver("SCRIPT_NAME", Fn);
+        g_imp->m_hSubstCgiParamOverride.AddOver("HTTP_RANGE", CMaaStringZ);
+#endif
     }
     if  (s_SubstOut)
     {

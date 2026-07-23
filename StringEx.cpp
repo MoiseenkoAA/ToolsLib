@@ -10604,7 +10604,7 @@ CMaaString CMaaString::GetWord0(char c) noexcept(noexcept_new)
     return Ret;
 }
 
-CMaaString CMaaString::GetCsvWord(CMaaString SrcCodePage /*= "1251"*/) noexcept(noexcept_new)
+CMaaString CMaaString::GetCsvWord(const CMaaString& SrcCodePage /*= "1251"*/) noexcept(noexcept_new)
 {
     int pos = 0;
     CMaaString &Line = *this;
@@ -10657,9 +10657,9 @@ CMaaString CMaaString::GetCsvWord(CMaaString SrcCodePage /*= "1251"*/) noexcept(
     return cell;
 }
 
-void CMaaString::AppendCsvWord(CMaaString w, CMaaString DstCodePage /*= "1251"*/) noexcept(noexcept_new)
+void CMaaString::AppendCsvWord(CMaaString w, const CMaaString& DstCodePage /*= "1251"*/) noexcept(noexcept_new)
 {
-    if  (DstCodePage == "1251")
+    if  (DstCodePage == CMaaString1251) // "1251"
     {
         w = UnicodeToAnsi(::Utf8ToUnicode(w));
     }
@@ -20172,14 +20172,14 @@ bool CMaaIsValidDate(const CMaaString &Date, const CMaaString &Time, int_ mode)
                     {
                         s3.SetLeftMid(3, 4);
                     }
-                    if  (s2 != Date && s != Date && s != CMaaString(" ") + Date && s3 != Date && s3 != CMaaString(" ") + Date)
+                    if  (s2 != Date && s != Date && s != CMaaStringSp + Date && s3 != Date && s3 != CMaaStringSp + Date)
                     {
                         return false;
                     }
                 }
                 else if (mode == 0)
                 {
-                    if  (s != Date && s != CMaaString(" ") + Date)
+                    if  (s != Date && s != CMaaStringSp + Date)
                     {
                         return false;
                     }
@@ -20275,11 +20275,12 @@ constexpr CMaaString::CE::CE() noexcept
     snWChar0{ "\0\0\0\0\0\0\0\0", (int)sizeof(wchar_t), sizeof(wchar_t) == 2 ? eROMemString0000_16 : eROMemString0000_32 },
     snWC32_0{ "\0\0\0\0\0\0\0\0", (int)sizeof(char32_t), eROMemString0000_32 },
     //static constexpr ceCMaaStringImp
-    snEta{ "@" }, snSp{ " " },
+    snEta{ pszCMaaStringEta }, snSp{ pszCMaaStringSp }, // "@", " "
     sn_a{ "a" }, sn_x{ "x" }, snLf{ "\n" }, snCr{ "\r" }, snCrLf{ "\r\n" },
     snSpSp{ "  " }, // sn_a, sn_z, sn_A, sn_Z
     snSemicolon{ ";" }, snComma{ "," }, snDot{ "." }, snDotDot{ ".." }, // snEllipse{ "..." },
     snDoc{ "d""oc" }, snStr2HtmlValEsc{ "&\"'<>" },
+    snEllipse{ "..." }, sn1251{ "1251" }, snPass1Prefix{ "{{{{{" }, snPass1Suffix{ "}}}}}" },
 
 #ifdef CMaaStringImp_NOT_NULL_MODE
     sZ{ &snZ },
@@ -20293,14 +20294,15 @@ constexpr CMaaString::CE::CE() noexcept
     sLf{ &snLf }, sCr{ &snCr }, sCrLf{ &snCrLf }, sSpSp{ &snSpSp },
     // s_a, s_z, s_A, s_Z,
     sSemicolon{ &snSemicolon }, sComma{ &snComma }, sDot{ &snDot }, sDotDot{ &snDotDot }, // sEllipse { &snEllipse },
-    sDoc{ &snDoc }, sStr2HtmlValEsc{ &snStr2HtmlValEsc }
+    sDoc{ &snDoc }, sStr2HtmlValEsc{ &snStr2HtmlValEsc },
+    sEllipse{ &snEllipse }, s1251{ &sn1251 }, sPass1Prefix{ &snPass1Prefix }, sPass1Suffix{ &snPass1Suffix }
 {
 }
 
 constexpr CMaaString::CE2::CE2() noexcept
 :
-    snJsonVal{ "val" }, snJsonNode{ "node" }, snJsonArray{ "array" }, snJsonName{ "name" }, snJsonValue{ "value" }, snJsonType{ "type" },
-    snJsonInt{ "int" }, snJsonBool{ "bool" }, snJsonFloat{ "float" }, snJsonNull{ "null" }, snJsonString{ "string" },
+    snJsonVal{ pszCMaaStringJsonVal }, snJsonNode{ pszCMaaStringJsonNode }, snJsonArray{ pszCMaaStringJsonArray }, snJsonName{ pszCMaaStringJsonName }, snJsonValue{ pszCMaaStringJsonValue }, snJsonType{ pszCMaaStringJsonType },
+    snJsonInt{ pszCMaaStringJsonInt }, snJsonBool{ pszCMaaStringJsonBool }, snJsonFloat{ pszCMaaStringJsonFloat }, snJsonNull{ pszCMaaStringJsonNull }, snJsonString{ pszCMaaStringJsonString },
 
     sJsonVal{ &snJsonVal }, sJsonNode{ &snJsonNode }, sJsonArray{ &snJsonArray }, sJsonName{ &snJsonName },
     sJsonValue{ &snJsonValue }, sJsonType{ &snJsonType },
@@ -20319,9 +20321,27 @@ constexpr CMaaString::CE3::CE3() noexcept
     }
 }
 
+constexpr CMaaString::CE4::CE4() noexcept
+:
+    snXml{ pszCMaaStringXml }, snUtf8{ pszCMaaStringUtf8 }, snWindows1251{ pszCMaaStringWindows1251 }, sn1_0{ pszCMaaString1_0 }, snDOCTYPE{ pszCMaaStringDOCTYPE }, snlastBuildDate{ pszCMaaStringlastBuildDate }, snVersion{ pszCMaaStringVersion }, snEncoding{ pszCMaaStringEncoding },
+    sXml{ &snXml }, sUtf8{ &snUtf8 }, sWindows1251{ &snWindows1251 }, s1_0{ &sn1_0 }, sDOCTYPE{ &snDOCTYPE }, slastBuildDate{ &snlastBuildDate }, sVersion{ &snVersion }, sEncoding{ &snEncoding }
+{
+}
+
+constexpr CMaaString::CE5::CE5() noexcept
+:
+    snTextPlain{ pszCMaaStringTextPlain }, snTextHtml{ pszCMaaStringTextHtml }, snHttp{ pszCMaaStringHttp }, snHttps{ pszCMaaStringHttps }, snApplicationOctet_stream { pszCMaaStringApplicationOctet_stream }, snHEAD{ pszCMaaStringHEAD }, snGET{ pszCMaaStringGET }, snPOST{ pszCMaaStringPOST }, snAsterisk{ pszCMaaStringAsterisk }, snCacheControlNoCacheCrLf{ pszCMaaStringCacheControlNoCacheCrLf }, snPragmaNoCacheCrLf{ pszCMaaStringPragmaNoCacheCrLf }, snConnectionCloseCrLf{ pszCMaaStringConnectionCloseCrLf }, snConnectionKeepAliveCrLf{ pszCMaaStringConnectionKeepAliveCrLf },
+    snFormData{ pszCMaaStringFormData }, snName{ pszCMaaStringName }, snFilename{ pszCMaaStringFilename },
+    sTextPlain{ &snTextPlain }, sTextHtml{ &snTextHtml }, sHttp{ &snHttp }, sHttps{ &snHttps }, sApplicationOctet_stream{ &snApplicationOctet_stream }, sHEAD{ &snHEAD }, sGET { &snGET }, sPOST{ &snPOST }, sAsterisk{ &snAsterisk }, sCacheControlNoCacheCrLf{ &snCacheControlNoCacheCrLf }, sPragmaNoCacheCrLf{ &snPragmaNoCacheCrLf }, sConnectionCloseCrLf{ &snConnectionCloseCrLf }, sConnectionKeepAliveCrLf{ &snConnectionKeepAliveCrLf },
+    sFormData{ &snFormData }, sName{ &snName }, sFilename{ &snFilename }
+{
+}
+
 static constexpr CMaaString::CE sCMaaStringC;
 static constexpr CMaaString::CE2 sCMaaStringC2;
 static constexpr CMaaString::CE3 sCMaaStringC3;
+static constexpr CMaaString::CE4 sCMaaStringC4;
+static constexpr CMaaString::CE5 sCMaaStringC5;
 const CMaaString::CE & CMaaString::C() noexcept
 {
     return sCMaaStringC;
@@ -20333,6 +20353,14 @@ const CMaaString::CE2 & CMaaString::C2() noexcept
 const CMaaString::CE3 & CMaaString::C3() noexcept
 {
     return sCMaaStringC3;
+}
+const CMaaString::CE4 & CMaaString::C4() noexcept
+{
+    return sCMaaStringC4;
+}
+const CMaaString::CE5 & CMaaString::C5() noexcept
+{
+    return sCMaaStringC5;
 }
 
 constexpr CMaaTLGlobalStrings::CMaaTLGlobalStrings() noexcept

@@ -708,7 +708,7 @@ bool gd_Image::LoadFromMemory(CMaaString Data, CMaaString Ext, bool bThrow, int 
     return im ? true : false;
 }
 
-bool gd_Image::Save(CMaaString FileName, CMaaString Mode, bool bThrow, int Type, int JpegQuality)
+bool gd_Image::Save(CMaaString FileName, CMaaFile::eMode Mode, bool bThrow, int Type, int JpegQuality)
 {
     if  (!im)
     {

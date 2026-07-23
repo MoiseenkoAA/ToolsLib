@@ -638,7 +638,7 @@ bool CMaaXmlNodeImpl::AddAttribute(const CMaaString &Name, const CMaaString &Val
 bool CMaaXmlNodeImpl::AddString(const CMaaString &Name, const CMaaString &Value) noexcept(noexcept_new)
 {
 #ifdef TOOLSLIB_XML_COMPLEX_STRINGS_SUPPORT__
-    if  (Name == CMaaStringEta)
+    if  (Name == pszCMaaStringEta)
     {
         if  ((m_ChildsList.IsNotEmpty() || m_StringsList.IsNotEmpty()) && Value.IsNotEmpty())
         {
@@ -693,7 +693,7 @@ bool CMaaXmlNodeImpl::RemoveAttribute(const CMaaString &Name) noexcept
 bool CMaaXmlNodeImpl::RemoveString(const CMaaString &Name) noexcept
 {
 #ifdef TOOLSLIB_XML_COMPLEX_STRINGS_SUPPORT__
-    if  (Name == CMaaStringEta)
+    if  (Name == pszCMaaStringEta)
     {
         const bool r = m_String.IsNotEmpty();
         m_String.Empty();
@@ -1734,7 +1734,7 @@ const CMaaString& CMaaXmlNodeImpl::FindAttribute(const CMaaString& Name, bool& b
 const CMaaString& CMaaXmlNodeImpl::FindString(const CMaaString& Name) const noexcept
 {
 #ifdef TOOLSLIB_XML_COMPLEX_STRINGS_SUPPORT__
-    if (Name == CMaaStringEta)
+    if (Name == pszCMaaStringEta)
     {
         return m_String;
     }
@@ -1745,7 +1745,7 @@ const CMaaString& CMaaXmlNodeImpl::FindString(const CMaaString& Name) const noex
 const CMaaString& CMaaXmlNodeImpl::FindString(const CMaaString &Name, bool *pIsFound) const noexcept
 {
 #ifdef TOOLSLIB_XML_COMPLEX_STRINGS_SUPPORT__
-    if  (Name == CMaaStringEta)
+    if  (Name == pszCMaaStringEta)
     {
         if  (pIsFound)
         {
@@ -1773,7 +1773,7 @@ const CMaaString& CMaaXmlNodeImpl::FindString(const CMaaString &Name, bool *pIsF
 const CMaaString& CMaaXmlNodeImpl::FindString(const CMaaString& Name, bool& bIsFound) const noexcept
 {
 #ifdef TOOLSLIB_XML_COMPLEX_STRINGS_SUPPORT__
-    if (Name == CMaaStringEta)
+    if (Name == pszCMaaStringEta)
     {
         bIsFound = m_String.IsNotEmpty();
         return m_String;
@@ -3559,7 +3559,7 @@ CMaaString JsonToStr(const CMaaString& x) noexcept(noexcept_new)
 
 void CMaaXmlNode::ToJson(CMaaConcatString& s, const CMaaString& Sp0, const CMaaString& DeltaSp, const CMaaString& EndOfLine, int Flags, int MaxNameLen, int MaxAttrLen) const
 {
-    const bool bArray = GetName() == CMaaStringJsonArray;
+    const bool bArray = GetName() == pszCMaaStringJsonArray;
     MaxNameLen = MaxNameLen >= 0 ? MaxNameLen : 0x7fffffff;
     MaxAttrLen = MaxAttrLen >= 0 ? MaxAttrLen : 0x7fffffff;
     CMaaXmlNode nn;
@@ -3568,12 +3568,12 @@ void CMaaXmlNode::ToJson(CMaaConcatString& s, const CMaaString& Sp0, const CMaaS
         nn = n.NextSibling();
         const CMaaString& NodeName = n.GetName();
         const CMaaString& JsonName = n.FindAttribute(CMaaStringJsonName);
-        if (NodeName == CMaaStringJsonVal)
+        if (NodeName == pszCMaaStringJsonVal)
         {
             CMaaString Name = StrToJson(JsonName, MaxNameLen, Flags);
             const CMaaString &v1 = n.FindAttribute(CMaaStringJsonValue);
             const CMaaString &t = n.FindAttribute(CMaaStringJsonType);
-            if (t.IsEmpty() || t == CMaaStringJsonString)
+            if (t.IsEmpty() || t == pszCMaaStringJsonString)
             {
                 CMaaString v = StrToJson(v1, MaxAttrLen, Flags);
                 s += Sp0;
@@ -3614,7 +3614,7 @@ void CMaaXmlNode::ToJson(CMaaConcatString& s, const CMaaString& Sp0, const CMaaS
                 s += EndOfLine;
             }
         }
-        else if (NodeName == CMaaStringJsonNode)
+        else if (NodeName == pszCMaaStringJsonNode)
         {
             CMaaString Name = StrToJson(JsonName, MaxNameLen, Flags);
             s += Sp0;
@@ -3637,7 +3637,7 @@ void CMaaXmlNode::ToJson(CMaaConcatString& s, const CMaaString& Sp0, const CMaaS
             }
             s += EndOfLine;
         }
-        else if (NodeName == CMaaStringJsonArray)
+        else if (NodeName == pszCMaaStringJsonArray)
         {
             CMaaString Name = StrToJson(JsonName, MaxNameLen, Flags);
             s += Sp0;
@@ -3966,18 +3966,18 @@ bool CMaaXmlProcessingInstruction::AddInstruction(int Type, CMaaString Value) no
     CMaaString Name;
     if  (Type == eVersion)
     {
-        Name = "version";
+        Name = CMaaStringVersion; // "version";
         if  (Value.IsEmpty())
         {
-            Value = "1.0";
+            Value = CMaaString1_0; // "1.0"
         }
     }
     else if (Type == eEncoding)
     {
-        Name = "encoding";
+        Name = CMaaStringEncoding; // "encoding";
         if  (Value.IsEmpty())
         {
-            Value = "utf-8";
+            Value = CMaaStringUtf8; // "utf-8";
         }
     }
     else
@@ -4142,7 +4142,7 @@ CMaaXmlElement CMaaXmlDocument::DocumentElement() const noexcept
     return n;
 }
 
-CMaaXmlProcessingInstruction CMaaXmlDocument::CreateProcessingInstruction(CMaaString xml) noexcept(noexcept_new)
+CMaaXmlProcessingInstruction CMaaXmlDocument::CreateProcessingInstruction(const CMaaString& xml) noexcept(noexcept_new)
 {
     return CMaaXmlProcessingInstruction(xml);
 }
@@ -4238,7 +4238,7 @@ CMaaString CMaaXmlDocument::ToJson(int ApproxLength, const CMaaString &Sp0, cons
         //CMaaString DeltaSp = " ";
 
         CMaaXmlNode e = DocumentElement();
-        if (e.GetName() == CMaaStringJsonNode || e.GetName() == CMaaStringJsonArray)
+        if (e.GetName() == pszCMaaStringJsonNode || e.GetName() == pszCMaaStringJsonArray)
         {
             s += Sp0;
             CMaaString Name = StrToJson(e.FindAttribute(CMaaStringJsonName), MaxNameLen, Flags);
@@ -4248,12 +4248,12 @@ CMaaString CMaaXmlDocument::ToJson(int ApproxLength, const CMaaString &Sp0, cons
                 s += Name;
                 s.Add("\": ", 3);
             }
-            s += e.GetName() == CMaaStringJsonNode ? '{' : '[';
+            s += e.GetName() == pszCMaaStringJsonNode ? '{' : '[';
             s += EndOfLine;
             CMaaString Sp = Sp0 + DeltaSp;
 
             e.ToJson(s, Sp0 + DeltaSp, DeltaSp, EndOfLine, Flags, MaxNameLen, MaxAttrLen);
-            s += e.GetName() == CMaaStringJsonNode ? '}' : ']';
+            s += e.GetName() == pszCMaaStringJsonNode ? '}' : ']';
             s += EndOfLine;
 
             return s;
@@ -4921,7 +4921,7 @@ bool CMaaXmlDocument::SetContent(CMaaString Text1, CMaaUnivHash<CMaaString, CMaa
             }
             else if (Type == '!')
             {
-                if  (ElementName != "DOCTYPE")
+                if  (ElementName != pszCMaaStringDOCTYPE) //  "DOCTYPE"
                 {
                     StartLine = esl;
                     *errorLine = el;
@@ -5433,7 +5433,7 @@ bool CMaaXmlDocument::SetJson(const CMaaString &Text, CMaaString* errorMsg, int*
                 continue;
             }
             CMaaString Name;
-            if (i < Len && c.GetName() == CMaaStringJsonArray)// || c.GetHandle() == r.GetHandle())
+            if (i < Len && c.GetName() == pszCMaaStringJsonArray)// || c.GetHandle() == r.GetHandle())
             {
                 // value of array //or root
             }
@@ -5567,7 +5567,7 @@ bool CMaaXmlDocument::SetJson(const CMaaString &Text, CMaaString* errorMsg, int*
                 }
                 if (p[i] == '}')
                 {
-                    if (c.GetName() != CMaaStringJsonNode)
+                    if (c.GetName() != pszCMaaStringJsonNode)
                     {
                         *errorMsg = "'}' is unexpected";
                         *errorColumn = i - StartLine;
@@ -5576,7 +5576,7 @@ bool CMaaXmlDocument::SetJson(const CMaaString &Text, CMaaString* errorMsg, int*
                 }
                 else
                 {
-                    if (c.GetName() != CMaaStringJsonArray)
+                    if (c.GetName() != pszCMaaStringJsonArray)
                     {
                         *errorMsg = "']' is unexpected";
                         *errorColumn = i - StartLine;
@@ -6118,7 +6118,7 @@ bool CMaaXmlDocument::SaveToFile(const CMaaString &FileName, bool bThrow, const 
     {
         if  (n.IsProcessingInstruction())
         {
-            if  (n.FindAttribute("encoding") == "utf-8")
+            if  (n.FindAttribute("encoding") == pszCMaaStringUtf8) // "utf-8"
             {
                 prefix = CMaaFile::GetPrefix(CMaaFile::ePfxUtf8);
             }
@@ -6162,13 +6162,13 @@ void CMaaXmlDocument::ConvertToUtf8(_dword cp) noexcept(noexcept_new)
         if  (n.IsProcessingInstruction())
         {
             CMaaString txt = n["encoding"];
-            if  (txt != "utf-8")
+            if  (txt != pszCMaaStringUtf8) // "utf-8"
             {
-                if  (txt == "windows-1251" && cp == (_dword)-1)
+                if  (txt == pszCMaaStringWindows1251 && cp == (_dword)-1) // "windows-1251"
                 {
                     cp = 1251;
                 }
-                n["encoding"] = "utf-8";
+                n["encoding"] = CMaaStringUtf8; // "utf-8";
                 N++;
                 //break;
             }
@@ -6193,7 +6193,7 @@ void CMaaXmlDocument::ConvertToUtf8(_dword cp) noexcept(noexcept_new)
 
 void CMaaXmlDocument::AddReplaceProcessingInstruction(CMaaString Encoding, CMaaString Version, _dword ToUtf8Cp) noexcept(noexcept_new)
 {
-    if  ((int)ToUtf8Cp != -2 && Encoding == "utf-8")
+    if  ((int)ToUtf8Cp != -2 && Encoding == pszCMaaStringUtf8) // "utf-8"
     {
         ConvertToUtf8(ToUtf8Cp);
     }
@@ -6215,7 +6215,7 @@ void CMaaXmlDocument::AddReplaceProcessingInstruction(CMaaString Encoding, CMaaS
     }
     if  (pi.IsNull())
     {
-        CMaaXmlProcessingInstruction pi = CreateProcessingInstruction("xml");
+        CMaaXmlProcessingInstruction pi = CreateProcessingInstruction(CMaaStringXml);
         if  (pi.IsNotNull())
         {
             pi.AddInstruction(CMaaXmlProcessingInstruction::eVersion, Version);
@@ -6234,12 +6234,14 @@ void CMaaXmlDocument::AddReplaceProcessingInstruction(CMaaString Encoding, CMaaS
 //-------------------------------------------------------------------------------------------------
 CMaaString CMaaXmlNode::EncodeString(const CMaaString &s, int iFeatures, const CMaaString &Name) noexcept(noexcept_new)
 {
-    return ((iFeatures & CMaaXmlDocument::eRssCDataStrings) && s.Find("]]>") < 0 && Name != "lastBuildDate") ? (CMaaString("<![CDATA[") + s + "]]>").s() : EncodeAttr(s, iFeatures);
+    // "lastBuildDate"
+    return ((iFeatures & CMaaXmlDocument::eRssCDataStrings) && s.Find("]]>") < 0 && Name != pszCMaaStringlastBuildDate) ? (CMaaString("<![CDATA[") + s + "]]>").s() : EncodeAttr(s, iFeatures);
 }
 //-------------------------------------------------------------------------------------------------
 void CMaaXmlNode::EncodeString(CMaaConcatString &c, const CMaaString &s, int iFeatures, const CMaaString &Name) noexcept(noexcept_new)
 {
-    if  ((iFeatures & CMaaXmlDocument::eRssCDataStrings) && s.Find("]]>") < 0 && Name != "lastBuildDate")
+    // "lastBuildDate"
+    if  ((iFeatures & CMaaXmlDocument::eRssCDataStrings) && s.Find("]]>") < 0 && Name != pszCMaaStringlastBuildDate)
     {
         c += "<![CDATA[";
         c += s;

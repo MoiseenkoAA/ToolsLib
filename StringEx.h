@@ -261,6 +261,46 @@ public:
 #pragma pack( pop, temp_pack_id_3 )
 #endif
 
+#define pszCMaaStringEta "@"
+#define pszCMaaStringSp " "
+#define pszCMaaStringXml "xml"
+#define pszCMaaStringUtf8 "utf-8"
+#define pszCMaaStringWindows1251 "windows-1251"
+#define pszCMaaString1_0 "1.0"
+#define pszCMaaStringDOCTYPE "DOCTYPE"
+#define pszCMaaStringlastBuildDate "lastBuildDate"
+#define pszCMaaStringVersion "version"
+#define pszCMaaStringEncoding "encoding"
+#define pszCMaaStringJsonVal "val"
+#define pszCMaaStringJsonNode "node"
+#define pszCMaaStringJsonArray "array"
+#define pszCMaaStringJsonName "name"
+#define pszCMaaStringJsonValue "value"
+#define pszCMaaStringJsonType "type"
+#define pszCMaaStringJsonInt "int"
+#define pszCMaaStringJsonBool "bool"
+#define pszCMaaStringJsonFloat "float"
+#define pszCMaaStringJsonNull "null"
+#define pszCMaaStringJsonString "string"
+
+#define pszCMaaStringTextPlain "text/plain"
+#define pszCMaaStringTextHtml "text/html"
+#define pszCMaaStringHttp "http"
+#define pszCMaaStringHttps "https"
+#define pszCMaaStringApplicationOctet_stream "application/octet-stream"
+#define pszCMaaStringHEAD "HEAD"
+#define pszCMaaStringGET "GET"
+#define pszCMaaStringPOST "POST"
+#define pszCMaaStringAsterisk "*"
+#define pszCMaaStringCacheControlNoCacheCrLf "Cache-Control: no-cache\r\n"
+#define pszCMaaStringPragmaNoCacheCrLf "Pragma: no-cache\r\n"
+#define pszCMaaStringConnectionCloseCrLf "Connection: close\r\n"
+#define pszCMaaStringConnectionKeepAliveCrLf "Connection: keep-alive\r\n"
+#define pszCMaaStringFormData "form-data"
+#define pszCMaaStringName "name"
+#define pszCMaaStringFilename "filename"
+
+
 #define gsCMaaStringZ ((const CMaaString&)CMaaString::C().sZ)
 #define CMaaStringZ ((const CMaaString&)CMaaString::C().sZ)
 #define CMaaString32Z ((const CMaaString32&)CMaaString32::C().sZ)
@@ -278,6 +318,14 @@ public:
 #define CMaaStringLf ((const CMaaString&)CMaaString::C().sLf)
 #define CMaaStringCrLf ((const CMaaString&)CMaaString::C().sCrLf)
 #define CMaaStringSpSp ((const CMaaString&)CMaaString::C().sSpSp)
+#define CMaaStringXml ((const CMaaString&)CMaaString::C4().sXml)
+#define CMaaStringUtf8 ((const CMaaString&)CMaaString::C4().sUtf8)
+#define CMaaStringWindows1251 ((const CMaaString&)CMaaString::C4().sWindows1251)
+#define CMaaString1_0 ((const CMaaString&)CMaaString::C4().s1_0)
+#define CMaaStringDOCTYPE ((const CMaaString&)CMaaString::C4().sDOCTYPE)
+#define CMaaStringlastBuildDate ((const CMaaString&)CMaaString::C4().slastBuildDate)
+#define CMaaStringVersion ((const CMaaString&)CMaaString::C4().sVersion)
+#define CMaaStringEncoding ((const CMaaString&)CMaaString::C4().sEncoding)
 #define CMaaStringJsonVal ((const CMaaString&)CMaaString::C2().sJsonVal)
 #define CMaaStringJsonNode ((const CMaaString&)CMaaString::C2().sJsonNode)
 #define CMaaStringJsonArray ((const CMaaString&)CMaaString::C2().sJsonArray)
@@ -301,6 +349,24 @@ public:
 #define CMaaString_7 ((const CMaaString&)CMaaString::C3().s_Nums[7])
 #define CMaaString_8 ((const CMaaString&)CMaaString::C3().s_Nums[8])
 #define CMaaString_9 ((const CMaaString&)CMaaString::C3().s_Nums[9])
+
+#define CMaaStringTextPlain ((const CMaaString&)CMaaString::C5().sTextPlain)
+#define CMaaStringTextHtml ((const CMaaString&)CMaaString::C5().sTextHtml)
+#define CMaaStringHttp ((const CMaaString&)CMaaString::C5().sHttp)
+#define CMaaStringHttps ((const CMaaString&)CMaaString::C5().sHttps)
+#define CMaaStringApplicationOctet_stream ((const CMaaString&)CMaaString::C5().sApplicationOctet_stream)
+#define CMaaStringHEAD ((const CMaaString&)CMaaString::C5().sHEAD)
+#define CMaaStringGET ((const CMaaString&)CMaaString::C5().sGET)
+#define CMaaStringPOST ((const CMaaString&)CMaaString::C5().sPOST)
+#define CMaaStringAsterisk ((const CMaaString&)CMaaString::C5().sAsterisk)
+#define CMaaStringCacheControlNoCacheCrLf ((const CMaaString&)CMaaString::C5().sCacheControlNoCacheCrLf)
+#define CMaaStringPragmaNoCacheCrLf ((const CMaaString&)CMaaString::C5().sPragmaNoCacheCrLf)
+#define CMaaStringConnectionCloseCrLf ((const CMaaString&)CMaaString::C5().sConnectionCloseCrLf)
+#define CMaaStringConnectionKeepAliveCrLf ((const CMaaString&)CMaaString::C5().sConnectionKeepAliveCrLf)
+#define CMaaStringFormData ((const CMaaString&)CMaaString::C5().sFormData)
+#define CMaaStringName ((const CMaaString&)CMaaString::C5().sName)
+#define CMaaStringFilename ((const CMaaString&)CMaaString::C5().sFilename)
+
 /*
 #define CMaaString_a ((const CMaaString&)CMaaString::C().s_a)
 #define CMaaString_z ((const CMaaString&)CMaaString::C().s_z)
@@ -311,9 +377,12 @@ public:
 #define CMaaStringComma ((const CMaaString&)CMaaString::C().sComma)
 #define CMaaStringDot ((const CMaaString&)CMaaString::C().sDot)
 #define CMaaStringDotDot ((const CMaaString&)CMaaString::C().sDotDot)
-//#define CMaaStringEllipse ((const CMaaString&)CMaaString::C().sEllipse)
 #define CMaaStringDoc ((const CMaaString&)CMaaString::C().sDoc)
 #define CMaaStringStr2HtmlValEsc ((const CMaaString&)CMaaString::C().sStr2HtmlValEsc)
+#define CMaaStringEllipse ((const CMaaString&)CMaaString::C().sEllipse)
+#define CMaaString1251 ((const CMaaString&)CMaaString::C().s1251)
+#define CMaaStringPass1Prefix ((const CMaaString&)CMaaString::C().sPass1Prefix)
+#define CMaaStringPass1Suffix ((const CMaaString&)CMaaString::C().sPass1Suffix)
 
 #else
 
@@ -334,6 +403,14 @@ public:
 #define CMaaString64Lf ((const CMaaString&)CMaaString64::C().sLf)
 #define CMaaString64CrLf ((const CMaaString&)CMaaString64::C().sCrLf)
 #define CMaaString64SpSp ((const CMaaString&)CMaaString64::C().sSpSp)
+#define CMaaString64Xml ((const CMaaString&)CMaaString64::C4().sXml)
+#define CMaaString64Utf8 ((const CMaaString&)CMaaString64::C4().sUtf8)
+#define CMaaString64Windows1251 ((const CMaaString&)CMaaString64::C4().sWindows1251)
+#define CMaaString641_0 ((const CMaaString&)CMaaString64::C4().s1_0)
+#define CMaaString64DOCTYPE ((const CMaaString&)CMaaString64::C4().sDOCTYPE)
+#define CMaaString64lastBuildDate ((const CMaaString&)CMaaString64::C4().slastBuildDate)
+#define CMaaString64Version ((const CMaaString&)CMaaString64::C4().sVersion)
+#define CMaaString64Encoding ((const CMaaString&)CMaaString64::C4().sEncoding)
 #define CMaaString64JsonVal ((const CMaaString&)CMaaString64::C2().sJsonVal)
 #define CMaaString64JsonNode ((const CMaaString&)CMaaString64::C2().sJsonNode)
 #define CMaaString64JsonArray ((const CMaaString&)CMaaString64::C2().sJsonArray)
@@ -357,6 +434,24 @@ public:
 #define CMaaString64_7 ((const CMaaString&)CMaaString64::C3().s_Nums[7])
 #define CMaaString64_8 ((const CMaaString&)CMaaString64::C3().s_Nums[8])
 #define CMaaString64_9 ((const CMaaString&)CMaaString64::C3().s_Nums[9])
+
+#define CMaaString64TextPlain ((const CMaaString&)CMaaString64::C5().sTextPlain)
+#define CMaaString64TextHtml ((const CMaaString&)CMaaString64::C5().sTextHtml)
+#define CMaaString64Http ((const CMaaString&)CMaaString64::C5().sHttp)
+#define CMaaString64Https ((const CMaaString&)CMaaString64::C5().sHttps)
+#define CMaaString64ApplicationOctet_stream ((const CMaaString&)CMaaString64::C5().sApplicationOctet_stream)
+#define CMaaString64HEAD ((const CMaaString&)CMaaString64::C5().sHEAD)
+#define CMaaString64GET ((const CMaaString&)CMaaString64::C5().sGET)
+#define CMaaString64POST ((const CMaaString&)CMaaString64::C5().sPOST)
+#define CMaaString64Asterisk ((const CMaaString&)CMaaString64::C5().sAsterisk)
+#define CMaaString64CacheControlNoCacheCrLf ((const CMaaString&)CMaaString64::C5().sCacheControlNoCacheCrLf)
+#define CMaaString64PragmaNoCacheCrLf ((const CMaaString&)CMaaString64::C5().sPragmaNoCacheCrLf)
+#define CMaaString64ConnectionCloseCrLf ((const CMaaString&)CMaaString64::C5().sConnectionCloseCrLf)
+#define CMaaString64ConnectionKeepAliveCrLf ((const CMaaString&)CMaaString64::C5().sConnectionKeepAliveCrLf)
+#define CMaaString64FormData ((const CMaaString&)CMaaString64::C5().sFormData)
+#define CMaaString64Name ((const CMaaString&)CMaaString64::C5().sName)
+#define CMaaString64Filename ((const CMaaString&)CMaaString64::C5().sFilename)
+
 /*
 #define CMaaString64_a ((const CMaaString&)CMaaString64::C().s_a)
 #define CMaaString64_z ((const CMaaString&)CMaaString64::C().s_z)
@@ -367,9 +462,12 @@ public:
 #define CMaaString64Comma ((const CMaaString&)CMaaString64::C().sComma)
 #define CMaaString64Dot ((const CMaaString&)CMaaString64::C().sDot)
 #define CMaaString64DotDot ((const CMaaString&)CMaaString64::C().sDotDot)
-//#define CMaaString64Ellipse ((const CMaaString&)CMaaString64::C().sEllipse)
 #define CMaaString64Doc ((const CMaaString&)CMaaString64::C().sDoc)
 #define CMaaString64Str2HtmlValEsc ((const CMaaString&)CMaaString64::C().sStr2HtmlValEsc)
+#define CMaaString64Ellipse ((const CMaaString&)CMaaString64::C().sEllipse)
+#define CMaaString641251 ((const CMaaString&)CMaaString64::C().s1251)
+#define CMaaString64Pass1Prefix ((const CMaaString&)CMaaString64::C().sPass1Prefix)
+#define CMaaString64Pass1Suffix ((const CMaaString&)CMaaString64::C().sPass1Suffix)
 
 #endif
 //------------------------------------------------------------------------------
@@ -943,8 +1041,9 @@ public:
             snEta, snSp,
             sn_a, sn_x, snLf, snCr, snCrLf,
             snSpSp, // sn_a, sn_z, sn_A, sn_Z
-            snSemicolon, snComma, snDot, snDotDot, // snEllipse{ "..." },
-            snDoc, snStr2HtmlValEsc;
+            snSemicolon, snComma, snDot, snDotDot,
+            snDoc, snStr2HtmlValEsc,
+            snEllipse, sn1251, snPass1Prefix, snPass1Suffix; 
         // another sample: // snJsonFloat{ "float", 5, eROMemString0 };
 
         struct S
@@ -964,8 +1063,9 @@ public:
             s_a, s_x,
             sLf, sCr, sCrLf, sSpSp,
             // s_a, s_z, s_A, s_Z,
-            sSemicolon, sComma, sDot, sDotDot, // sEllipse { &snEllipse },
-            sDoc, sStr2HtmlValEsc;
+            sSemicolon, sComma, sDot, sDotDot,
+            sDoc, sStr2HtmlValEsc,
+            sEllipse, s1251, sPass1Prefix, sPass1Suffix;
        
         constexpr CE() noexcept;
     };
@@ -988,9 +1088,31 @@ public:
 
         constexpr CE3() noexcept;
     };
+    struct CE4 // used xml objects
+    {
+        ceCMaaStringImp
+            snXml, snUtf8, snWindows1251, sn1_0, snDOCTYPE, snlastBuildDate, snVersion, snEncoding;
+        CMaaString::CE::S
+            sXml, sUtf8, sWindows1251, s1_0, sDOCTYPE, slastBuildDate, sVersion, sEncoding;
+
+        constexpr CE4() noexcept;
+    };
+    struct CE5 // used CCGIHelper objects
+    {
+        ceCMaaStringImp
+            snTextPlain, snTextHtml, snHttp, snHttps, snApplicationOctet_stream, snHEAD, snGET, snPOST, snAsterisk, snCacheControlNoCacheCrLf, snPragmaNoCacheCrLf, snConnectionCloseCrLf, snConnectionKeepAliveCrLf,
+            snFormData, snName, snFilename;
+        CMaaString::CE::S
+            sTextPlain, sTextHtml, sHttp, sHttps, sApplicationOctet_stream, sHEAD, sGET, sPOST, sAsterisk, sCacheControlNoCacheCrLf, sPragmaNoCacheCrLf, sConnectionCloseCrLf, sConnectionKeepAliveCrLf,
+            sFormData, sName, sFilename;
+
+        constexpr CE5() noexcept;
+    };
     static const CE& C() noexcept;
     static const CE2& C2() noexcept;
     static const CE3& C3() noexcept;
+    static const CE4& C4() noexcept;
+    static const CE5& C5() noexcept;
 
 private:
 public:
@@ -1754,9 +1876,7 @@ public:
     template<std::size_t N> bool operator==(const char(&txt)[N]) const noexcept
     {
         const size_t l = GET_CHECK_TXT_N1_N(txt, N);
-        return Length() == (int)l &&
-            CMaaIsMemEq(*this, txt, l);
-            //!memcmp(*this, txt, l);
+        return Length() == (int)l && (!(int)l || CMaaIsMemEq(m_pImp->m_pszStr, txt, l)); //!memcmp(*this, txt, l);
     }
 #ifdef TOOLSLIB_CHAR8T_SUPPORT
     bool operator!=(char8_t* pszTxt) const noexcept { return operator!=((char*)pszTxt); }
@@ -1770,9 +1890,7 @@ public:
     template<std::size_t N> bool operator==(const char8_t(&txt)[N]) const noexcept
     {
         const size_t l = GET_CHECK_TXT_N1_N(txt, N);
-        return Length() == (int)l &&
-            CMaaIsMemEq(*this, txt, l);
-            //!memcmp(*this, txt, l);
+        return Length() == (int)l && (!(int)l || CMaaIsMemEq(m_pImp->m_pszStr, txt, l)); //!memcmp(*this, txt, l);
     }
 #endif
 #else
@@ -1910,7 +2028,7 @@ public:
     {
         return Left(__Pos(CharIndex));
     }
-    CMaaString __Ellipse(int CharIndex = 64, CMaaString el = "...") noexcept(noexcept_new) // = CMaaStringEllipse
+    CMaaString __Ellipse(int CharIndex = 64, const CMaaString& el = CMaaStringEllipse) noexcept(noexcept_new) // = "..."
     {
         CMaaString r = __Left(CharIndex);
         if  (r.Length() != Length())
@@ -2118,6 +2236,15 @@ public:
     {
         TOOLSLIB_STR_HELPER_printf("const ch* S::c() const\n");
         return *this;
+    }
+    const char* c0() const noexcept
+    {
+        TOOLSLIB_STR_HELPER_printf("const ch* S::c0() const\n");
+#ifdef CMaaStringImp_NOT_NULL_MODE
+        return m_pImp != sp_NullImp ? m_pImp->m_pszStr : nullptr;
+#else
+        return m_pImp ? m_pImp->m_pszStr : nullptr;
+#endif
     }
     Helper operator + (const char * szString) const noexcept(noexcept_new);
     Helper operator + (char* szString) const noexcept(noexcept_new) { return operator + ((const char*)szString); }
@@ -3375,8 +3502,8 @@ public:
         return GetWord(Spaces, true, true);
     }
     */
-    CMaaString GetCsvWord(CMaaString SrcCodePage = "1251") noexcept(noexcept_new);
-    void AppendCsvWord(CMaaString ww, CMaaString DstCodePage = "1251") noexcept(noexcept_new);
+    CMaaString GetCsvWord(const CMaaString& SrcCodePage = CMaaString1251) noexcept(noexcept_new); // "1251"
+    void AppendCsvWord(CMaaString ww, const CMaaString& DstCodePage = CMaaString1251) noexcept(noexcept_new); // "1251"
     CMaaString GetLine0(/*bool bRemove = true, bool bRemoveCrLf = true, bool bOptimizeMid = true,*/ CMaaString* pCrLf = nullptr) noexcept(noexcept_new); // unsafe mod *this string
     CMaaString GetLine(bool bRemove = true, bool bRemoveCrLf = true, bool bOptimizeMid = true, CMaaString * pCrLf = nullptr) noexcept(noexcept_new);
     CMaaString GetLine(const CMaaString &crlf, bool bRemove = true, bool bRemoveCrLf = true, bool bOptimizeMid = true) noexcept(noexcept_new);
@@ -3524,7 +3651,7 @@ public:
     CMaaString List2Sql(const CMaaString &d = CMaaStringSemicolon) const noexcept(noexcept_new);
     CMaaString List4Sql(const CMaaString &d = CMaaStringSemicolon) const noexcept(noexcept_new);
     //CMaaString ListGetFirst(bool bRemove = true, CMaaString d = CMaaStringSemicolon);
-    CMaaString Pass1Replace(CMaaUnivHash<CMaaString, CMaaString> &hVars, CMaaString Prefix = "{{{{{", CMaaString Suffix = "}}}}}") const noexcept(noexcept_new);
+    CMaaString Pass1Replace(CMaaUnivHash<CMaaString, CMaaString> &hVars, CMaaString Prefix = CMaaStringPass1Prefix, CMaaString Suffix = CMaaStringPass1Suffix) const noexcept(noexcept_new); // "{{{{{", "}}}}}"
     CMaaString Utf8ToUtf8_3_Compatible(char chReplace = '_', bool bCut = false) const noexcept;
     CMaaString Utf8ToUtf8_4_Compatible(char chReplace = '_', bool bCut = false) const noexcept;
     CMaaString ToCSourceString() const noexcept(noexcept_new);

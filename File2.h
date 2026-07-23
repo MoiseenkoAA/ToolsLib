@@ -138,6 +138,13 @@ _qword GetCurrentTime_us(time_t * pt = nullptr, int * pusec = nullptr) noexcept;
 //------------------------------------------------------------------------------
 // class CMaaFile global defs
 //------------------------------------------------------------------------------
+#define pszCMaaFileStdin "stdin"
+#define pszCMaaFileStdout "stdout"
+#define pszCMaaFileStderr "stderr"
+#define pszCMaaFileNul "nul"
+#define pszCMaaFileNull "null"
+#define pszCMaaFileDevNull "/dev/null"
+
 #define CMaaFileStdin ((const CMaaString&)CMaaFile::C().sStdin)     // "stdin"
 #define CMaaFileStdout ((const CMaaString&)CMaaFile::C().sStdout)   // "stdout"
 #define CMaaFileStderr ((const CMaaString&)CMaaFile::C().sStderr)   // "stderr"
