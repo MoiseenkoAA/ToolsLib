@@ -386,7 +386,7 @@ class CMaaRWLockRp // atomic win32 & linux not timed rw lock Writers priority
     static constexpr _dword cWritersWaitingMask = cMaxWaitingWriters << (sizeof(_dword) * 8 - 6 - 13);
     static constexpr _dword cWritersMask = (((_dword)-1) << (sizeof(_dword) * 8 - 6 - 13)) & ~ cR2WUnchangedFlag;
     static constexpr _dword cMaxReaders = (_dword)0x1fff;
-    static constexpr _dword cReadersWaitingMask = ((_dword)-1) >> (6 + 13);
+    static constexpr _dword cReadersMask = ((_dword)-1) >> (6 + 13);
 public:
     CMaaRWLockRp() noexcept;
     ~CMaaRWLockRp() noexcept;
@@ -443,7 +443,7 @@ class CMaaRWLockWp
     static constexpr _dword cWritersWaitingMask = cMaxWaitingWriters << (sizeof(_dword) * 8 - 6 - 13);
     static constexpr _dword cWritersMask = (((_dword)-1) << (sizeof(_dword) * 8 - 6 - 13)) & ~cR2WUnchangedFlag;
     static constexpr _dword cMaxReaders = (_dword)0x1fff;
-    static constexpr _dword cReadersWaitingMask = ((_dword)-1) >> (6 + 13);
+    static constexpr _dword cReadersMask = ((_dword)-1) >> (6 + 13);
 public:
     CMaaRWLockWp() noexcept;
     ~CMaaRWLockWp() noexcept;
@@ -475,7 +475,7 @@ public:
     {
 #ifdef CMaaRWLockWp_DBG
         const CMaaThreadIdType dw = CMaaGetCurrentThreadId();
-        if ((m_WriterReaders & cReadersWaitingMask))
+        if ((m_WriterReaders & cReadersMask))
         {
             int nn = 0;
             for (int i = 0; i < MaxRCount; i++)
@@ -489,7 +489,7 @@ public:
         }
         return 0;
 #else
-        return m_WriterReaders & cReadersWaitingMask;
+        return m_WriterReaders & cReadersMask;
 #endif
     }
     int WCnt() const noexcept
