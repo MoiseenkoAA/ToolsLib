@@ -2879,7 +2879,7 @@ bool CMaaRWLockRp::WLock_us(_qword us) noexcept
         while (1)
         {
             _dword y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
-            if (m_WriterReaders.compare_exchange_strong(y, (y & ~cR2WUnchangedFlag) - cWritersWaiting1 + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+            if (m_WriterReaders.compare_exchange_strong(y, (y & ~ cR2WUnchangedFlag) - cWritersWaiting1 + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
             {
                 break;
             }
@@ -2993,10 +2993,11 @@ bool CMaaRWLockRp::R2WLock(int nR) noexcept
     while (1)
     {
         y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
-        if (m_WriterReaders.compare_exchange_strong(y, y - cWritersWaiting1 + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+        if (m_WriterReaders.compare_exchange_strong(y, y + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
         {
             bUnchanged = (m_WriterReaders.load(std::TL_memory_order_acquire) & cR2WUnchangedFlag);
             m_WriterReaders.fetch_and(~ cR2WUnchangedFlag, std::TL_memory_order_acq_rel);
+            m_WriterReaders.fetch_sub(cWritersWaiting1, std::TL_memory_order_acq_rel);
             break;
         }
         if (--s)
@@ -3034,10 +3035,11 @@ bool CMaaRWLockRp::R2WLock() noexcept // int nR == 1
     while (1)
     {
         y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
-        if (m_WriterReaders.compare_exchange_strong(y, y - cWritersWaiting1 + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+        if (m_WriterReaders.compare_exchange_strong(y, y + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
         {
             bUnchanged = (m_WriterReaders.load(std::TL_memory_order_acquire) & cR2WUnchangedFlag);
             m_WriterReaders.fetch_and(~ cR2WUnchangedFlag, std::TL_memory_order_acq_rel);
+            m_WriterReaders.fetch_sub(cWritersWaiting1, std::TL_memory_order_acq_rel);
             break;
         }
         if (--s)
@@ -3116,10 +3118,20 @@ void CMaaRWLockWp::RLock(bool bForced) noexcept
         m_WriterReaders.fetch_add(1, std::TL_memory_order_acq_rel);
         return;
     }
-    int s = DEFAULT_R_MUTEX_SPINS;
+    //int s = DEFAULT_R_MUTEX_SPINS;
     while (1)//(m_WriterReaders.load(std::TL_memory_order_acquire) & cWritersMask) >= cWritersWaitingBit)
     {
-        _dword y = m_WriterReaders.load(std::TL_memory_order_acquire) & cReadersWaitingMask;
+        _dword y;
+        while (1)
+        {
+            y = m_WriterReaders.load(std::TL_memory_order_acquire);
+            if (!(y & ~ cReadersWaitingMask))
+            {
+                break;
+            }
+            m_WriterReaders.wait(y, std::memory_order_relaxed);
+        }
+        // y = m_WriterReaders.load(std::TL_memory_order_acquire)cReadersWaitingMask;
         /*
         _dword y = m_WriterReaders.load(std::TL_memory_order_acquire);
         y = !(y & cWriterMask) && (y & cReadersWaitingMask) ? y & (cWritersWaitingMask | cReadersWaitingMask | cR2WUnchangedFlag) :
@@ -3130,13 +3142,16 @@ void CMaaRWLockWp::RLock(bool bForced) noexcept
         {
             break;
         }
+        /*
         if (--s)
         {
             continue;
         }
         s = DEFAULT_R_MUTEX_TRY_NEXT_SPINS1;
         std::this_thread::yield();
+        */
     }
+    m_WriterReaders.notify_all();
 }
 bool CMaaRWLockWp::RLock_us(_qword us, bool bForced) noexcept
 {
@@ -3183,6 +3198,7 @@ bool CMaaRWLockWp::RLock_us(_qword us, bool bForced) noexcept
         s = DEFAULT_R_MUTEX_TRY_NEXT_SPINS1;
         std::this_thread::yield();
     }
+    m_WriterReaders.notify_all();
     return true;
 }
 void CMaaRWLockWp::RUnLock() noexcept
@@ -3194,6 +3210,7 @@ void CMaaRWLockWp::RUnLock() noexcept
     if (RCnt() <= 0) { rw1_err(); }
 #endif
     m_WriterReaders.fetch_sub(1, std::TL_memory_order_acq_rel);
+    m_WriterReaders.notify_all();
 }
 void CMaaRWLockWp::WLock() noexcept
 {
@@ -3208,22 +3225,36 @@ void CMaaRWLockWp::WLock() noexcept
     else
     {
         m_WriterReaders.fetch_add(cWritersWaiting1, std::TL_memory_order_acq_rel);
-        int s = DEFAULT_W_MUTEX_SPINS;
+        m_WriterReaders.notify_all();
+        //int s = DEFAULT_W_MUTEX_SPINS;
         while (1)
         {
-            _dword y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
-            if (m_WriterReaders.compare_exchange_strong(y, (y & ~cR2WUnchangedFlag) - cWritersWaiting1 + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+            _dword y;
+            while (1)
+            {
+                y = m_WriterReaders.load(std::TL_memory_order_acquire);
+                if (!(y & ~(cWritersWaitingMask | cR2WUnchangedFlag)))
+                {
+                    break;
+                }
+                m_WriterReaders.wait(y, std::memory_order_relaxed);
+            }
+            // y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
+            if (m_WriterReaders.compare_exchange_strong(y, (y & ~ cR2WUnchangedFlag) - cWritersWaiting1 + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
             {
                 break;
             }
+            /*
             if (--s)
             {
                 continue;
             }
             s = DEFAULT_W_MUTEX_TRY_NEXT_SPINS1;
             std::this_thread::yield();
+            */
         }
         m_WriterThreadId.store(ThreadId, std::TL_memory_order_release);
+        m_WriterReaders.notify_all();
     }
 #ifdef CMaaRWLockWp_DBG
     m_W.store(CMaaGetCurrentThreadId(), std::TL_memory_order_release);
@@ -3247,19 +3278,21 @@ bool CMaaRWLockWp::WLock_us(_qword us) noexcept
     else
     {
         m_WriterReaders.fetch_add(cWritersWaiting1, std::TL_memory_order_acq_rel);
+        m_WriterReaders.notify_all();
         const CMaaTime& hrt = GetHRTime(true);
         const _uqword e = hrt.GetNextTime(us, 1000000);
         int s = DEFAULT_W_MUTEX_SPINS;
         while (1)
         {
             _dword y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
-            if (m_WriterReaders.compare_exchange_strong(y, (y & ~cR2WUnchangedFlag) - cWritersWaiting1 + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+            if (m_WriterReaders.compare_exchange_strong(y, (y & ~ cR2WUnchangedFlag) - cWritersWaiting1 + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
             {
                 break;
             }
             if (hrt.GetCounter() >= e)
             {
                 m_WriterReaders.fetch_sub(cWritersWaiting1, std::TL_memory_order_acq_rel);
+                m_WriterReaders.notify_all();
 #ifdef CMaaRWLockWp_DBG
                 //m_W = InvalidThrId;
 #endif
@@ -3273,6 +3306,7 @@ bool CMaaRWLockWp::WLock_us(_qword us) noexcept
             std::this_thread::yield();
         }
         m_WriterThreadId.store(ThreadId, std::TL_memory_order_release);
+        m_WriterReaders.notify_all();
     }
 #ifdef CMaaRWLockWp_DBG
     m_W.store(ThreadId, std::TL_memory_order_release);
@@ -3306,8 +3340,13 @@ bool CMaaRWLockWp::WUnLock() noexcept
         if ((m_WriterReaders.load(std::TL_memory_order_acquire) & cWriterMask) == cWriter1)
         {
             m_WriterThreadId.store(InvalidThrId, std::TL_memory_order_release);
+            m_WriterReaders.fetch_sub(cWriter1, std::TL_memory_order_acq_rel);
+            m_WriterReaders.notify_all();
         }
-        m_WriterReaders.fetch_sub(cWriter1, std::TL_memory_order_acq_rel);
+        else
+        {
+            m_WriterReaders.fetch_sub(cWriter1, std::TL_memory_order_acq_rel);
+        }
         return true;
     }
 #ifdef DEBUG_RW_LOCKS
@@ -3333,8 +3372,13 @@ bool CMaaRWLockWp::W2RLock(int n) noexcept
         if ((m_WriterReaders.load(std::TL_memory_order_acquire) & cWriterMask) == cWriter1)
         {
             m_WriterThreadId.store(InvalidThrId, std::TL_memory_order_release);
+            m_WriterReaders.fetch_sub(cWriter1 - (_dword)n, std::TL_memory_order_acq_rel);
+            m_WriterReaders.notify_all();
         }
-        m_WriterReaders.fetch_sub(cWriter1 - (_dword)n, std::TL_memory_order_acq_rel);
+        else
+        {
+            m_WriterReaders.fetch_sub(cWriter1 - (_dword)n, std::TL_memory_order_acq_rel);
+        }
         return true;
     }
 #ifdef DEBUG_RW_LOCKS
@@ -3356,8 +3400,13 @@ bool CMaaRWLockWp::W2RLock() noexcept
         if ((m_WriterReaders.load(std::TL_memory_order_acquire) & cWriterMask) == cWriter1)
         {
             m_WriterThreadId.store(InvalidThrId, std::TL_memory_order_release);
+            m_WriterReaders.fetch_sub(cWriter1 - 1, std::TL_memory_order_acq_rel);
+            m_WriterReaders.notify_all();
         }
-        m_WriterReaders.fetch_sub(cWriter1 - 1, std::TL_memory_order_acq_rel);
+        else
+        {
+            m_WriterReaders.fetch_sub(cWriter1 - 1, std::TL_memory_order_acq_rel);
+        }
         return true;
     }
 #ifdef DEBUG_RW_LOCKS
@@ -3391,6 +3440,7 @@ bool CMaaRWLockWp::R2WLock(int nR) noexcept
 #ifdef CMaaRWLockWp_DBG
         m_W.store(ThreadId, std::TL_memory_order_release);
 #endif
+        //m_WriterReaders.notify_all();
         return true;
     }
 
@@ -3404,28 +3454,60 @@ bool CMaaRWLockWp::R2WLock(int nR) noexcept
     }
 
     m_WriterReaders.fetch_sub(nR, std::TL_memory_order_acq_rel); // --m_WriterReaders;
+    m_WriterReaders.notify_all();
 
     bool bUnchanged;
-    int s = DEFAULT_W_MUTEX_SPINS;
+    //int s = DEFAULT_W_MUTEX_SPINS;
     while (1)
     {
+        while (1)
+        {
+            y = m_WriterReaders.load(std::TL_memory_order_acquire);
+            if (!(y & ~(cWritersWaitingMask | cR2WUnchangedFlag)))
+            {
+                break;
+            }
+            m_WriterReaders.wait(y, std::memory_order_relaxed);
+        }
+        //y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
+        if (m_WriterReaders.compare_exchange_strong(y, y + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+        {
+            bUnchanged = (m_WriterReaders.fetch_and(~ cR2WUnchangedFlag, std::TL_memory_order_acq_rel) & cR2WUnchangedFlag);
+            m_WriterReaders.fetch_sub(cWritersWaiting1, std::TL_memory_order_acq_rel);
+            break;
+        }
+        /*
+        * fix to get cR2WUnchangedFlag right:
+        was:
         y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
         if (m_WriterReaders.compare_exchange_strong(y, y - cWritersWaiting1 + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
         {
             bUnchanged = (m_WriterReaders.fetch_and(~ cR2WUnchangedFlag, std::TL_memory_order_acq_rel) & cR2WUnchangedFlag);
             break;
         }
+        fix (not tested):
+        y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
+        if (m_WriterReaders.compare_exchange_strong(y, y + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+        {
+            bUnchanged = (m_WriterReaders.fetch_and(~ cR2WUnchangedFlag, std::TL_memory_order_acq_rel) & cR2WUnchangedFlag);
+            m_WriterReaders.fetch_sub(cWritersWaiting1, std::TL_memory_order_acq_rel);
+            break;
+        }
+        */
+        /*
         if (--s)
         {
             continue;
         }
         s = DEFAULT_W_MUTEX_TRY_NEXT_SPINS1;
         std::this_thread::yield();
+        */
     }
     m_WriterThreadId.store(ThreadId, std::TL_memory_order_release);
 #ifdef CMaaRWLockWp_DBG
     m_W.store(ThreadId, std::TL_memory_order_release);
 #endif
+    m_WriterReaders.notify_all();
     return bUnchanged;
 }
 bool CMaaRWLockWp::R2WLock() noexcept // int nR == 1
@@ -3457,28 +3539,60 @@ bool CMaaRWLockWp::R2WLock() noexcept // int nR == 1
     }
 
     m_WriterReaders.fetch_sub(1, std::TL_memory_order_acq_rel);
+    m_WriterReaders.notify_all();
 
     bool bUnchanged;
     int s = DEFAULT_W_MUTEX_SPINS;
     while (1)
     {
+        while (1)
+        {
+            y = m_WriterReaders.load(std::TL_memory_order_acquire);
+            if (!(y & ~(cWritersWaitingMask | cR2WUnchangedFlag)))
+            {
+                break;
+            }
+            m_WriterReaders.wait(y, std::memory_order_relaxed);
+        }
+        //y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
+        if (m_WriterReaders.compare_exchange_strong(y, y + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+        {
+            bUnchanged = (m_WriterReaders.fetch_and(~ cR2WUnchangedFlag, std::TL_memory_order_acq_rel) & cR2WUnchangedFlag);
+            m_WriterReaders.fetch_sub(cWritersWaiting1, std::TL_memory_order_acq_rel);
+            break;
+        }
+        /*
+        * fix to get cR2WUnchangedFlag right:
+        was:
         y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
         if (m_WriterReaders.compare_exchange_strong(y, y - cWritersWaiting1 + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
         {
             bUnchanged = (m_WriterReaders.fetch_and(~ cR2WUnchangedFlag, std::TL_memory_order_acq_rel) & cR2WUnchangedFlag);
             break;
         }
+        fix (not tested):
+        y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
+        if (m_WriterReaders.compare_exchange_strong(y, y + cWriter1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+        {
+            bUnchanged = (m_WriterReaders.fetch_and(~ cR2WUnchangedFlag, std::TL_memory_order_acq_rel) & cR2WUnchangedFlag);
+            m_WriterReaders.fetch_sub(cWritersWaiting1, std::TL_memory_order_acq_rel);
+            break;
+        }
+        */
+        /*
         if (--s)
         {
             continue;
         }
         s = DEFAULT_W_MUTEX_TRY_NEXT_SPINS1;
         std::this_thread::yield();
+        */
     }
     m_WriterThreadId.store(ThreadId, std::TL_memory_order_release);
 #ifdef CMaaRWLockWp_DBG
     m_W.store(ThreadId, std::TL_memory_order_release);
 #endif
+    m_WriterReaders.notify_all();
     return bUnchanged;
 }
 bool CMaaRWLockWp::IsWOwner() const noexcept

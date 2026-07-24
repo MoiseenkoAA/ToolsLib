@@ -334,7 +334,8 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
         }
         if (m_bReinitQS)
         {
-            (*destVars[3]) = (*envVars[3]) = m_ReinitQS;
+            //(*destVars[3]) = (*envVars[3]) = m_ReinitQS;
+            m_QS = m_envQS = m_ReinitQS;
         }
         m_Start = 0, m_End = -1;
         if  (m_Range.IsNotEmpty())
