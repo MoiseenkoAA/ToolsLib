@@ -7809,9 +7809,53 @@ CMaaString CMaaString::RefMid(int nFirst, int nCount) const noexcept
     return CMaaString(*this, nFirst, nCount);
 }
 
+CMaaConstStr CMaaString::ConstLeft(int nCount) const noexcept
+{
+    const int Len = Length();
+    return nCount >= Len ? CMaaConstStr((const char *)*this, Len, false) : nCount > 0 ? CMaaConstStr(m_pImp->m_pszStr, nCount, false) : CMaaConstStr(nullptr, 0, false);
+}
+CMaaConstStr CMaaString::ConstRight(int nCount) const noexcept
+{
+    const int Len = Length();
+    return nCount >= Len ? CMaaConstStr((const char*)*this, Len, false) : nCount > 0 ? CMaaConstStr(m_pImp->m_pszStr + Len - nCount, nCount, false) : CMaaConstStr(nullptr, 0, false);
+}
+CMaaConstStr CMaaString::ConstMid(int nFirst, int nCount) const noexcept
+{
+    const int Len = Length();
+    if (nFirst < 0)
+    {
+        if (nCount >= -nFirst)
+        {
+            nCount += nFirst; // // 17.12.2021
+        }
+        else
+        {
+            nCount = 0;
+        }
+        nFirst = 0;
+    }
+    if (nFirst >= Len || !nCount)
+    {
+        return CMaaConstStr(nullptr, 0, false);
+    }
+    if (nCount < 0)
+    {
+        return nFirst ? CMaaConstStr(m_pImp->m_pszStr + nFirst, Len - nFirst, false) : CMaaConstStr(m_pImp->m_pszStr, Len, false);
+    }
+    if (nFirst == 0 && nCount == Len)
+    {
+        return CMaaConstStr(m_pImp->m_pszStr, Len, false);
+    }
+    if (nFirst + nCount >= Len)
+    {
+        return CMaaConstStr(m_pImp->m_pszStr + nFirst, Len - nFirst, false);
+    }
+    return CMaaConstStr(m_pImp->m_pszStr + nFirst, nCount, false);
+}
+
 CMaaString CMaaString::LeftMid(int nLeft, int nFirst, int nCount) const noexcept(noexcept_new)
 {
-    return (RefLeft(nLeft) + RefMid(nFirst, nCount)).s().Str0Copy();
+    return (RefLeft(nLeft) + ConstMid(nFirst, nCount)).s().Str0Copy();
 }
 
 CMaaString & CMaaString::SetLeftMid(int nLeft, int nFirst, int nCount) noexcept(noexcept_new)
@@ -7863,7 +7907,7 @@ CMaaString & CMaaString::SetLeftMid(int nLeft, int nFirst, int nCount) noexcept(
     }
     else
     {
-        *this = (RefLeft(nLeft) + RefMid(nFirst, nCount)).s().Str0Copy();
+        *this = (RefLeft(nLeft) + ConstMid(nFirst, nCount)).s().Str0Copy();
     }
     return *this;
 }
@@ -18686,16 +18730,16 @@ CMaaString CMaaString::CutZeroFractionPart(bool bCutLeadingZerosToo) const noexc
     for (nz = l - 1; s[nz] == '0'; nz--);
     if  (nz == dot && nz > 0 && s[nz - 1] >= '0' && s[nz - 1] <= '9')
     {
-        s = std::move(s.RefLeft(dot) + s.RefMid(l));
+        s = std::move(s.RefLeft(dot) + s.ConstMid(l));
     }
     else if (nz == dot && l > dot + 1)
     {
-        s = std::move(s.RefLeft(dot) + "0" + s.RefMid(l));
+        s = std::move(s.RefLeft(dot) + "0" + s.ConstMid(l));
         dot++;
     }
     else if (nz > dot && nz < l - 1)
     {
-        s = std::move(s.RefLeft(nz + 1) + s.RefMid(l));
+        s = std::move(s.RefLeft(nz + 1) + s.ConstMid(l));
     }
     if  (bCutLeadingZerosToo)
     {
@@ -18713,11 +18757,11 @@ CMaaString CMaaString::CutZeroFractionPart(bool bCutLeadingZerosToo) const noexc
             for (nz = l + 1; nz < dot && s[nz] == '0'; nz++);
             if  (nz == dot)
             {
-                s = std::move(s.RefLeft(l < 0 ? 0 : l + 1) + "0" + s.RefMid(dot));
+                s = std::move(s.RefLeft(l < 0 ? 0 : l + 1) + "0" + s.ConstMid(dot));
             }
             else if (nz > l + 1 && nz < dot)
             {
-                s = std::move(s.RefLeft(l < 0 ? 0 : l + 1) + s.RefMid(nz));
+                s = std::move(s.RefLeft(l < 0 ? 0 : l + 1) + s.ConstMid(nz));
             }
         }
     }
@@ -18905,7 +18949,7 @@ bool CMaaString::ListRem(const CMaaString &prop, const CMaaString &d) noexcept(n
             TruncateRWS(NewLen);
             return true;
         }
-        CMaaString x = RefLeft(n) + RefMid(n + CutLen);
+        CMaaString x = RefLeft(n) + ConstMid(n + CutLen);
         if (x.Length() != NewLen)
         {
             return false;
@@ -18996,7 +19040,7 @@ CMaaString CMaaString::Pass1Replace(CMaaUnivHash<CMaaString, CMaaString> &hVars,
         }
         if (n >= 0 && n < N)
         {
-            txt = std::move(txt.RefMid(0, pos) + m[n] + txt.RefMid(pos2));
+            txt = std::move(txt.RefMid(0, pos) + m[n] + txt.ConstMid(pos2));
             pos += m[n].Length();
         }
         else
@@ -20112,7 +20156,7 @@ CMaaString SummToTextSumm(const CMaaString &input, int_ lang, CMaaString *pSumm,
     }
     if  (lang & 1)
     {
-        s = std::move(s.Left(s.__Pos(1)).ToUpper(e_utf8_rus) + s.RefMid(s.__Pos(1)));
+        s = std::move(s.Left(s.__Pos(1)).ToUpper(e_utf8_rus) + s.ConstMid(s.__Pos(1)));
     }
     return s;
 }

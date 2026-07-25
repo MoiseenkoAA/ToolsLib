@@ -266,7 +266,7 @@ int CHttpResponceHandlerForReader::AppendData(CMaaString &Method, const void * p
                         if  (n2 > 0)
                         {
                             //m_InHeader.SetNewLengthValue(m_InHeader.Length() - 2);
-                            m_InHeader = m_InHeader - 2 + Buffer.RefMid(n + 2, n2 - n);
+                            m_InHeader = m_InHeader - 2 + Buffer.ConstMid(n + 2, n2 - n);
                             CMaaString txt;
                             txt.Format("Content-Length: %D\r\n\r\n", (_qword)InData.Length());
                             m_InHeader += txt;

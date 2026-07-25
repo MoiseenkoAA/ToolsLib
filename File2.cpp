@@ -1340,7 +1340,7 @@ CMaaString CMaaFile::GetCanonicalPath(CMaaString Path)
             }
             if  (Buffer[0] == '/')
             {
-                Path = CMaaString(Buffer, x) + Path.RefMid(n2);
+                Path = CMaaString(Buffer, x) + Path.ConstMid(n2);
                 n = 0;
             }
             else
