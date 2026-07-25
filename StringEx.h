@@ -2186,16 +2186,18 @@ public:
         template<int N> Helper& operator +=(const char(&txt)[N]) noexcept(noexcept_new)
         {
             TOOLSLIB_STR_HELPER_printf("H& op+=((&txt)[N])\n");
-            (*(CMaaString*)this) += CMaaConstStr(txt);
-            return *this;
-        }
-        template<int N> Helper& operator +=(const char8_t(&txt)[N]) noexcept(noexcept_new)
-        {
-            TOOLSLIB_STR_HELPER_printf("H& op+=((&txt8)[N])\n");
             //(*(CMaaString*)this) += CMaaConstStr(txt);
             (*(CMaaString*)this).Add(txt, GET_CHECK_TXT_N1_N(txt, N));
             return *this;
         }
+#ifdef TOOLSLIB_CHAR8T_SUPPORT
+        template<int N> Helper& operator +=(const char8_t(&txt)[N]) noexcept(noexcept_new)
+        {
+            TOOLSLIB_STR_HELPER_printf("H& op+=((&txt8)[N])\n");
+            (*(CMaaString*)this).Add(txt, GET_CHECK_TXT_N1_N(txt, N));
+            return *this;
+        }
+#endif
         template<class S> Helper& operator +(const S& txt) noexcept(noexcept_new)
         {
             TOOLSLIB_STR_HELPER_printf("H& op+(T)\n");
@@ -2205,16 +2207,18 @@ public:
         template<int N> Helper& operator +(const char (&txt)[N]) noexcept(noexcept_new)
         {
             TOOLSLIB_STR_HELPER_printf("H& op+((&txt)[N])\n");
-            (*(CMaaString*)this) += CMaaConstStr(txt);
-            return *this;
-        }
-        template<int N> Helper& operator +(const char8_t(&txt)[N]) noexcept(noexcept_new)
-        {
-            TOOLSLIB_STR_HELPER_printf("H& op+((&txt)[N])\n");
             //(*(CMaaString*)this) += CMaaConstStr(txt);
             (*(CMaaString*)this).Add(txt, GET_CHECK_TXT_N1_N(txt, N));
             return *this;
         }
+#ifdef TOOLSLIB_CHAR8T_SUPPORT
+        template<int N> Helper& operator +(const char8_t(&txt)[N]) noexcept(noexcept_new)
+        {
+            TOOLSLIB_STR_HELPER_printf("H& op+((&txt)[N])\n");
+            (*(CMaaString*)this).Add(txt, GET_CHECK_TXT_N1_N(txt, N));
+            return *this;
+        }
+#endif
         Helper& operator +(char *txt) noexcept(noexcept_new)
         {
             TOOLSLIB_STR_HELPER_printf("H& op+(char *)\n");
@@ -2295,31 +2299,33 @@ public:
     Helper operator + (const char8_t* szString) const noexcept(noexcept_new) { return operator + ((const char*)szString); }
 #endif
     Helper operator + (const CMaaString& That) const noexcept(noexcept_new);
-    template <int x> Helper operator + (const CMaaConcatString_<x, false>& str) noexcept(noexcept_new)
+    template <int x> Helper operator + (const CMaaConcatString_<x, false>& str) const noexcept(noexcept_new)
     {
         TOOLSLIB_STR_HELPER_printf("H S::op+(c S&)\n");
         CMaaString tmp(*this);
         return (tmp += str);
     }
-    Helper operator + (const CMaaConstStr& str) noexcept(noexcept_new)
+    Helper operator + (const CMaaConstStr& str) const noexcept(noexcept_new)
     {
         TOOLSLIB_STR_HELPER_printf("H S::op+(c cS&)\n");
         CMaaString tmp(*this);
         return (tmp += str);
     }
-    template<int N> Helper operator + (const char(&txt)[N]) noexcept(noexcept_new)
-    {
-        TOOLSLIB_STR_HELPER_printf("H S::op+(c ch(&txt))\n");
-        CMaaString tmp(*this);
-        return (tmp += CMaaConstStr(txt));
-    }
-    template<int N> Helper operator + (const char8_t(&txt)[N]) noexcept(noexcept_new)
+    template<int N> Helper operator + (const char(&txt)[N]) const noexcept(noexcept_new)
     {
         TOOLSLIB_STR_HELPER_printf("H S::op+(c ch(&txt))\n");
         CMaaString tmp(*this);
         //return (tmp += CMaaConstStr(txt));
         return tmp.Add(txt, GET_CHECK_TXT_N1_N(txt, N));
     }
+#ifdef TOOLSLIB_CHAR8T_SUPPORT
+    template<int N> Helper operator + (const char8_t(&txt)[N]) const noexcept(noexcept_new)
+    {
+        TOOLSLIB_STR_HELPER_printf("H S::op+(c ch(&txt))\n");
+        CMaaString tmp(*this);
+        return tmp.Add(txt, GET_CHECK_TXT_N1_N(txt, N));
+    }
+#endif
     Helper operator - (int n) const noexcept(noexcept_new);
     //Helper operator - (const CMaaString&) const noexcept = delete;
     Helper operator - (const char *) const noexcept = delete;
@@ -4407,10 +4413,12 @@ public:
     {
         Add(str, GET_CHECK_TXT_N1_N(txt, N));
     }
+#ifdef TOOLSLIB_CHAR8T_SUPPORT
     template <int N> void operator += (const char8_t(&str)[N]) noexcept(xThrow <= 0 || bCountMode)
     {
         Add(str, GET_CHECK_TXT_N1_N(txt, N));
     }
+#endif
 #else
     void operator += (const char* str) noexcept(xThrow <= 0 || bCountMode)
     {

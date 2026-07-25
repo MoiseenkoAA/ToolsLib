@@ -1060,7 +1060,7 @@ int CCGIHelper::SendReply(CMaaString Data, CMaaString ContentType, CMaaString Fi
             {
                 pos++;
             }
-            Header = CMaaString("HTTP/1.1 ") + Header.Mid(pos);
+            Header = CMaaString("HTTP/1.1 ") + Header.ConstMid(pos);
         }
         else
         {
@@ -1547,7 +1547,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
             {
                 pos++;
             }
-            Header = CMaaString("HTTP/1.1 ") + Header.Mid(pos);
+            Header = CMaaString("HTTP/1.1 ") + Header.ConstMid(pos);
         }
         else
         {
