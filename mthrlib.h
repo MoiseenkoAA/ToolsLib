@@ -108,6 +108,10 @@
 #define TOOLSLIB_ATOMIC_OP_EQ(x, a, n, y) x n y
 #endif
 
+#if defined(__cpp_lib_atomic_wait) && __cpp_lib_atomic_wait >= 201907L
+#define TL_ATOMIC_HAVE_WAIT
+#endif
+
 int gCMaaToolLib_crt_Initializer() noexcept;
 
 #define TOOLSLIB_FAST_MTX CMaaAtomicFastMutexW
@@ -619,7 +623,7 @@ public:
     void lock() noexcept
     {
         while (m_Lock.test_and_set(std::memory_order_acquire))
-#if defined(__cpp_lib_atomic_wait) && __cpp_lib_atomic_wait >= 201907L
+#ifdef TL_ATOMIC_HAVE_WAIT
             // Since C++20, locks can be acquired only after notification in the unlock,
             // avoiding any unnecessary spinning.
             // Note that even though wait guarantees it returns only after the value has
@@ -634,7 +638,7 @@ public:
     void unlock() noexcept
     {
         m_Lock.clear(std::memory_order_release);
-#if defined(__cpp_lib_atomic_wait) && __cpp_lib_atomic_wait >= 201907L
+#ifdef TL_ATOMIC_HAVE_WAIT
         //m_Lock.notify_one();
 #endif
     }
@@ -704,7 +708,7 @@ public:
     void lock() noexcept
     {
         while (m_Lock.test_and_set(std::memory_order_acquire))
-#if defined(__cpp_lib_atomic_wait) && __cpp_lib_atomic_wait >= 201907L
+#ifdef TL_ATOMIC_HAVE_WAIT
             // Since C++20, locks can be acquired only after notification in the unlock,
             // avoiding any unnecessary spinning.
             // Note that even though wait guarantees it returns only after the value has
@@ -716,7 +720,7 @@ public:
     void unlock() noexcept
     {
         m_Lock.clear(std::memory_order_release);
-#if defined(__cpp_lib_atomic_wait) && __cpp_lib_atomic_wait >= 201907L
+#ifdef TL_ATOMIC_HAVE_WAIT
         m_Lock.notify_one();
 #endif
     }

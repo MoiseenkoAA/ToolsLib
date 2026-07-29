@@ -77,6 +77,8 @@ extern CMaaRWLockWp gFastCgiRWLock;
 class CCGIHelper
 {
 public:
+    static std::atomic<_qword> gsAllPostsSize;
+
     CMaaString getenv(const CMaaString& name);
     void RLock() noexcept
     {
@@ -134,6 +136,7 @@ protected:
     CMaaUnivHash<CMaaString, CMaaString>* m_phCgiParamOverride = nullptr;
     CMaaString m_ReinitQS;
     bool m_bReinitQS = false;
+    int m_PostSizeDelta = 0;
 public:
     CMaaFile m_fStdOut; // = CMaaFile(CMaaFileStdout, CMaaFile::eW_SrSw, true) for CGI, = {} for FastCGI
 protected:
@@ -255,7 +258,7 @@ public:
     }
 protected:
     static thread_local_ bool s_SubstIn, s_SubstOut;
-    static thread_local_ CMaaString s_Method, s_Fn, s_Qs;
+    //static thread_local_ CMaaString s_Method, s_Fn, s_Qs;
 public:
     static thread_local_ CMaaString s_Output;
 

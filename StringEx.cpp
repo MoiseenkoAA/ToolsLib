@@ -7809,17 +7809,17 @@ CMaaString CMaaString::RefMid(int nFirst, int nCount) const noexcept
     return CMaaString(*this, nFirst, nCount);
 }
 
-CMaaConstStr CMaaString::ConstLeft(int nCount) const noexcept
+CMaaConstStr3 CMaaString::ConstLeft(int nCount) const noexcept
 {
     const int Len = Length();
-    return nCount >= Len ? CMaaConstStr((const char *)*this, Len, false) : nCount > 0 ? CMaaConstStr(m_pImp->m_pszStr, nCount, false) : CMaaConstStr(nullptr, 0, false);
+    return nCount >= Len ? CMaaConstStr3((const char *)*this, Len) : nCount > 0 ? CMaaConstStr3(m_pImp->m_pszStr, nCount) : CMaaConstStr3();
 }
-CMaaConstStr CMaaString::ConstRight(int nCount) const noexcept
+CMaaConstStr3 CMaaString::ConstRight(int nCount) const noexcept
 {
     const int Len = Length();
-    return nCount >= Len ? CMaaConstStr((const char*)*this, Len, false) : nCount > 0 ? CMaaConstStr(m_pImp->m_pszStr + Len - nCount, nCount, false) : CMaaConstStr(nullptr, 0, false);
+    return nCount >= Len ? CMaaConstStr3((const char*)*this, Len) : nCount > 0 ? CMaaConstStr3(m_pImp->m_pszStr + Len - nCount, nCount) : CMaaConstStr3();
 }
-CMaaConstStr CMaaString::ConstMid(int nFirst, int nCount) const noexcept
+CMaaConstStr3 CMaaString::ConstMid(int nFirst, int nCount) const noexcept
 {
     const int Len = Length();
     if (nFirst < 0)
@@ -7836,21 +7836,21 @@ CMaaConstStr CMaaString::ConstMid(int nFirst, int nCount) const noexcept
     }
     if (nFirst >= Len || !nCount)
     {
-        return CMaaConstStr(nullptr, 0, false);
+        return CMaaConstStr3();
     }
     if (nCount < 0)
     {
-        return nFirst ? CMaaConstStr(m_pImp->m_pszStr + nFirst, Len - nFirst, false) : CMaaConstStr(m_pImp->m_pszStr, Len, false);
+        return nFirst ? CMaaConstStr3(m_pImp->m_pszStr + nFirst, Len - nFirst) : CMaaConstStr3(m_pImp->m_pszStr, Len);
     }
     if (nFirst == 0 && nCount == Len)
     {
-        return CMaaConstStr(m_pImp->m_pszStr, Len, false);
+        return CMaaConstStr3(m_pImp->m_pszStr, Len);
     }
     if (nFirst + nCount >= Len)
     {
-        return CMaaConstStr(m_pImp->m_pszStr + nFirst, Len - nFirst, false);
+        return CMaaConstStr3(m_pImp->m_pszStr + nFirst, Len - nFirst);
     }
-    return CMaaConstStr(m_pImp->m_pszStr + nFirst, nCount, false);
+    return CMaaConstStr3(m_pImp->m_pszStr + nFirst, nCount);
 }
 
 CMaaString CMaaString::LeftMid(int nLeft, int nFirst, int nCount) const noexcept(noexcept_new)

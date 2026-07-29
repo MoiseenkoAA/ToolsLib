@@ -68,6 +68,8 @@
 CMaaRWLockWp gFastCgiRWLock;
 #endif
 
+std::atomic<_qword> CCGIHelper::gsAllPostsSize(550 * 1024 * 1024);
+
 char * getenv8(const char * name)
 {
 #ifdef _WIN32
@@ -369,65 +371,84 @@ void CCGIHelper::Initialize(_qword MaxContentLength,
         //m_cl = cl;
         if (m_phCgiParamOverride && !m_phCgiParamOverride->Find(CMaaStringZ, &m_PostData))
         {
-            m_QS = m_PostData;
-        }
-        else if (cl > 0 && (MaxContentLength < 0 || cl <= MaxContentLength))
-        {
-            if  (ProgressFmt.IsEmpty())
+            if (gsAllPostsSize < m_PostData.Length() && m_PostData.IsNotEmpty())
             {
-                ProgressFmt = "%1 / %2 = %3%%";
-            }
-            m_fProgress = CMaaFile(ProgressFn, CMaaFile::eWCD_SrSw, eNoExcept);
-            if  (m_fProgress.IsOpen())
-            {
-                m_ProgressFn = ProgressFn;
-            }
-            CMaaFile fStdIn;
-#ifdef FAST_CGI_SUPP
-            if (!m_pFastCgiRequest)
-#endif
-            {
-                fStdIn = CMaaFile(CMaaFileStdin, CMaaFile::eR_SrSw, eNoExcept);
-            }
-            CMaaConcatString1 str;
-            _qword len = 0;
-            CMaaPtr_<char, 1> Buffer(1024 * 1024);
-            while((
-#ifdef FAST_CGI_SUPP
-                m_pFastCgiRequest ||
-#endif
-                 fStdIn.IsOpen()) && len < cl)
-            {
-#ifdef FAST_CGI_SUPP
-                _dword x = !m_pFastCgiRequest ? 
-                    fStdIn.Read(Buffer, cl - len >= (_qword)Buffer.Size() ? (_dword)Buffer.Size() : (_dword)(cl - len)) :
-                    FCGX_GetStr(Buffer, cl - len >= (_qword)Buffer.Size() ? (_dword)Buffer.Size() : (_dword)(cl - len), m_pFastCgiRequest->in);
-#else
-                _dword x = fStdIn.Read(Buffer, cl - len >= (_qword)Buffer.Size() ? (_dword)Buffer.Size() : (_dword)(cl - len));
-#endif
-                if  ((_sdword)x <= 0)
-                {
-                    break;
-                }
-                str.Add(Buffer, (int)x);
-                len += x;
-                if  (m_fProgress.IsOpen())
-                {
-                    m_fProgress.Seek(0);
-                    m_fProgress.fprintf2("%,D%,D%.1lf%.lf%.2lf", ProgressFmt, len, cl, (double)len * 100.0 / cl, (double)len * 100.0 / cl, (double)len * 100.0 / cl);
-                }
-            }
-            //m_fProgress.Close();
-            //fprintf(stderr, "len = %d, cl = %d\n", (int)len, (int)cl);
-            //m_rl = len;
-            if  (len == cl)
-            {
-                m_PostData = m_QS = (CMaaString)str;
-                //m_PostData = (CMaaString)str;
+                m_Error = 2;
             }
             else
             {
-                m_Error = 1;
+                gsAllPostsSize -= m_PostData.Length();
+                m_PostSizeDelta += m_PostData.Length();
+                m_QS = m_PostData;
+            }
+        }
+        else if (cl > 0 && (MaxContentLength < 0 || cl <= MaxContentLength))
+        {
+            if (gsAllPostsSize < cl && cl)
+            {
+                m_Error = 2;
+            }
+            else
+            {
+                gsAllPostsSize -= cl;
+                m_PostSizeDelta += (int)cl;
+
+                if (ProgressFmt.IsEmpty())
+                {
+                    ProgressFmt = "%1 / %2 = %3%%";
+                }
+                m_fProgress = CMaaFile(ProgressFn, CMaaFile::eWCD_SrSw, eNoExcept);
+                if (m_fProgress.IsOpen())
+                {
+                    m_ProgressFn = ProgressFn;
+                }
+                CMaaFile fStdIn;
+#ifdef FAST_CGI_SUPP
+                if (!m_pFastCgiRequest)
+#endif
+                {
+                    fStdIn = CMaaFile(CMaaFileStdin, CMaaFile::eR_SrSw, eNoExcept);
+                }
+                CMaaConcatString1 str;
+                _qword len = 0;
+                CMaaPtr_<char, 1> Buffer(1024 * 1024);
+                while ((
+#ifdef FAST_CGI_SUPP
+                    m_pFastCgiRequest ||
+#endif
+                    fStdIn.IsOpen()) && len < cl)
+                {
+#ifdef FAST_CGI_SUPP
+                    _dword x = !m_pFastCgiRequest ?
+                        fStdIn.Read(Buffer, cl - len >= (_qword)Buffer.Size() ? (_dword)Buffer.Size() : (_dword)(cl - len)) :
+                        FCGX_GetStr(Buffer, cl - len >= (_qword)Buffer.Size() ? (_dword)Buffer.Size() : (_dword)(cl - len), m_pFastCgiRequest->in);
+#else
+                    _dword x = fStdIn.Read(Buffer, cl - len >= (_qword)Buffer.Size() ? (_dword)Buffer.Size() : (_dword)(cl - len));
+#endif
+                    if ((_sdword)x <= 0)
+                    {
+                        break;
+                    }
+                    str.Add(Buffer, (int)x);
+                    len += x;
+                    if (m_fProgress.IsOpen())
+                    {
+                        m_fProgress.Seek(0);
+                        m_fProgress.fprintf2("%,D%,D%.1lf%.lf%.2lf", ProgressFmt, len, cl, (double)len * 100.0 / cl, (double)len * 100.0 / cl, (double)len * 100.0 / cl);
+                    }
+                }
+                //m_fProgress.Close();
+                //fprintf(stderr, "len = %d, cl = %d\n", (int)len, (int)cl);
+                //m_rl = len;
+                if (len == cl)
+                {
+                    m_PostData = m_QS = (CMaaString)str;
+                    //m_PostData = (CMaaString)str;
+                }
+                else
+                {
+                    m_Error = 1;
+                }
             }
         }
         else if (cl > 0)
@@ -745,6 +766,7 @@ g_temp.Format("%S\npoint 1\n---%S---%S---\n", &g_temp, &p->m_ContentData.Right(c
 
 CCGIHelper::~CCGIHelper()
 {
+    gsAllPostsSize += m_PostSizeDelta;
     RWUnLock();
     //fprintf(stderr, "CCGIHelper::~CCGIHelper()\nm_Attr2List\n"); fflush(stderr);
     m_Attr2List.RemoveAll();
@@ -1938,7 +1960,7 @@ int CCGIHelper::SendReply(CMaaFile f, CMaaString Header, CMaaString FileName, ti
         _dword nn;
         if  (m_SubstOut)
         {
-            s_Output += CMaaString(Buffer, x);
+            s_Output.Add(Buffer, x);
             nn = (_dword)x;
         }
         else
@@ -2053,7 +2075,8 @@ bool CCGIHelper::ItIsABot(const char * p)
 }
 thread_local_ bool CCGIHelper::s_SubstIn = false;
 thread_local_ bool CCGIHelper::s_SubstOut = false;
-thread_local_ CMaaString CCGIHelper::s_Method, CCGIHelper::s_Fn, CCGIHelper::s_Qs, CCGIHelper::s_Output;
+//thread_local_ CMaaString CCGIHelper::s_Method, CCGIHelper::s_Fn, CCGIHelper::s_Qs;
+thread_local_ CMaaString CCGIHelper::s_Output;
 
 void CCGIHelper::SetSubst(bool bIn, bool bOut, const CMaaString &Qs, CMaaString Fn, const CMaaString &Method)
 {
@@ -2066,9 +2089,9 @@ void CCGIHelper::SetSubst(bool bIn, bool bOut, const CMaaString &Qs, CMaaString 
 */
     s_SubstIn = bIn;
     s_SubstOut = bOut;
-    s_Method = Method;
-    s_Qs = Qs;
-    s_Fn = Fn;
+    //s_Method = Method;
+    //s_Qs = Qs;
+    //s_Fn = Fn;
     if  (s_SubstIn)
     {
         //        CMaaFile ll(s_SubstIn ? "/var/ram/maa/ssi.txt" : nullptr, CMaaFile::eAC_SrSw, eNoExcept);

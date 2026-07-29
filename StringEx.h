@@ -207,19 +207,6 @@ public:
     }
 #endif
     CMaaConstStr(char* txt) noexcept = delete;
-    constexpr CMaaConstStr(const char * txt, int N, bool) noexcept
-    :   p(txt),
-        len(N)
-#ifdef TOOLSLIB_TEST_CALC_HASH_CS
-        //, Hash{ CMaaStaticStandardHashFunction((const unsigned char*)txt, N) }
-        , Hash{ 0 }
-#endif
-#ifdef TOOLSLIB_TEST_CALC_HASH64_CS
-        //, Hash64{ CMaaStaticStandardHashFunction64(const unsigned char*)txt, N) }
-        , Hash64{ 0 }
-#endif
-    {
-    }
 
     // constexpr functions signal errors by throwing exceptions
     // in C++11, they must do so from the conditional operator ?:
@@ -267,6 +254,28 @@ public:
     constexpr std::size_t Length() const noexcept
     {
         return len;// sz > 0 && !p[sz - 1] ? sz - 1 : sz;
+    }
+} GCC_PACKED;
+
+// A helper class
+struct CMaaConstStr3
+{
+    const char* const p;
+    const int len;
+public:
+    constexpr CMaaConstStr3() noexcept
+    :   p(nullptr),
+        len(0)
+    {
+    }
+    constexpr CMaaConstStr3(const char * txt, int N) noexcept
+    :   p(txt),
+        len(N)
+    {
+    }
+    constexpr int Length() const noexcept
+    {
+        return len;
     }
 } GCC_PACKED;
 
@@ -2078,6 +2087,10 @@ public:
     {
         return Add(str.p, str.len);
     }
+    CMaaString & operator += (const CMaaConstStr3& str) noexcept(noexcept_new)
+    {
+        return Add(str.p, str.len);
+    }
     CMaaString & operator -= (int n) noexcept(noexcept_new);
     CMaaString & Add(const void * pMem, int Len, _e1632 Flags = eUtf8Flag /*=0*/) noexcept(noexcept_new);
     CMaaString & AddLeftOf(const CMaaString& str, int nCount) noexcept(noexcept_new); // like  *this += str.Left(nCount);
@@ -2311,6 +2324,12 @@ public:
         CMaaString tmp(*this);
         return (tmp += str);
     }
+    Helper operator + (const CMaaConstStr3& str) const noexcept(noexcept_new)
+    {
+        TOOLSLIB_STR_HELPER_printf("H S::op+(c cS3&)\n");
+        CMaaString tmp(*this);
+        return (tmp += str);
+    }
     template<int N> Helper operator + (const char(&txt)[N]) const noexcept(noexcept_new)
     {
         TOOLSLIB_STR_HELPER_printf("H S::op+(c ch(&txt))\n");
@@ -2462,9 +2481,9 @@ public:
     CMaaString RefLeft(int nCount) const noexcept;
     CMaaString RefRight(int nCount) const noexcept;
     CMaaString RefMid(int nFirst, int nCount = -1) const noexcept;
-    CMaaConstStr ConstLeft(int nCount) const noexcept;
-    CMaaConstStr ConstRight(int nCount) const noexcept;
-    CMaaConstStr ConstMid(int nFirst, int nCount = -1) const noexcept;
+    CMaaConstStr3 ConstLeft(int nCount) const noexcept;
+    CMaaConstStr3 ConstRight(int nCount) const noexcept;
+    CMaaConstStr3 ConstMid(int nFirst, int nCount = -1) const noexcept;
     CMaaString LeftMid(int nLeft, int nFirst, int nCount = -1) const noexcept(noexcept_new);
     CMaaString LeftInsMid(int nLeft, const CMaaString& Ins, int nFirst, int nCount = -1) const noexcept(noexcept_new);
     CMaaString LeftInsRight(int nLeft, const CMaaString& Ins, int nRight) const noexcept(noexcept_new);
@@ -4390,6 +4409,10 @@ public:
     }
 #endif
     void operator += (const CMaaConstStr& str) noexcept(xThrow <= 0 || bCountMode)
+    {
+        Add(str.p, str.len);
+    }
+    void operator += (const CMaaConstStr3& str) noexcept(xThrow <= 0 || bCountMode)
     {
         Add(str.p, str.len);
     }

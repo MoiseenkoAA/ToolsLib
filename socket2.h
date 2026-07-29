@@ -1493,7 +1493,10 @@ public:
 protected:
     CMaaHeap<_qword, CMaaSocketTimer *> m_TimerHeap;
 public:
-    bool HeapLook(_qword* k = nullptr, CMaaSocketTimer** d = nullptr) const noexcept { return m_TimerHeap.Look(k, d); }
+    bool HeapLook(_qword* k = nullptr, CMaaSocketTimer** d = nullptr) const noexcept
+    {
+        return m_TimerHeap.Look(k, d);
+    }
     CMaaHeap<_qword, CMaaSocketTimer *>::Handle HeapAdd(_qword nxt, CMaaSocketTimer * t) noexcept
     {
         //try
@@ -1512,6 +1515,10 @@ public:
     bool HeapDel(CMaaHeap<_qword, CMaaSocketTimer *>::Handle h) noexcept
     {
         return m_TimerHeap.Del(h);
+    }
+    bool HeapDel() noexcept
+    {
+        return m_TimerHeap.Del();
     }
 #endif
 

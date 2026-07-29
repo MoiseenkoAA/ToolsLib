@@ -9138,7 +9138,7 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
         m_pFdSockets->m_TimerMutex.LockM();
     }
 
-    const bool bActiveOld = m_bActive;
+    //const bool bActiveOld = m_bActive;
 
     if  (PeriodUs)
     {
@@ -9155,6 +9155,7 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
     }
     
     bool bRet = true;
+    static constexpr _qword MaxQword = (_qword)(((_uqword)-1ll) >> 1);
 
 #ifndef __SOCK_NEW_TIMERS
 
@@ -9173,6 +9174,10 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
     //    m_Next++;
     ///}
 #endif
+    if (!m_bActive)
+    {
+        NextOld = MaxQword;
+    }
     m_bActive = true;
 
 #else
@@ -9180,10 +9185,24 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
     _qword NextOld, Next;
     if  (m_pFdSockets)
     {
-        CMaaSocketTimer* t;
-        if (!m_pFdSockets->HeapLook(&NextOld, &t) || !t->IsStarted())
+        while (1)
         {
-            NextOld = m_Next;
+            CMaaSocketTimer* t;
+            if (!m_pFdSockets->HeapLook(&NextOld, &t))
+            {
+                NextOld = MaxQword;
+                break;
+            }
+            if (t->IsStarted())
+            {
+                break;
+            }
+            //if (t->m_Handle)
+            {
+                //m_pFdSockets->HeapDel(t->m_Handle);
+                m_pFdSockets->HeapDel();
+                t->m_Handle = nullptr; // t->ResetHandle();
+            }
         }
 
         Next = m_Next = m_pFdSockets->GetTime() + m_PeriodUs;
@@ -9203,6 +9222,7 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
                     if (!m_Handle)
                     {
                         m_bActive = bRet = false;
+                        iWakeUp = 0;
                     }
                     else
                     {
@@ -9217,6 +9237,7 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
                     m_pFdSockets->HeapDel(m_Handle);  m_Handle = nullptr;
                 }
                 m_bActive = bRet = false;
+                iWakeUp = 0;
             }
             //gpSockStartup->m_TimerMutex.UnLockM();
         }
@@ -9236,7 +9257,8 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
         m_pFdSockets->m_TimerMutex.UnLockM();
     }
 
-    if  (iWakeUp > 1 || (iWakeUp == 1 && (!bActiveOld || Next < NextOld)))
+    //if  (iWakeUp > 1 || (iWakeUp == 1 && (!bActiveOld || Next < NextOld)))
+    if  (iWakeUp > 1 || (iWakeUp == 1 && Next < NextOld))
     {
         if  (m_pFdSockets && m_pFdSockets->m_pThread)
         {
