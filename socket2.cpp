@@ -9155,7 +9155,6 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
     }
     
     bool bRet = true;
-    static constexpr _qword MaxQword = (_qword)(((_uqword)-1ll) >> 1);
 
 #ifndef __SOCK_NEW_TIMERS
 
@@ -9176,7 +9175,7 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
 #endif
     if (!m_bActive)
     {
-        NextOld = MaxQword;
+        NextOld = Max_qword;
     }
     m_bActive = true;
 
@@ -9190,7 +9189,7 @@ bool CMaaSocketTimer::Start2(_qword PeriodUs, int iWakeUp) noexcept
             CMaaSocketTimer* t;
             if (!m_pFdSockets->HeapLook(&NextOld, &t))
             {
-                NextOld = MaxQword;
+                NextOld = Max_qword;
                 break;
             }
             if (t->IsStarted())

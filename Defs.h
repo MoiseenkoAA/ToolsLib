@@ -297,6 +297,15 @@ typedef _uqword uint3264;
 #endif
 //---------------------------------------------------------------------------
 
+inline static constexpr _word Max_word = (_word)-1;
+inline static constexpr _dword Max_dword = (_dword)-1;
+inline static constexpr _uqword Max_uqword = (_uqword)-1;
+inline static constexpr unsigned Max_uint = (unsigned)-1;
+inline static constexpr _sword Max_sword = (_sword)(Max_word >> 1);
+inline static constexpr _sdword Max_sdword = (_sdword)(Max_dword >> 1);
+inline static constexpr _qword Max_qword = (_qword)(Max_uqword >> 1);
+inline static constexpr int Max_int = (int)(Max_uint >> 1);
+
 enum eNotInit_
 {
     eNotInit

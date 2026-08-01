@@ -235,7 +235,7 @@ public:
         }
         return true;
     }
-    bool Look(Handle ptr, Key* k, Data* d) const noexcept(noexcept(*k = *k) && noexcept(*d = *d)) // look handle
+    bool Look(Handle ptr, Key* k /*= nullptr*/, Data* d /*= nullptr*/) const noexcept(noexcept(*k = *k) && noexcept(*d = *d)) // look handle
     {
         if (ptr)
         {
@@ -251,7 +251,7 @@ public:
         }
         return false;
     }
-    bool Del(Key* k = nullptr, Data* d = nullptr) noexcept(noexcept(*k = *k) && noexcept(*d = *d) && noexcept(m[0] = m[0]) && noexcept(MoveDown(0))) // del & return min
+    bool Del(Key* k /*= nullptr*/, Data* d = nullptr) noexcept(noexcept(*k = *k) && noexcept(*d = *d) && noexcept(m[0] = m[0]) && noexcept(MoveDown(0))) // del & return min
     {
         if (m_Size <= 0)
         {
@@ -271,7 +271,19 @@ public:
         MoveDown(0);
         return true;
     }
-    bool Del(const Handle ptr, Key* k = nullptr, Data* d = nullptr) noexcept(noexcept(*k = *k) && noexcept(*d = *d) && noexcept(m[0] = m[0]) && noexcept(MoveDown(0))) // del & return by handle
+    bool Del() noexcept(noexcept(m[0] = m[0]) && noexcept(MoveDown(0))) // del top
+    {
+        if (m_Size <= 0)
+        {
+            return false;
+        }
+        Swap(0, --m_Size);
+        delete m[m_Size];
+        //m[m_Size] = nullptr;
+        MoveDown(0);
+        return true;
+    }
+    bool Del(const Handle ptr, Key* k /*= nullptr*/, Data* d = nullptr) noexcept(noexcept(*k = *k) && noexcept(*d = *d) && noexcept(m[0] = m[0]) && noexcept(MoveDown(0))) // del & return by handle
     {
         if (m_Size <= 0)
         {
@@ -286,6 +298,18 @@ public:
         {
             *d = m[i]->d;
         }
+        Swap(i, --m_Size);
+        delete m[m_Size];
+        MoveDown(i);
+        return true;
+    }
+    bool Del(const Handle ptr) noexcept(noexcept(m[0] = m[0]) && noexcept(MoveDown(0))) // del & return by handle
+    {
+        if (m_Size <= 0)
+        {
+            return false;
+        }
+        const int i = ptr->idx;
         Swap(i, --m_Size);
         delete m[m_Size];
         MoveDown(i);

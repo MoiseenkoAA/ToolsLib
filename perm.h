@@ -164,7 +164,6 @@ struct sDbgTmp
      #include <windows.h>
      #include <tchar.h>
 
-
 //     #include <new>
 //#include <string>
      #include <stdio.h>

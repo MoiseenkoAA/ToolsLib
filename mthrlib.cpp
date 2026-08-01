@@ -141,6 +141,115 @@ void CMaaLiteMutex::UnLock()
 
 #endif
 
+
+#ifdef _WIN32 // safe on time correction
+CMaaWaiter::CMaaWaiter() noexcept
+{
+    InitializeConditionVariable(&m_cv);
+    InitializeCriticalSection(&m_cs);
+}
+CMaaWaiter::~CMaaWaiter()
+{
+    DeleteCriticalSection(&m_cs);
+}
+void CMaaWaiter::Lock() noexcept
+{
+    EnterCriticalSection(&m_cs);
+}
+void CMaaWaiter::UnLock() noexcept
+{
+    LeaveCriticalSection(&m_cs);
+}
+void CMaaWaiter::notify_one() noexcept
+{
+    WakeConditionVariable(&m_cv);
+}
+void CMaaWaiter::notify_all() noexcept
+{
+    WakeAllConditionVariable(&m_cv);
+}
+#else
+#ifdef __unix__ // safe on time correction
+CMaaWaiter::CMaaWaiter() noexcept
+{
+    pthread_condattr_t attr;
+    pthread_condattr_init(&attr);
+    // CRITICAL: Set the condition variable to use CLOCK_MONOTONIC
+    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+    pthread_cond_init(&m_cv, &attr);
+
+    // Clean up attributes as they are no longer needed
+    pthread_condattr_destroy(&attr);
+
+    memset(&m, 0, sizeof(m));
+    // Initialize mutex and condition variable
+    pthread_mutex_init(&m, NULL);
+    /*
+    pthread_mutexattr_t a;
+    pthread_mutexattr_init(&a);
+    if (false) // (bRecrsive)
+    {
+        //pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE_NP);
+        pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE);
+    }
+    else
+    {
+        //pthread_mutexattr_settype(&a, PTHREAD_MUTEX_TIMED_NP); // NORMAL
+        pthread_mutexattr_settype(&a, PTHREAD_MUTEX_ERRORCHECK); // NORMAL
+    }
+    pthread_mutex_init(&m, &a);
+    pthread_mutexattr_destroy(&a);
+    */
+
+}
+CMaaWaiter::~CMaaWaiter() noexcept
+{
+    pthread_mutex_destroy(&m);
+    pthread_cond_destroy(&m_cv);
+}
+void CMaaWaiter::Lock() noexcept
+{
+    pthread_mutex_lock(&m);
+}
+void CMaaWaiter::UnLock() noexcept
+{
+    pthread_mutex_unlock(&m);
+}
+void CMaaWaiter::notify_one() noexcept
+{
+    pthread_cond_signal(&m_cv);
+}
+void CMaaWaiter::notify_all() noexcept
+{
+    pthread_cond_broadcast(&m_cv);
+}
+#else // chrono // universal, but unsafe on time correction
+CMaaWaiter::CMaaWaiter() noexcept
+{
+}
+CMaaWaiter::~CMaaWaiter()
+{
+}
+void CMaaWaiter::Lock() noexcept
+{
+    m.lock();
+}
+void CMaaWaiter::UnLock() noexcept
+{
+    m.unlock();
+}
+void CMaaWaiter::notify_one() noexcept
+{
+    m_cv.notify_one();
+}
+void CMaaWaiter::notify_all() noexcept
+{
+    m_cv.notify_all();
+}
+#endif
+#endif
+
+
 //===========================================================
 #ifdef TOOLSLIB_SINGLE_THREAD
 #define CMaaAtomicFastMutex CMaaAtomicFastMutexST
@@ -169,6 +278,20 @@ _dword CMaaAtomicFastMutex::Lock() noexcept
     }
     else
     {
+#ifdef TOOLSLIB_MORE_WAITERS
+        /*
+        m_Waiter.wait([this, ThreadId]
+            {
+                int y = 0;
+                if (m_Lock.compare_exchange_weak(y, 1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+                {
+                    m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+                    return true;
+                }
+            });
+        */
+        m_Waiter.wait([this] { return TryLock(); });
+#else
         int s = DEFAULT_FAST_MUTEX_SPINS; // m_Spins;
         while(1)
         {
@@ -213,6 +336,7 @@ _dword CMaaAtomicFastMutex::Lock() noexcept
             }
         }
         m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+#endif
     }
     return WAIT_OBJECT_0;
 }
@@ -239,16 +363,32 @@ _dword CMaaAtomicFastMutex::Lock_us(_qword us) noexcept
         return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
     }
     const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+#ifndef TOOLSLIB_MORE_WAITERS
     const CMaaTime &tt = gHRTime;
     const _uqword nxt = tt.GetNextTime(us);
+#endif
     if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
     {
         ++m_Lock;
     }
     else
     {
+#ifdef TOOLSLIB_MORE_WAITERS
+        /*
+        return m_Waiter.wait_for(us, [this, ThreadId]
+            {
+                int y = 0;
+                if (m_Lock.compare_exchange_weak(y, 1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+                {
+                    m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+                    return true;
+                }
+            }) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+        */
+        return m_Waiter.wait_for(us, [this] { return TryLock(); }) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+#else
         int s = DEFAULT_FAST_MUTEX_SPINS; // m_Spins;
-        while(1)
+        while (1)
         {
             int y = 0;
             if (m_Lock.compare_exchange_weak(y, 1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
@@ -265,14 +405,14 @@ _dword CMaaAtomicFastMutex::Lock_us(_qword us) noexcept
             {
                 break;
             }
-            if  (b || (tt.GetCounter() >= nxt))
+            if (b || (tt.GetCounter() >= nxt))
             {
                 return WAIT_TIMEOUT;
             }
             s = DEFAULT_FAST_MUTEX_TRY_NEXT_SPINS; // m_Spins > 1 ? DEFAULT_FAST_MUTEX_TRY_NEXT_SPINS : 1;
 
             CMaaThreadIdType abThreadId = m_ThreadId.load(std::TL_memory_order_acquire);
-            if  (abThreadId != InvalidThrId)
+            if (abThreadId != InvalidThrId)
             {
                 if (!CMaaThreadExists(abThreadId))
                 {
@@ -296,6 +436,7 @@ _dword CMaaAtomicFastMutex::Lock_us(_qword us) noexcept
             }
         }
         m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+#endif
     }
     return WAIT_OBJECT_0;
 }
@@ -343,6 +484,11 @@ int CMaaAtomicFastMutex::UnLock() noexcept
         if  (m_Lock.load(std::TL_memory_order_acquire) == 1)
         {
             m_ThreadId.store(InvalidThrId, std::TL_memory_order_release);
+            --m_Lock;
+#ifdef TOOLSLIB_MORE_WAITERS
+            m_Waiter.notify_one();
+#endif
+            return 0;
         }
         return --m_Lock;
     }
@@ -397,14 +543,19 @@ _dword CMaaAtomicFastMutex2W::Lock_us(_qword us) noexcept
         return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
     }
     const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+#ifndef TOOLSLIB_MORE_WAITERS
     const CMaaTime& tt = gHRTime;
     const _uqword nxt = tt.GetNextTime(us);
+#endif
     if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
     {
         m_Lock.fetch_add(1, std::TL_memory_order_acq_rel);
     }
     else
     {
+#ifdef TOOLSLIB_MORE_WAITERS
+        return m_Waiter.wait_for(us, [this] { return TryLock(); }) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+#else
         int s = 100;
         while (1)
         {
@@ -442,6 +593,7 @@ _dword CMaaAtomicFastMutex2W::Lock_us(_qword us) noexcept
             }
         }
         m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+#endif
     }
     return WAIT_OBJECT_0;
 }
@@ -594,14 +746,30 @@ _dword CMaaAtomicFastMutexW::Lock_us(_qword us) noexcept
         return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
     }
     const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+#ifndef TOOLSLIB_MORE_WAITERS
     const CMaaTime& tt = gHRTime;
     const _uqword nxt = tt.GetNextTime(us);
+#endif
     if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
     {
         ++m_Lock;
     }
     else
     {
+#ifdef TOOLSLIB_MORE_WAITERS
+        /*
+        return m_Waiter.wait_for(us, [this, ThreadId]
+            {
+                int y = 0;
+                if (m_Lock.compare_exchange_weak(y, 1, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+                {
+                    m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+                    return true;
+                }
+            }) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+        */
+        return m_Waiter.wait_for(us, [this] { return TryLock(); }) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+#else
         int s = DEFAULT_FAST_MUTEX_SPINS; // m_Spins;
         while (1)
         {
@@ -651,6 +819,7 @@ _dword CMaaAtomicFastMutexW::Lock_us(_qword us) noexcept
             }
         }
         m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+#endif
     }
     return WAIT_OBJECT_0;
 }
@@ -702,6 +871,10 @@ int CMaaAtomicFastMutexW::UnLock() noexcept
 #ifdef TL_ATOMIC_HAVE_WAIT
             m_Lock.notify_one();
 #endif
+#ifdef TOOLSLIB_MORE_WAITERS
+            m_Waiter.notify_one();
+#endif
+            return 0;
         }
         else
         {

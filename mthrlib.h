@@ -81,8 +81,16 @@
 #include <curses.h>
 */
 
+#define TOOLSLIB_MORE_WAITERS
+
+#ifndef TOOLSLIB_MORE_WAITERS
 #define CONSTEXPR_GLOCK_LIB_ATOMIC
 //#define CONSTEXPR_GLOCK_USR_ATOMIC
+#else
+#define nonCONSTEXPR_GLOCK_LIB_ATOMIC
+#define nonCONSTEXPR_GLOCK_USR_ATOMIC
+#endif
+
 //#define AFM0_PROFILE
 
 // default: std::memory_order_seq_cst
@@ -147,7 +155,7 @@ class CMaaWin32Lock;
 //#define TOOLSLIB_FAST_gLock_usr_Mutex // TOOLSLIB_FAST_MTX - bad performance
 #define TOOLSLIB_FAST_gLock_usr3_Mutex
 
-#ifdef CONSTEXPR_GLOCK_LIB_ATOMIC
+#if defined(CONSTEXPR_GLOCK_LIB_ATOMIC) || defined(nonCONSTEXPR_GLOCK_LIB_ATOMIC)
 #define CMaa_gLock_lib_Mutex CMaaAtomicFastMutex2W
 #else
 #ifdef TOOLSLIB_FAST_gLock_lib_Mutex
@@ -157,7 +165,7 @@ class CMaaWin32Lock;
 #endif
 #endif
 
-#ifdef CONSTEXPR_GLOCK_USR_ATOMIC
+#if defined(CONSTEXPR_GLOCK_USR_ATOMIC) || defined(nonCONSTEXPR_GLOCK_USR_ATOMIC)
 #define CMaa_gLock_usr_Mutex CMaaAtomicFastMutex2W
 #else
 #ifdef TOOLSLIB_FAST_gLock_usr_Mutex
@@ -176,6 +184,155 @@ class CMaaWin32Lock;
 #define CMaa_gLock_usr3_Mutex CMaaMutex
 #endif
 #endif
+
+class CMaaWaiter // aim: monotonic wait, wait for
+{
+//public:
+#ifdef _WIN32 // safe on time correction
+    CONDITION_VARIABLE m_cv;
+    CRITICAL_SECTION m_cs;
+#else
+#ifdef __unix__ // safe on time correction
+    //public:
+    pthread_mutex_t m;
+    pthread_cond_t m_cv;
+#else // chrono // universal, but unsafe on time correction
+    std::mutex m;
+    std::condition_variable m_cv;
+#endif
+#endif
+public:
+    CMaaWaiter() noexcept;
+    ~CMaaWaiter();
+    void Lock() noexcept;
+    void UnLock() noexcept;
+    //template<class Predicate> void wait(Predicate pred);
+    //template<class Predicate> bool wait_for(_qword us, Predicate pred);
+    void notify_one() noexcept;
+    void notify_all() noexcept;
+
+#ifdef _WIN32 // safe on time correction
+    template<class Predicate> void wait(Predicate pred)
+    {
+        while (!pred())
+        {
+            EnterCriticalSection(&m_cs);
+            SleepConditionVariableCS(&m_cv, &m_cs, INFINITE);
+            LeaveCriticalSection(&m_cs);
+        };
+    }
+    template<class Predicate> bool wait_for(_qword us, Predicate pred)
+    {
+        //try
+        //{
+        if (pred())
+        {
+            return true;
+        }
+        const _qword t0 = GetUsTime();
+        do
+        {
+            EnterCriticalSection(&m_cs);
+            const _qword t = (us - (_qword)(GetUsTime() - t0) + 999) / 1000;
+            if (t <= 0)
+            {
+                LeaveCriticalSection(&m_cs);
+                return false;
+            }
+            if (!SleepConditionVariableCS(&m_cv, &m_cs, t < 24 * 3600 * 1000 ? (DWORD)t : 24 * 3600 * 1000) && t < 24 * 3600 * 1000 && GetLastError() == ERROR_TIMEOUT)
+            {
+                LeaveCriticalSection(&m_cs);
+                return pred(); // or false;
+            }
+            LeaveCriticalSection(&m_cs);
+
+        } while (!pred());
+        return true;
+        //}
+        //catch (...)
+        //{
+        //}
+        //return false;
+    }
+#else
+#ifdef __unix__ // safe on time correction
+    template<class Predicate> void wait(Predicate pred)
+    {
+        //try
+        //{
+        while (!pred())
+        {
+            Lock();
+            pthread_cond_wait(&m_cv, &m);
+            UnLock();
+        }
+        //}
+        //catch (...)
+        //{
+        //}
+    }
+    template<class Predicate> bool wait_for(_qword us, Predicate pred)
+    {
+        //try
+        //{
+        if (pred())
+        {
+            return true;
+        }
+        const _qword t0 = GetUsTime();
+        struct timespec ti;
+        clock_gettime(CLOCK_MONOTONIC, &ti);
+        ti.tv_nsec += (us % 1000000UL) * 1000UL;
+        ti.tv_sec += (us / 1000000UL) + (ti.tv_nsec / 1000000000);
+        ti.tv_nsec %= 1000000000;
+
+        do
+        {
+            Lock();
+            const _qword t = (us - (_qword)(GetUsTime() - t0) + 999) / 1000;
+            if (t <= 0)
+            {
+                UnLock();
+                return false;
+            }
+            if (pthread_cond_timedwait(&m_cv, &m, &ti) == ETIMEDOUT)
+            {
+                UnLock();
+                return pred(); // or false;
+            }
+            UnLock();
+        } while (!pred());
+        return true;
+        //}
+        //catch (...)
+        //{
+        //}
+        //return false;
+    }
+#else // chrono // universal // safe for time correction
+    //template<class Predicate> void wait(std::unique_lock<std::mutex>& lock, Predicate pred)
+    template<class Predicate> void wait(Predicate pred)
+    {
+        std::unique_lock lk(m);
+        m_cv.wait(lk, pred);
+    }
+    /*
+    template<class Rep, class Period, class Predicate> bool wait_for(const std::chrono::duration<Rep, Period>& rel_time, Predicate pred)
+    {
+        std::unique_lock lk(m);
+        return m_cv.wait_for(lk, rel_time, pred);
+    }
+    */
+    //template< class Rep, class Period, class Predicate > bool wait_for(std::unique_lock<std::mutex>& lock, const std::chrono::duration<Rep, Period>& rel_time, Predicate pred)
+    template<class Predicate> bool wait_for(_qword us, Predicate pred)
+    {
+        std::unique_lock lk(m);
+        return m_cv.wait_until(lk, std::chrono::steady_clock::now() + std::chrono::microseconds(us), pred);
+    }
+#endif
+#endif
+};
+
 
 
 #ifdef _WIN32
@@ -260,7 +417,9 @@ class CMaaAtomicFastMutex
 
     std::atomic<int> m_Lock;
     std::atomic<CMaaThreadIdType> m_ThreadId;
-
+#ifdef TOOLSLIB_MORE_WAITERS
+    CMaaWaiter m_Waiter;
+#endif
     //const int m_Spins;
 public:
     CMaaAtomicFastMutex(/*int Spins = DEFAULT_FAST_MUTEX_SPINS*/) noexcept;
@@ -289,7 +448,9 @@ class CMaaAtomicFastMutexW
 
     std::atomic<int> m_Lock;
     std::atomic<CMaaThreadIdType> m_ThreadId;
-
+#ifdef TOOLSLIB_MORE_WAITERS
+    CMaaWaiter m_Waiter;
+#endif
     //const int m_Spins;
 public:
     CMaaAtomicFastMutexW(/*int Spins = DEFAULT_FAST_MUTEX_SPINS*/) noexcept;
@@ -507,13 +668,15 @@ public:
     bool try_lock() noexcept { return TryLock(); }
 };
 
-class CMaaFastMutex
+class CMaaFastMutex // uses spinlocks, do not use it
 {
     static constexpr CMaaThreadIdType InvalidThrId{ CMaaInvalidThreadId() };
 
     std::atomic<int> m_Lock;
     std::atomic<CMaaThreadIdType> m_ThreadId;
-
+#ifdef TOOLSLIB_MORE_WAITERS
+    //CMaaWaiter m_Waiter;
+#endif
     //const int m_Spins;
 public:
     CMaaFastMutex() noexcept;
@@ -786,14 +949,22 @@ class CMaaAtomicFastMutex2W // 2026 // the simplest, recursive fast mutex // wai
     mutable std::atomic<int> m_Lock;
     mutable std::atomic<CMaaThreadIdType> m_ThreadId;
     mutable CMaaAtomicFastMutex0W m_Mtx0W;
-
+#ifdef TOOLSLIB_MORE_WAITERS
+    CMaaWaiter m_Waiter;
+#endif
 public:
-    constexpr CMaaAtomicFastMutex2W() noexcept
+#ifndef TOOLSLIB_MORE_WAITERS
+    constexpr 
+#endif
+        CMaaAtomicFastMutex2W() noexcept
     :   m_Lock{ -1 },
         m_ThreadId{ InvalidThrId }
     {
     }
-    constexpr ~CMaaAtomicFastMutex2W() {}
+#ifndef TOOLSLIB_MORE_WAITERS
+    constexpr
+#endif
+        ~CMaaAtomicFastMutex2W() {}
     void lock() noexcept
     {
         Lock();
@@ -851,6 +1022,9 @@ public:
             {
                 m_ThreadId.store(InvalidThrId, std::TL_memory_order_release);
                 m_Mtx0W.unlock();
+#ifdef TOOLSLIB_MORE_WAITERS
+                m_Waiter.notify_one();
+#endif
             }
             return n;
         }
