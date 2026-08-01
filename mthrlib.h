@@ -81,7 +81,7 @@
 #include <curses.h>
 */
 
-#define TOOLSLIB_MORE_WAITERS
+//#define TOOLSLIB_MORE_WAITERS // sometimes waits up to timeout and return predicate at the end
 
 #ifndef TOOLSLIB_MORE_WAITERS
 #define CONSTEXPR_GLOCK_LIB_ATOMIC
@@ -89,6 +89,7 @@
 #else
 #define nonCONSTEXPR_GLOCK_LIB_ATOMIC
 #define nonCONSTEXPR_GLOCK_USR_ATOMIC
+//#define TOOLSLIB_MORE_WAITERS_RW // not worked
 #endif
 
 //#define AFM0_PROFILE
@@ -206,8 +207,8 @@ public:
     ~CMaaWaiter();
     void Lock() noexcept;
     void UnLock() noexcept;
-    //template<class Predicate> void wait(Predicate pred);
-    //template<class Predicate> bool wait_for(_qword us, Predicate pred);
+    //template<class Predicate> void wait(Predicate pred); // see the next: sometimes m_cv event is lost
+    //template<class Predicate> bool wait_for(_qword us, Predicate pred); // sometimes waits up to timeout and return predicate at the end
     void notify_one() noexcept;
     void notify_all() noexcept;
 

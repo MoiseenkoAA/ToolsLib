@@ -3037,7 +3037,7 @@ bool CMaaRWLockRp::RLock_us(_qword us) noexcept
         m_WriterReaders.fetch_add(1, std::TL_memory_order_acq_rel);
         return true;
     }
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
     return m_RWaiter.wait_for(us, [this]
         {
             _dword y = m_WriterReaders.load(std::TL_memory_order_acquire);
@@ -3091,7 +3091,7 @@ void CMaaRWLockRp::RUnLock() noexcept
 #ifdef TL_ATOMIC_HAVE_WAIT
         m_WriterReaders.notify_all();
 #endif
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
         m_WWaiter.notify_one();
 #endif
     }
@@ -3163,7 +3163,7 @@ bool CMaaRWLockRp::WLock_us(_qword us) noexcept
     else
     {
         m_WriterReaders.fetch_add(cWritersWaiting1, std::TL_memory_order_acq_rel);
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
         if (!m_WWaiter.wait_for(us, [this, ThreadId]
             {
                 _dword y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
@@ -3179,7 +3179,7 @@ bool CMaaRWLockRp::WLock_us(_qword us) noexcept
             }))
         {
             m_WriterReaders.fetch_sub(cWritersWaiting1, std::TL_memory_order_acq_rel);
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
             m_RWaiter.notify_all();
             m_WWaiter.notify_one();
 #endif
@@ -3250,7 +3250,7 @@ bool CMaaRWLockRp::WUnLock() noexcept
 #ifdef TL_ATOMIC_HAVE_WAIT
             m_WriterReaders.notify_all();
 #endif
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
             m_RWaiter.notify_all();
             m_WWaiter.notify_one();
 #endif
@@ -3279,6 +3279,9 @@ bool CMaaRWLockRp::W2RLock(int n) noexcept
 #ifdef TL_ATOMIC_HAVE_WAIT
             m_WriterReaders.notify_all();
 #endif
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+            m_RWaiter.notify_all();
+#endif
         }
         else
         {
@@ -3299,6 +3302,9 @@ bool CMaaRWLockRp::W2RLock() noexcept
             m_WriterReaders.fetch_sub(cWriter1 - 1, std::TL_memory_order_acq_rel);
 #ifdef TL_ATOMIC_HAVE_WAIT
             m_WriterReaders.notify_all();
+#endif
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+            m_RWaiter.notify_all();
 #endif
         }
         else
@@ -3334,6 +3340,10 @@ bool CMaaRWLockRp::R2WLock(int nR) noexcept
     m_WriterReaders.fetch_sub(nR, std::TL_memory_order_acq_rel); // --m_WriterReaders;
 #ifdef TL_ATOMIC_HAVE_WAIT
     m_WriterReaders.notify_all();
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+    m_WWaiter.notify_one();
+    m_RWaiter.notify_all();
+#endif
 
     bool bUnchanged;
     while (1)
@@ -3357,6 +3367,10 @@ bool CMaaRWLockRp::R2WLock(int nR) noexcept
     m_WriterThreadId.store(ThreadId, std::TL_memory_order_release);
     m_WriterReaders.notify_all();
 #else
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+    m_WWaiter.notify_one();
+    m_RWaiter.notify_all();
+#endif
     bool bUnchanged;
     int s = DEFAULT_W_MUTEX_SPINS;
     while (1)
@@ -3399,6 +3413,10 @@ bool CMaaRWLockRp::R2WLock() noexcept // int nR == 1
     m_WriterReaders.fetch_sub(1, std::TL_memory_order_acq_rel);
 #ifdef TL_ATOMIC_HAVE_WAIT
     m_WriterReaders.notify_all();
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+    m_WWaiter.notify_one();
+    m_RWaiter.notify_all();
+#endif
 
     bool bUnchanged;
     while (1)
@@ -3422,6 +3440,10 @@ bool CMaaRWLockRp::R2WLock() noexcept // int nR == 1
     m_WriterThreadId.store(ThreadId, std::TL_memory_order_release);
     m_WriterReaders.notify_all();
 #else
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+    m_WWaiter.notify_one();
+    m_RWaiter.notify_all();
+#endif
     bool bUnchanged;
     int s = DEFAULT_W_MUTEX_SPINS;
     while (1)
@@ -3574,7 +3596,7 @@ bool CMaaRWLockWp::RLock_us(_qword us, bool bForced) noexcept
         m_WriterReaders.fetch_add(1, std::TL_memory_order_acq_rel);
         return true;
     }
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
 #ifdef CMaaRWLockWp_DBG
     if (!
 #else
@@ -3658,7 +3680,7 @@ void CMaaRWLockWp::RUnLock() noexcept
 #ifdef TL_ATOMIC_HAVE_WAIT
         m_WriterReaders.notify_all();
 #endif
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
         m_WWaiter.notify_one();
 #endif
     }
@@ -3742,7 +3764,7 @@ bool CMaaRWLockWp::WLock_us(_qword us) noexcept
 #ifdef TL_ATOMIC_HAVE_WAIT
         m_WriterReaders.notify_all();
 #endif
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
         if (!m_WWaiter.wait_for(us, [this, ThreadId]
             {
                 _dword y = m_WriterReaders.load(std::TL_memory_order_acquire) & (cWritersWaitingMask | cR2WUnchangedFlag);
@@ -3761,10 +3783,10 @@ bool CMaaRWLockWp::WLock_us(_qword us) noexcept
 #ifdef TL_ATOMIC_HAVE_WAIT
             m_WriterReaders.notify_all();
 #endif
-#ifdef TOOLSLIB_MORE_WAITERS
+//#ifdef TOOLSLIB_MORE_WAITERS_RW
             m_WWaiter.notify_one();
             m_RWaiter.notify_all();
-#endif
+//#endif
 #ifdef CMaaRWLockWp_DBG
             //m_W = InvalidThrId;
 #endif
@@ -3841,7 +3863,7 @@ bool CMaaRWLockWp::WUnLock() noexcept
 #ifdef TL_ATOMIC_HAVE_WAIT
             m_WriterReaders.notify_all();
 #endif
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
             m_WWaiter.notify_one();
             m_RWaiter.notify_all();
 #endif
@@ -3879,6 +3901,9 @@ bool CMaaRWLockWp::W2RLock(int n) noexcept
 #ifdef TL_ATOMIC_HAVE_WAIT
             m_WriterReaders.notify_all();
 #endif
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+            m_RWaiter.notify_all();
+#endif
         }
         else
         {
@@ -3908,6 +3933,9 @@ bool CMaaRWLockWp::W2RLock() noexcept
             m_WriterReaders.fetch_sub(cWriter1 - 1, std::TL_memory_order_acq_rel);
 #ifdef TL_ATOMIC_HAVE_WAIT
             m_WriterReaders.notify_all();
+#endif
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+            m_RWaiter.notify_all();
 #endif
         }
         else
@@ -3963,6 +3991,10 @@ bool CMaaRWLockWp::R2WLock(int nR) noexcept
     m_WriterReaders.fetch_sub(nR, std::TL_memory_order_acq_rel); // --m_WriterReaders;
 #ifdef TL_ATOMIC_HAVE_WAIT
     m_WriterReaders.notify_all();
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+    m_WWaiter.notify_one();
+    m_RWaiter.notify_all();
+#endif
 
     bool bUnchanged;
     while (1)
@@ -3984,6 +4016,10 @@ bool CMaaRWLockWp::R2WLock(int nR) noexcept
         }
     }
 #else
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+    m_WWaiter.notify_one();
+    m_RWaiter.notify_all();
+#endif
     bool bUnchanged;
     int s = DEFAULT_W_MUTEX_SPINS;
     while (1)
@@ -4042,6 +4078,10 @@ bool CMaaRWLockWp::R2WLock() noexcept // int nR == 1
     m_WriterReaders.fetch_sub(1, std::TL_memory_order_acq_rel);
 #ifdef TL_ATOMIC_HAVE_WAIT
     m_WriterReaders.notify_all();
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+    m_WWaiter.notify_one();
+    m_RWaiter.notify_all();
+#endif
 
     bool bUnchanged;
     while (1)
@@ -4063,6 +4103,10 @@ bool CMaaRWLockWp::R2WLock() noexcept // int nR == 1
         }
     }
 #else
+#ifdef TOOLSLIB_MORE_WAITERS_RW
+    m_WWaiter.notify_one();
+    m_RWaiter.notify_all();
+#endif
     bool bUnchanged;
     int s = DEFAULT_W_MUTEX_SPINS;
     while (1)

@@ -376,7 +376,7 @@ class CMaaRWLockRp // atomic win32 & linux not timed rw lock Writers priority
 
     std::atomic<_dword> m_WriterReaders;
     std::atomic<CMaaThreadIdType> m_WriterThreadId;
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
     CMaaWaiter m_RWaiter, m_WWaiter;
 #endif
     static constexpr _dword cR2WUnchangedFlag = ((_dword)1) << (sizeof(_dword) * 8 - 1);
@@ -431,7 +431,7 @@ class CMaaRWLockWp
 
     std::atomic<_dword> m_WriterReaders;
     std::atomic<CMaaThreadIdType> m_WriterThreadId;
-#ifdef TOOLSLIB_MORE_WAITERS
+#ifdef TOOLSLIB_MORE_WAITERS_RW
     CMaaWaiter m_RWaiter, m_WWaiter;
 #endif
 #ifdef CMaaRWLockWp_DBG
