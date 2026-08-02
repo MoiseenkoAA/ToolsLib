@@ -213,7 +213,7 @@ public:
     void notify_all() noexcept;
 
 #ifdef _WIN32 // safe on time correction
-    template<class Predicate> void wait(Predicate pred)
+    template<class Predicate> void wait(Predicate pred) noexcept
     {
         while (!pred())
         {
@@ -222,7 +222,7 @@ public:
             LeaveCriticalSection(&m_cs);
         };
     }
-    template<class Predicate> bool wait_for(_qword us, Predicate pred)
+    template<class Predicate> bool wait_for(_qword us, Predicate pred) noexcept
     {
         //try
         //{
@@ -235,12 +235,7 @@ public:
         {
             EnterCriticalSection(&m_cs);
             const _qword t = (us - (_qword)(GetUsTime() - t0) + 999) / 1000;
-            if (t <= 0)
-            {
-                LeaveCriticalSection(&m_cs);
-                return false;
-            }
-            if (!SleepConditionVariableCS(&m_cv, &m_cs, t < 24 * 3600 * 1000 ? (DWORD)t : 24 * 3600 * 1000) && t < 24 * 3600 * 1000 && GetLastError() == ERROR_TIMEOUT)
+            if (t <= 0 || (!SleepConditionVariableCS(&m_cv, &m_cs, t < 24 * 3600 * 1000 ? (DWORD)t : 24 * 3600 * 1000) && t < 24 * 3600 * 1000 && GetLastError() == ERROR_TIMEOUT))
             {
                 LeaveCriticalSection(&m_cs);
                 return pred(); // or false;
@@ -257,7 +252,7 @@ public:
     }
 #else
 #ifdef __unix__ // safe on time correction
-    template<class Predicate> void wait(Predicate pred)
+    template<class Predicate> void wait(Predicate pred) noexcept
     {
         //try
         //{
@@ -272,7 +267,7 @@ public:
         //{
         //}
     }
-    template<class Predicate> bool wait_for(_qword us, Predicate pred)
+    template<class Predicate> bool wait_for(_qword us, Predicate pred) noexcept
     {
         //try
         //{
@@ -280,7 +275,7 @@ public:
         {
             return true;
         }
-        const _qword t0 = GetUsTime();
+        //const _qword t0 = GetUsTime();
         struct timespec ti;
         clock_gettime(CLOCK_MONOTONIC, &ti);
         ti.tv_nsec += (us % 1000000UL) * 1000UL;
@@ -290,13 +285,10 @@ public:
         do
         {
             Lock();
-            const _qword t = (us - (_qword)(GetUsTime() - t0) + 999) / 1000;
-            if (t <= 0)
-            {
-                UnLock();
-                return false;
-            }
-            if (pthread_cond_timedwait(&m_cv, &m, &ti) == ETIMEDOUT)
+            struct timespec t;
+            clock_gettime(CLOCK_MONOTONIC, &t);
+            //if ((us - (_qword)(GetUsTime() - t0)) <= 0 || pthread_cond_timedwait(&m_cv, &m, &ti) == ETIMEDOUT)
+            if (t.tv_sec > ti.tv_sec || (t.tv_sec == ti.tv_sec && t.tv_nsec >= ti.tv_nsec) || pthread_cond_timedwait(&m_cv, &m, &ti) == ETIMEDOUT)
             {
                 UnLock();
                 return pred(); // or false;
@@ -312,7 +304,7 @@ public:
     }
 #else // chrono // universal // safe for time correction
     //template<class Predicate> void wait(std::unique_lock<std::mutex>& lock, Predicate pred)
-    template<class Predicate> void wait(Predicate pred)
+    template<class Predicate> void wait(Predicate pred) noexcept
     {
         std::unique_lock lk(m);
         m_cv.wait(lk, pred);
@@ -325,7 +317,7 @@ public:
     }
     */
     //template< class Rep, class Period, class Predicate > bool wait_for(std::unique_lock<std::mutex>& lock, const std::chrono::duration<Rep, Period>& rel_time, Predicate pred)
-    template<class Predicate> bool wait_for(_qword us, Predicate pred)
+    template<class Predicate> bool wait_for(_qword us, Predicate pred) noexcept
     {
         std::unique_lock lk(m);
         return m_cv.wait_until(lk, std::chrono::steady_clock::now() + std::chrono::microseconds(us), pred);
