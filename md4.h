@@ -51,12 +51,12 @@ char * MD4Data(const unsigned char *, unsigned int, char *);
 //void MD5Update ();
 //void MD5Final ();
 
-class CMD4Cacl
+class CMD4Calc
 {
     MD4_CTX m_ctx;
 public:
-    CMD4Cacl();
-    ~CMD4Cacl();
+    CMD4Calc();
+    ~CMD4Calc();
     void Update(const void * ptr, unsigned int Len) noexcept;
     void GetHash(void * ptr) noexcept; // 16 bytes;
     CMaaString GetHash() // 16 bytes string

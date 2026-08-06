@@ -54,12 +54,12 @@ typedef struct {
 //void MD5Update ();
 //void MD5Final ();
 
-class CMD5Cacl
+class CMD5Calc
 {
     MD5_CTX__ m_ctx;
 public:
-    CMD5Cacl() noexcept;
-    ~CMD5Cacl();
+    CMD5Calc() noexcept;
+    ~CMD5Calc();
     void Update(const void * ptr, unsigned int Len) noexcept;
     void GetHash(void * ptr) noexcept; // 16 bytes;
     CMaaString GetHash() // 16 bytes string

@@ -309,21 +309,21 @@ static void Transform (UINT4 *buf, UINT4 *in)
  */
 
 
-CMD5Cacl::CMD5Cacl() noexcept
+CMD5Calc::CMD5Calc() noexcept
 {
     MD5Init(&m_ctx);
 }
 
-CMD5Cacl::~CMD5Cacl()
+CMD5Calc::~CMD5Calc()
 {
 }
 
-void CMD5Cacl::Update(const void * ptr, unsigned int Len) noexcept
+void CMD5Calc::Update(const void * ptr, unsigned int Len) noexcept
 {
     MD5Update(&m_ctx, (unsigned char *)ptr, Len);
 }
 
-void CMD5Cacl::GetHash(void * ptr) noexcept // 16 bytes;
+void CMD5Calc::GetHash(void * ptr) noexcept // 16 bytes;
 {
     MD5Final((unsigned char*)ptr, &m_ctx);
 }

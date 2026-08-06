@@ -15077,7 +15077,7 @@ CMaaString CMaaString::MyDecode(bool* pbOk, int* pValidCharNums, const CMaaStrin
 
 CMaaString CMaaString::ToMD5() const noexcept(noexcept_new)
 {
-    CMD5Cacl c;
+    CMD5Calc c;
     c.Update((const char *)*this, (warning_int)Length());
     char hash[16];
     c.GetHash(hash);
@@ -19544,7 +19544,7 @@ CMaaString CRAM_MD5_Auth(const CMaaString &Base64Request, const CMaaString &emai
 
     if  (pass.Length() > 64)
     {
-        CMD5Cacl calc;
+        CMD5Calc calc;
         calc.Update(pass, (warning_int)pass.Length());
         pass = calc.GetHash();
     }
@@ -19568,13 +19568,13 @@ CMaaString CRAM_MD5_Auth(const CMaaString &Base64Request, const CMaaString &emai
         Data2[i] = (char)pass[i] ^ ipad;
     }
 
-    CMD5Cacl calc_intermediate;
+    CMD5Calc calc_intermediate;
     calc_intermediate.Update(Data2, 64);
     calc_intermediate.Update(dec, (warning_int)dec.Length());
     char Data3[16];
     calc_intermediate.GetHash(Data3);
 
-    CMD5Cacl calc;
+    CMD5Calc calc;
     calc.Update(Data1, 64);
     calc.Update(Data3, 16);
 

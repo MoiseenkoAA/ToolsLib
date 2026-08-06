@@ -295,21 +295,21 @@ static void Decode(UINT4 *output, const unsigned char *input, unsigned int len)
 }
 
 
-CMD4Cacl::CMD4Cacl()
+CMD4Calc::CMD4Calc()
 {
     MD4Init(&m_ctx);
 }
 
-CMD4Cacl::~CMD4Cacl()
+CMD4Calc::~CMD4Calc()
 {
 }
 
-void CMD4Cacl::Update(const void * ptr, unsigned int Len) noexcept
+void CMD4Calc::Update(const void * ptr, unsigned int Len) noexcept
 {
     MD4Update(&m_ctx, (unsigned char *)ptr, Len);
 }
 
-void CMD4Cacl::GetHash(void * ptr) noexcept // 16 bytes;
+void CMD4Calc::GetHash(void * ptr) noexcept // 16 bytes;
 {
     MD4Final((unsigned char*)ptr, &m_ctx);
 }
