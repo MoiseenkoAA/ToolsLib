@@ -615,3 +615,19 @@ extern std::atomic<int_> gCMaaStringImpStatShort, gCMaaStringImpStatLong, gCMaaS
 #define INC_TOOLSLIB_STAT_STRING_IMP_REFS(x)
 #define DEC_TOOLSLIB_STAT_STRING_IMP_REFS
 #endif
+
+template <int xThrow = 0, bool bCountMode = false> class CMaaConcatString_;
+//------------------------------------------------------------------------------
+//struct CMaaTmpSprintfBuffer;
+struct CMaaTmpSprintfBuffer : public CMaaDLink
+{
+    CMaaPtr_<char, 1> m_Buffer;
+
+    CMaaTmpSprintfBuffer(size_t len)
+    :   m_Buffer(len)
+    {
+    }
+    ~CMaaTmpSprintfBuffer() = default;
+    CMaaTmpSprintfBuffer(const CMaaTmpSprintfBuffer&) = delete;
+    CMaaTmpSprintfBuffer& operator = (const CMaaTmpSprintfBuffer&) = delete;
+};

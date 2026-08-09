@@ -102,8 +102,11 @@ class CMaaString64;
 _qword maa_wcslen(const _WC_* pText) noexcept;
 _qword maa_wcslen32(const char32_t* pText) noexcept;
 
-class ToolsExport CMaaString;
-template <int xThrow = 0, bool bCountMode = false> class CMaaConcatString_;
+class CMaaString;
+#if TOOLSLIB_USE_CMAASTRING64 == 2
+class CMaaString64;
+#endif
+//template <int xThrow = 0, bool bCountMode = false> class CMaaConcatString_;
 //--------------------------------------------------------------------------
 //CMaaString DataToString ( const void * ptr, int len );
 //--------------------------------------------------------------------------
@@ -956,7 +959,7 @@ struct ceCMaaStringImp
     //constexpr ~ceCMaaStringImp() noexcept {}
 };
 //------------------------------------------------------------------------------
-struct CMaaTmpSprintfBuffer;
+//struct CMaaTmpSprintfBuffer;
 struct CMaaTmpSprintf2StringsArray;
 //------------------------------------------------------------------------------
 class CMaaString
@@ -1140,7 +1143,16 @@ private:
 public:
     struct CMaaStringImp : public ceCMaaStringImp
     {
+#if TOOLSLIB_USE_CMAASTRING64 == 2
+#if TOOLSLIB_CMAASTRING64 == 0
         friend class CMaaString;
+#else
+        friend class ::CMaaString32;
+#endif
+        friend class ::CMaaString64;
+#else
+        friend class CMaaString;
+#endif
     private:
         CMaaStringImp(const char* pszStr) noexcept(noexcept_new);
         CMaaStringImp(size_t Length) = delete;
@@ -3860,7 +3872,10 @@ public:
     const char * GetAdditionalDataA(int_ bDefaultNullAccept = -1, int_ * pchsize = nullptr) const noexcept;
     _WC_ * GetAdditionalDataW(int_ bDefaultNullAccept = -1, int_ * pwsize = nullptr) const noexcept;
 #endif
+    static void Sprintf(const char* strFormat, int FormatLen, char* Buffer, char* FormatBuffer, CMaaConcatString_<0, false>& NewString, va_list list, int_ SrcLine, const char* SrcFile);
+    static void Sprintf2(const char* strFormat, int FormatLen, const char* strText, int TextLen, char* Buffer, char* FormatBuffer, int_& N, CMaaTmpSprintf2StringsArray*& pStringsArray, CMaaConcatString_<0, false>& NewString, va_list list, int_ SrcLine, const char* SrcFile);
 protected:
+    //friend class CMaaConcatString_;
     CMaaString& Sprintf(const char* strFormat, int FormatLen, va_list list, int_ SrcLine = -1, const char* SrcFile = "unknown") noexcept;
     CMaaString& Sprintf(const char * Format, va_list list, int_ SrcLine = -1, const char* SrcFile = "unknown") noexcept;
     CMaaString& Sprintf(CMaaString strFormat, va_list list, int_ SrcLine = -1, const char* SrcFile = "unknown") noexcept;
@@ -3916,6 +3931,22 @@ private:
 };
 
 template <> void CMaaSwap<CMaaString>(CMaaString& a, CMaaString& b) noexcept;
+
+struct CMaaTmpSprintf2StringsArray : public CMaaDLink
+{
+    struct Rec
+    {
+        CMaaString s;
+        int_ l, r;
+        char c0;
+    };
+    CMaaPtr_<Rec, 1> m;
+
+    CMaaTmpSprintf2StringsArray(int n);
+    ~CMaaTmpSprintf2StringsArray() = default;
+    CMaaTmpSprintf2StringsArray(const CMaaTmpSprintf2StringsArray&) = delete;
+    CMaaTmpSprintf2StringsArray& operator = (const CMaaTmpSprintf2StringsArray&) = delete;
+};
 
 //inline const char * operator+(int x, const CMaaString& str) { return x + (const char *)str; }
 //-----------------------------------------------------------------------------------------
@@ -3987,6 +4018,72 @@ inline const CMaaString & CMaaStrCh(char C, bool bInit = false) noexcept
     return s[(unsigned char)C];
 }
 //------------------------------------------------------
+bool my_is_bad_string_ptr(const char* ptr, int maxlen, int_ SrcLine, const char* SrcFile) noexcept;
+//------------------------------------------------------
+class CMaaTLGlobalStrings
+{
+public:
+    enum e
+    {
+        e_encodeURIComponent_GoodCharacters = 0,
+        /*
+        e_ae_Operators,
+        e_ae__szFunctions1 = e_ae_Operators + 25,
+        e_ae__szFunctions2 = e_ae__szFunctions1 + 9,
+        e_ae__modificators = e_ae__szFunctions2 + 4,
+        e_ae__Modificators_1st_chars_1 = e_ae__modificators + 24,
+        e_ae__Modificators_1st_chars_2,
+        e_ae__ch_modificators,
+        e_ae__sp_ch_modificators,
+        */
+        e_RussianAlphabet2,
+        e_FullRussianAlphabet2,
+        //e_LatRus1251Lower,
+        //e_LatRus1251Upper,
+        e_Cr,
+        e_Lf,
+        e_CrLf,
+        e_LfCr,
+
+        eNullErr,
+        eBadPtrErr,
+        eBad_wstrptr_Err,
+        eBad_wc2ptr_Err,
+        eBad_string_flag_Err,
+        eBad_string_ptr_Err,
+
+        eNullFormatErr,
+        eBadFormatErr,
+        eNullTextErr,
+        eBadTextErr,
+        eGetDateErr,
+        eGetTimeErr,
+
+        e_max
+    };
+
+protected:
+    ceCMaaStringImp c[e_max]; // + 1
+
+    CMaaString::CE::S m[e_max]; // + 1
+
+public:
+    constexpr CMaaTLGlobalStrings() noexcept;
+    static const CMaaString& Get(int_ _e) noexcept;
+};
+
+//int TestRepace();
+
+//const CMaaString & CMaaTLGlobalString(int_ _e) noexcept;
+//inline const CMaaString & CMaaTLGlobalString(CMaaTLGlobalStrings::e _e, bool bInit = false) noexcept { return CMaaTLGlobalString((int_)_e, bInit); }
+//inline const CMaaString & CMaaTLGlobalString2(CMaaTLGlobalStrings::e _e) noexcept { return CMaaTLGlobalString((int_)_e/*, true*/); }
+inline const CMaaString& CMaaTLGlobalString(int_ _e) noexcept
+{
+    return CMaaTLGlobalStrings::Get(_e);
+}
+#define CMaaTLGlobalString2 CMaaTLGlobalString
+//------------------------------------------------------
+
 /*
 #define CMaaString_0 CMaaStrCh('0')
 #define CMaaString_1 CMaaStrCh('1')
@@ -4120,8 +4217,14 @@ CMaaString GetCopyrightText(int_ StartYear = 0, const char * format = "Copyright
 #if (TOOLSLIB_USE_CMAASTRING64 < 2) || (TOOLSLIB_CMAASTRING64 > 0)
 //#define CMaaConcatString_TEST
 
+#if TOOLSLIB_USE_CMAASTRING64 == 2
+typedef CMaaString32 CMaaString32_;
+#else
+typedef CMaaString CMaaString32_;
+#endif
+
 //template <int xThrow = 0, bool bCountMode = false> class CMaaConcatString_;
-template <int xThrow, bool bCountMode> class CMaaConcatString_
+template <int_ xThrow, bool bCountMode> class CMaaConcatString_
 {
     char * m_ptr;
     CMaaPtr_<char, xThrow> m_Buffer;
@@ -4303,11 +4406,8 @@ public:
     }
     template<class S> Helper Append(S format, ...) noexcept((xThrow <= 0 || bCountMode) && noexcept(S(format)))
     {
-#if TOOLSLIB_USE_CMAASTRING64 == 2
-        CMaaString32 txt;
-#else
-        CMaaString txt;
-#endif
+        /*
+        CMaaString32_ txt;
 
         va_list list;
         va_start(list, format);
@@ -4315,6 +4415,28 @@ public:
         va_end(list);
 
         Add((const char*)txt, txt.Length());
+        */
+        
+        char csBuffer[TOOLSLIB_CS_64K];
+
+        CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
+        va_list list;
+        va_start(list, format);
+        NewString.Sprintf((const char *)format, -1, list, __LINE__, __FILE__);
+        va_end(list);
+        Add(NewString.const_ptr(), (int)NewString.Length());
+        return *this;
+    }
+    Helper Append(CMaaString format, ...) noexcept((xThrow <= 0 || bCountMode))
+    {
+        char csBuffer[TOOLSLIB_CS_64K];
+
+        CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
+        va_list list;
+        va_start(list, format);
+        NewString.Sprintf(format, format.Length(), list, __LINE__, __FILE__);
+        va_end(list);
+        Add(NewString.const_ptr(), (int)NewString.Length());
         return *this;
     }
 #if 0
@@ -4347,11 +4469,8 @@ public:
 #endif
     template<class S1, class S2> Helper Append2(const S1& format, S2 text, ...) noexcept((xThrow <= 0 || bCountMode) && noexcept(S2(text)))
     {
-#if TOOLSLIB_USE_CMAASTRING64 == 2
-        CMaaString32 txt;
-#else
-        CMaaString txt;
-#endif
+        /*
+        CMaaString32_ txt;
 
         va_list list;
         va_start(list, text);
@@ -4359,6 +4478,40 @@ public:
         va_end(list);
 
         Add((const char*)txt, txt.Length());
+        */
+
+        char csBuffer[TOOLSLIB_CS_64K];
+
+        CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
+        va_list list;
+        va_start(list, text);
+        NewString.Sprintf2((const char*)format, -1, (const char*)text, -1, list, __LINE__, __FILE__);
+        va_end(list);
+        Add(NewString.const_ptr(), (int)NewString.Length());
+        return *this;
+    }
+    Helper Append2(const CMaaString& format, const char * text, ...) noexcept((xThrow <= 0 || bCountMode))
+    {
+        char csBuffer[TOOLSLIB_CS_64K];
+
+        CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
+        va_list list;
+        va_start(list, text);
+        NewString.Sprintf2(format, format.Length(), text, -1, list, __LINE__, __FILE__);
+        va_end(list);
+        Add(NewString.const_ptr(), (int)NewString.Length());
+        return *this;
+    }
+    Helper Append2(const CMaaString& format, CMaaString text, ...) noexcept((xThrow <= 0 || bCountMode))
+    {
+        char csBuffer[TOOLSLIB_CS_64K];
+
+        CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
+        va_list list;
+        va_start(list, text);
+        NewString.Sprintf2(format, format.Length(), text, text.Length(), list, __LINE__, __FILE__);
+        va_end(list);
+        Add(NewString.const_ptr(), (int)NewString.Length());
         return *this;
     }
 #if 0
@@ -4485,7 +4638,7 @@ public:
         operator += ((char)c);
     }
 #endif
-    void AddLeftOf(const CMaaString &str, int nCount) noexcept(xThrow <= 0 || bCountMode)
+    void AddLeftOf(const CMaaString32_ &str, int nCount) noexcept(xThrow <= 0 || bCountMode)
     {
         // like  *this += str.RefLeft(nCount);
         if (nCount > 0)
@@ -4517,6 +4670,30 @@ public:
             Add(str.const_ptr(), nCount <= l ? nCount : l);
         }
     }
+    void AddMidOf(const CMaaString32_ &str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
+    {
+        // like  *this += str.RefMid(First, nCount);
+        const int l = str.Length();
+        if (First < 0 && nCount > -First)
+        {
+            nCount += First;
+            Add((const char*)str, nCount <= l ? nCount : l);
+        }
+        else if (First >= 0 && First < l)
+        {
+            Add(First + (const char*)str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
+        }
+    }
+#if TOOLSLIB_USE_CMAASTRING64 == 2
+    void AddLeftOf(const CMaaString &str, int nCount) noexcept(xThrow <= 0 || bCountMode)
+    {
+        // like  *this += str.RefLeft(nCount);
+        if (nCount > 0)
+        {
+            const int l = str.Length();
+            Add((const char*)str, nCount <= l ? nCount : l);
+        }
+    }
     void AddMidOf(const CMaaString &str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
     {
         // like  *this += str.RefMid(First, nCount);
@@ -4531,6 +4708,7 @@ public:
             Add(First + (const char*)str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
         }
     }
+#endif
     void AddMidOf(const CMaaConstStr& str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
     {
         if (First < 0 && nCount > -First)
@@ -4583,7 +4761,7 @@ public:
             Required(len);
             if (m_bIsValid)
             {
-                memmove(m_StringLength + m_ptr, str, len);
+                memcpy(m_StringLength + m_ptr, str, len);
             }
         }
         m_StringLength += len;
@@ -4747,6 +4925,130 @@ public:
         return CMaaString64Z;
     }
 #endif
+    //---------------------------------------------------------------------------
+    void Sprintf(const char* Format, int FormatLen, va_list list, int_ SrcLine = -1, const char* SrcFile = "unknown") noexcept
+    {
+        Empty();
+        if (!Format)
+        {
+            try
+            {
+                *this += CMaaTLGlobalString2(CMaaTLGlobalStrings::eNullFormatErr);
+            }
+            catch (...)
+            {
+            }
+        }
+        else if (my_is_bad_string_ptr(Format, FormatLen, SrcLine, SrcFile))
+        {
+            try
+            {
+                *this += CMaaTLGlobalString2(CMaaTLGlobalStrings::eBadFormatErr);
+            }
+            catch (...)
+            {
+            }
+        }
+        else
+        {
+            FormatLen = FormatLen >= 0 ? FormatLen : (int)strlen(Format);
+            CMaaTmpSprintfBuffer* pTmpBuffer;
+            CMaaTmpSprintfBuffer* pTmpFormatBuffer;
+            CMaaString::GetRetSprintfBuffers(1, pTmpBuffer, pTmpFormatBuffer);
+
+            char* Buffer = pTmpBuffer ? (char*)pTmpBuffer->m_Buffer : nullptr;
+            char* FormatBuffer = pTmpFormatBuffer ? (char*)pTmpFormatBuffer->m_Buffer : nullptr;
+
+            try
+            {
+                if constexpr (xThrow == 0 && !bCountMode)
+                {
+                    CMaaString::Sprintf(Format, FormatLen, Buffer, FormatBuffer, *this, list, SrcLine, SrcFile);
+                }
+                else
+                {
+                    char csBuffer[TOOLSLIB_CS_64K];
+                    CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer));
+                    CMaaString::Sprintf(Format, FormatLen, Buffer, FormatBuffer, NewString, list, SrcLine, SrcFile);
+                    Add(NewString.const_ptr(), (int)NewString.Length());
+                }
+            }
+            catch (...)
+            {
+                Empty();
+            }
+
+            if (pTmpBuffer || pTmpFormatBuffer)
+            {
+                CMaaString::GetRetSprintfBuffers(-1, pTmpBuffer, pTmpFormatBuffer);
+            }
+        }
+    }
+    void Sprintf2(const char* Format, int FormatLen, const char* Text, int TextLen, va_list list, int_ SrcLine = -1, const char* SrcFile = "unknown") noexcept
+    {
+        Empty();
+        if (!Format)
+        {
+            return *this += CMaaTLGlobalString2(CMaaTLGlobalStrings::eNullFormatErr);
+        }
+        else if (my_is_bad_string_ptr(Format, FormatLen, SrcLine, SrcFile))
+        {
+            return *this += CMaaTLGlobalString2(CMaaTLGlobalStrings::eBadFormatErr);
+        }
+        else if (!Text)
+        {
+            return *this += CMaaTLGlobalString2(CMaaTLGlobalStrings::eNullTextErr);
+        }
+        else if (my_is_bad_string_ptr(Text, TextLen, SrcLine, SrcFile))
+        {
+            return *this += CMaaTLGlobalString2(CMaaTLGlobalStrings::eBadTextErr);
+        }
+        else
+        {
+            FormatLen = FormatLen >= 0 ? FormatLen : (int)strlen(Format);
+            TextLen = TextLen >= 0 ? TextLen : (int)strlen(Text);
+            CMaaTmpSprintfBuffer* pTmpBuffer;
+            CMaaTmpSprintfBuffer* pTmpFormatBuffer;
+            CMaaTmpSprintf2StringsArray* pStringsArray;
+            CMaaString::GetRetSprintf2Buffers(1, pTmpBuffer, pTmpFormatBuffer, pStringsArray);
+
+            char* Buffer = pTmpBuffer ? (char*)pTmpBuffer->m_Buffer : nullptr;
+            char* FormatBuffer = pTmpFormatBuffer ? (char*)pTmpFormatBuffer->m_Buffer : nullptr;
+            int_ N = 0;
+
+            try
+            {
+                if constexpr (xThrow == 0 && !bCountMode)
+                {
+                    CMaaString::Sprintf2(Format, FormatLen, Text, TextLen, Buffer, FormatBuffer, N, pStringsArray, *this, list, SrcLine, SrcFile);
+                }
+                else
+                {
+                    char csBuffer[TOOLSLIB_CS_64K];
+                    CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer));
+                    CMaaString::Sprintf2(Format, FormatLen, Text, TextLen, Buffer, FormatBuffer, N, pStringsArray, NewString, list, SrcLine, SrcFile);
+                    Add(NewString.const_ptr(), (int)NewString.Length());
+                }
+            }
+            catch (...)
+            {
+                Empty();
+            }
+            if (pStringsArray)
+            {
+                N = N <= (int_)pStringsArray->m.MaxIndex() ? N : (int_)pStringsArray->m.MaxIndex();
+                CMaaTmpSprintf2StringsArray::Rec* ReplText = pStringsArray->m;
+                while (--N >= 0)
+                {
+                    ReplText[N].s.Empty();
+                }
+            }
+            if (pTmpBuffer || pTmpFormatBuffer || pStringsArray)
+            {
+                CMaaString::GetRetSprintf2Buffers(-1, pTmpBuffer, pTmpFormatBuffer, pStringsArray);
+            }
+        }
+    }
 protected:
     void Required(int len) noexcept(xThrow <= 0 || bCountMode)
     {
@@ -5492,70 +5794,6 @@ bool __is_bad_wc2string_ptr(const _WC_* ptr, size_t maxlen, bool bAccert = true,
 #endif
 
 #endif
-
-
-class CMaaTLGlobalStrings
-{
-public:
-    enum e
-    {
-        e_encodeURIComponent_GoodCharacters = 0,
-        /*
-        e_ae_Operators,
-        e_ae__szFunctions1 = e_ae_Operators + 25,
-        e_ae__szFunctions2 = e_ae__szFunctions1 + 9,
-        e_ae__modificators = e_ae__szFunctions2 + 4,
-        e_ae__Modificators_1st_chars_1 = e_ae__modificators + 24,
-        e_ae__Modificators_1st_chars_2,
-        e_ae__ch_modificators,
-        e_ae__sp_ch_modificators,
-        */
-        e_RussianAlphabet2,
-        e_FullRussianAlphabet2,
-        //e_LatRus1251Lower,
-        //e_LatRus1251Upper,
-        e_Cr,
-        e_Lf,
-        e_CrLf,
-        e_LfCr,
-
-        eNullErr,
-        eBadPtrErr,
-        eBad_wstrptr_Err,
-        eBad_wc2ptr_Err,
-        eBad_string_flag_Err,
-        eBad_string_ptr_Err,
-
-        eNullFormatErr,
-        eBadFormatErr,
-        eNullTextErr,
-        eBadTextErr,
-        eGetDateErr,
-        eGetTimeErr,
-
-        e_max
-    };
-
-protected:
-    ceCMaaStringImp c[e_max]; // + 1
-
-    CMaaString::CE::S m[e_max]; // + 1
-
-public:
-    constexpr CMaaTLGlobalStrings() noexcept;
-    static const CMaaString & Get(int_ _e) noexcept;
-};
-
-//int TestRepace();
-
-//const CMaaString & CMaaTLGlobalString(int_ _e) noexcept;
-//inline const CMaaString & CMaaTLGlobalString(CMaaTLGlobalStrings::e _e, bool bInit = false) noexcept { return CMaaTLGlobalString((int_)_e, bInit); }
-//inline const CMaaString & CMaaTLGlobalString2(CMaaTLGlobalStrings::e _e) noexcept { return CMaaTLGlobalString((int_)_e/*, true*/); }
-inline const CMaaString & CMaaTLGlobalString(int_ _e) noexcept
-{
-    return CMaaTLGlobalStrings::Get(_e);
-}
-#define CMaaTLGlobalString2 CMaaTLGlobalString
 
 //------------------------------------------------------------------------------
 //
