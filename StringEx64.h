@@ -117,7 +117,7 @@
 #define SummToTextSumm SummToTextSumm64
 #define NormalizeSummKIB NormalizeSummKIB64
 #define NormalizeSummSpComma NormalizeSummSpComma64
-#define CMaaTmpSprintf2StringsArray CMaaTmpSprintf2StringsArray64
+#define sSprintf2Buffers sSprintf2Buffers64
 #define ceCMaaStringImp ceCMaaStringImp64
 #undef dsscanf3264
 #undef dsscanfV3264
@@ -181,7 +181,7 @@
 #undef SummToTextSumm
 #undef NormalizeSummKIB
 #undef NormalizeSummSpComma
-#undef CMaaTmpSprintf2StringsArray
+#undef sSprintf2Buffers
 #undef ceCMaaStringImp
 #undef dsscanf3264
 #undef dsscanfV3264
@@ -244,7 +244,7 @@
 #define SummToTextSumm SummToTextSumm64
 #define NormalizeSummKIB NormalizeSummKIB64
 #define NormalizeSummSpComma NormalizeSummSpComma64
-#define CMaaTmpSprintf2StringsArray CMaaTmpSprintf2StringsArray64
+#define sSprintf2Buffers sSprintf2Buffers64
 #define ceCMaaStringImp ceCMaaStringImp64
 #undef dsscanf3264
 #undef dsscanfV3264

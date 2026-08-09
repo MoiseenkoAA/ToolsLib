@@ -4880,18 +4880,6 @@ char* mysprintf64(char* txt, _uqword x)
 }
 */
 //---------------------------------------------------------------------------
-/*
-CMaaTmpSprintfBuffer::CMaaTmpSprintfBuffer(size_t len) // = MAX_proc_s_LEN + 1)
-:   m_Buffer(len)
-{
-}
-*/
-//---------------------------------------------------------------------------
-CMaaTmpSprintf2StringsArray::CMaaTmpSprintf2StringsArray(int n)
-:   m(n)
-{
-}
-//---------------------------------------------------------------------------
 CMaaString& CMaaString::Sprintf(const char* Format, va_list list, int_ SrcLine, const char* SrcFile) noexcept
 {
     if (!Format)
@@ -4910,17 +4898,32 @@ CMaaString& CMaaString::Sprintf(CMaaString strFormat, va_list list, int_ SrcLine
     return Sprintf(strFormat, strFormat.Length(), list, SrcLine, SrcFile);
 }
 //---------------------------------------------------------------------------
-void CMaaString::GetRetSprintfBuffers(int a, CMaaTmpSprintfBuffer*& pTmpBuffer, CMaaTmpSprintfBuffer*& pTmpFormatBuffer) noexcept
+#if (TOOLSLIB_USE_CMAASTRING64 < 2) || (TOOLSLIB_CMAASTRING64 == 0)
+sSprintfBuffers::sSprintfBuffers(int_ a)
 {
-    CMaaWin32Locker_aLocker_gLock_Atomic;
-    aLocker_Lock;
-    static CMaaDListAD<CMaaTmpSprintfBuffer> m_BuffersList;
-    static CMaaDListAD<CMaaTmpSprintfBuffer> m_FormatBuffersList;
+    GetRetSprintfBuffers(m_a = a); // init static CMaaDListAD 's
+}
+sSprintfBuffers::~sSprintfBuffers()
+{
+    //if (pTmpBuffer || pTmpFormatBuffer)
+    //{
+        GetRetSprintfBuffers(-m_a);
+    //}
+}
+void sSprintfBuffers::GetRetSprintfBuffers(int_ a) noexcept
+{
+    static constexpr CMaaAtomicFastMutex0W mtx;
+    //CMaaWin32Locker_aLocker_gLock_Atomic;
+    //aLocker_Lock;
+    ((CMaaAtomicFastMutex0W&)mtx).lock();
+    static CMaaSList<CMaaTmpSprintfBuffer> s_BuffersList(true);
+    static CMaaSList<CMaaTmpSprintfBuffer> s_FormatBuffersList(true);
     if (a > 0)
     {
-        pTmpBuffer = m_BuffersList.GetFromFront();
-        pTmpFormatBuffer = m_FormatBuffersList.GetFromFront();
-        aLocker_UnLock;
+        pTmpBuffer = s_BuffersList.GetFromFront();
+        pTmpFormatBuffer = s_FormatBuffersList.GetFromFront();
+        //aLocker_UnLock;
+        ((CMaaAtomicFastMutex0W&)mtx).unlock();
         if (!pTmpBuffer)
         {
             try
@@ -4947,32 +4950,25 @@ void CMaaString::GetRetSprintfBuffers(int a, CMaaTmpSprintfBuffer*& pTmpBuffer, 
     {
         if (pTmpFormatBuffer)
         {
-            m_FormatBuffersList.AddAtFront(pTmpFormatBuffer);
+            s_FormatBuffersList.AddAtFront(pTmpFormatBuffer);
         }
         if (pTmpBuffer)
         {
-            m_BuffersList.AddAtFront(pTmpBuffer);
+            s_BuffersList.AddAtFront(pTmpBuffer);
         }
     }
-    aLocker_UnLock;
+    //aLocker_UnLock;
+    ((CMaaAtomicFastMutex0W&)mtx).unlock();
 }
+#endif
 //---------------------------------------------------------------------------
 CMaaString& CMaaString::Sprintf(const char* strFormat, int FormatLen, va_list list, int_ SrcLine, const char* SrcFile) noexcept
 {
     char csBuffer[TOOLSLIB_CS_64K];
-    //CMaaPtr_<char, -1> Format_(FormatLen + 10 <= MAX_format_s_LEN + 1 ? 0 : FormatLen + 10);
-
-    CMaaTmpSprintfBuffer* pTmpBuffer;
-    CMaaTmpSprintfBuffer* pTmpFormatBuffer;
-    GetRetSprintfBuffers(1, pTmpBuffer, pTmpFormatBuffer);
-
-    char* Buffer = pTmpBuffer ? (char*)pTmpBuffer->m_Buffer : nullptr;
-    char* FormatBuffer = pTmpFormatBuffer ? (char*)pTmpFormatBuffer->m_Buffer : nullptr;
-
     try
     {
         CMaaConcatString NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
-        Sprintf(strFormat, FormatLen, Buffer, FormatBuffer, NewString, list, SrcLine, SrcFile);
+        Sprintf(strFormat, FormatLen, NewString, list, SrcLine, SrcFile);
         *this = (CMaaString)NewString;
     }
     catch(...)
@@ -4980,16 +4976,15 @@ CMaaString& CMaaString::Sprintf(const char* strFormat, int FormatLen, va_list li
         Empty();
     }
 
-    if (pTmpBuffer || pTmpFormatBuffer)
-    {
-        GetRetSprintfBuffers(-1, pTmpBuffer, pTmpFormatBuffer);
-    }
-
     return *this;
 }
 //---------------------------------------------------------------------------
-void CMaaString::Sprintf(const char * strFormat, int FormatLen, char* Buffer, char* FormatBuffer, CMaaConcatString &NewString, va_list list, int_ SrcLine, const char* SrcFile)
+void CMaaString::Sprintf(const char * strFormat, int FormatLen, CMaaConcatString &NewString, va_list list, int_ SrcLine, const char* SrcFile)
 {
+    sSprintfBuffers Buffers;
+    char* Buffer = Buffers.pTmpBuffer ? (char*)Buffers.pTmpBuffer->m_Buffer : nullptr;
+    char* FormatBuffer = Buffers.pTmpFormatBuffer ? (char*)Buffers.pTmpFormatBuffer->m_Buffer : nullptr;
+
     char Char2[2] = { 0, 0 };
     char i64_txt[64];
 
@@ -5984,19 +5979,52 @@ CMaaString& CMaaString::Sprintf2(CMaaString strFormat, CMaaString strText, va_li
     return Sprintf2(strFormat, strFormat.Length(), strText, strText.Length(), list, SrcLine, SrcFile);
 }
 //---------------------------------------------------------------------------
-void CMaaString::GetRetSprintf2Buffers(int a, CMaaTmpSprintfBuffer*& pTmpBuffer, CMaaTmpSprintfBuffer*& pTmpFormatBuffer, CMaaTmpSprintf2StringsArray*& pStringsArray) noexcept
+sSprintf2Buffers::CMaaTmpSprintf2StringsArray::CMaaTmpSprintf2StringsArray(int_ n)
+:   m(n),
+    N(0)
 {
-    CMaaWin32Locker_aLocker_gLock_Atomic;
-    aLocker_Lock;
-    static CMaaDListAD<CMaaTmpSprintfBuffer> m_BuffersList;
-    static CMaaDListAD<CMaaTmpSprintfBuffer> m_FormatBuffersList;
-    static CMaaDListAD<CMaaTmpSprintf2StringsArray> m_StringsArrayList;
+}
+void sSprintf2Buffers::CMaaTmpSprintf2StringsArray::Empty() noexcept
+{
+    N = N <= (int_)m.MaxIndex() ? N : (int_)m.MaxIndex();
+    Rec* ReplText = m;
+    while (--N >= 0)
+    {
+        ReplText[N].s.Empty();
+    }
+    N = 0;
+}
+sSprintf2Buffers::sSprintf2Buffers(int_ a)
+{
+    GetRetSprintf2Buffers(m_a = a); // init static CMaaDListAD 's
+}
+sSprintf2Buffers::~sSprintf2Buffers()
+{
+    //if (pTmpBuffer || pTmpFormatBuffer || pStringsArray)
+    //{
+        GetRetSprintf2Buffers(-m_a);
+    //}
+}
+void sSprintf2Buffers::GetRetSprintf2Buffers(int_ a) noexcept
+{
+    if (a < 0 && pStringsArray)
+    {
+        pStringsArray->Empty();
+    }
+    static constexpr CMaaAtomicFastMutex0W mtx;
+    //CMaaWin32Locker_aLocker_gLock_Atomic;
+    //aLocker_Lock;
+    ((CMaaAtomicFastMutex0W&)mtx).lock();
+    static CMaaSList<CMaaTmpSprintfBuffer> s_BuffersList(true);
+    static CMaaSList<CMaaTmpSprintfBuffer> s_FormatBuffersList(true);
+    static CMaaSList<CMaaTmpSprintf2StringsArray> s_StringsArrayList(true);
     if (a > 0)
     {
-        pTmpBuffer = m_BuffersList.GetFromFront();
-        pTmpFormatBuffer = m_FormatBuffersList.GetFromFront();
-        pStringsArray = m_StringsArrayList.GetFromFront();
-        aLocker_UnLock;
+        pTmpBuffer = s_BuffersList.GetFromFront();
+        pTmpFormatBuffer = s_FormatBuffersList.GetFromFront();
+        pStringsArray = s_StringsArrayList.GetFromFront();
+        //aLocker_UnLock;
+        ((CMaaAtomicFastMutex0W&)mtx).unlock();
         if (!pTmpBuffer)
         {
             try
@@ -6023,63 +6051,43 @@ void CMaaString::GetRetSprintf2Buffers(int a, CMaaTmpSprintfBuffer*& pTmpBuffer,
     {
         if (pTmpFormatBuffer)
         {
-            m_FormatBuffersList.AddAtFront(pTmpFormatBuffer);
+            s_FormatBuffersList.AddAtFront(pTmpFormatBuffer);
         }
         if (pTmpBuffer)
         {
-            m_BuffersList.AddAtFront(pTmpBuffer);
+            s_BuffersList.AddAtFront(pTmpBuffer);
         }
         if (pStringsArray)
         {
-            m_StringsArrayList.AddAtFront(pStringsArray);
+            //pStringsArray->Empty(); // upper
+            s_StringsArrayList.AddAtFront(pStringsArray);
         }
     }
-    aLocker_UnLock;
+    //aLocker_UnLock;
+    ((CMaaAtomicFastMutex0W&)mtx).unlock();
 }
 //---------------------------------------------------------------------------
 CMaaString& CMaaString::Sprintf2(const char* strFormat, int FormatLen, const char* strText, int TextLen, va_list list, int_ SrcLine, const char* SrcFile) noexcept
 {
-    //CMaaPtr_<char, -1> Format_(FormatLen + 10 <= MAX_format_s_LEN + 1 ? 0 : FormatLen + 10);
-
-    CMaaTmpSprintfBuffer* pTmpBuffer;
-    CMaaTmpSprintfBuffer* pTmpFormatBuffer;
-    CMaaTmpSprintf2StringsArray* pStringsArray;
-    GetRetSprintf2Buffers(1, pTmpBuffer, pTmpFormatBuffer, pStringsArray);
-
-    char* Buffer = pTmpBuffer ? (char*)pTmpBuffer->m_Buffer : nullptr;
-    char* FormatBuffer = pTmpFormatBuffer ? (char*)pTmpFormatBuffer->m_Buffer : nullptr;
-    int_ N = 0;
-
     try
     {
         CMaaConcatString NewString;
-        Sprintf2(strFormat, FormatLen, strText, TextLen, Buffer, FormatBuffer, N, pStringsArray, NewString, list, SrcLine, SrcFile);
+        Sprintf2(strFormat, FormatLen, strText, TextLen, NewString, list, SrcLine, SrcFile);
         *this = (CMaaString)NewString;
     }
     catch (...)
     {
         Empty();
     }
-    if (pStringsArray)
-    {
-        N = N <= (int_)pStringsArray->m.MaxIndex() ? N : (int_)pStringsArray->m.MaxIndex();
-        CMaaTmpSprintf2StringsArray::Rec* ReplText = pStringsArray->m;
-        while (--N >= 0)
-        {
-            ReplText[N].s.Empty();
-        }
-    }
-    if (pTmpBuffer || pTmpFormatBuffer || pStringsArray)
-    {
-        GetRetSprintf2Buffers(-1, pTmpBuffer, pTmpFormatBuffer, pStringsArray);
-    }
-
     return *this;
 }
 //---------------------------------------------------------------------------
-void CMaaString::Sprintf2(const char* strFormat, int FormatLen, const char* strText, int TextLen, char* Buffer, char* FormatBuffer, int_ &N, CMaaTmpSprintf2StringsArray *& pStringsArray, CMaaConcatString &NewString, va_list list, int_ SrcLine, const char* SrcFile)
+void CMaaString::Sprintf2(const char* strFormat, int FormatLen, const char* strText, int TextLen, CMaaConcatString &NewString, va_list list, int_ SrcLine, const char* SrcFile)
 {
-    N = 0;
+    sSprintf2Buffers Buffers;
+    char* Buffer = Buffers.pTmpBuffer ? (char*)Buffers.pTmpBuffer->m_Buffer : nullptr;
+    char* FormatBuffer = Buffers.pTmpFormatBuffer ? (char*)Buffers.pTmpFormatBuffer->m_Buffer : nullptr;
+    sSprintf2Buffers::CMaaTmpSprintf2StringsArray*& pStringsArray = Buffers.pStringsArray;
 
     char Char2[2] = { 0, 0 };
     char i64_txt[64];
@@ -6111,9 +6119,15 @@ void CMaaString::Sprintf2(const char* strFormat, int FormatLen, const char* strT
         }
         else
         {
-            pStringsArray = TL_NEW CMaaTmpSprintf2StringsArray(MaxN);
+            pStringsArray = TL_NEW sSprintf2Buffers::CMaaTmpSprintf2StringsArray(MaxN);
         }
-        CMaaTmpSprintf2StringsArray::Rec* ReplText = pStringsArray->m;
+        if (!pStringsArray || (int_)pStringsArray->m.MaxIndex() < MaxN)
+        {
+            NewString.Empty();
+            return;
+        }
+        sSprintf2Buffers::CMaaTmpSprintf2StringsArray::Rec* ReplText = pStringsArray->m;
+        int_ &N = pStringsArray->N;
 
         for (int Start = 0; Start < FormatLen && N < MaxN; )
         {
