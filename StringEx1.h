@@ -617,27 +617,54 @@ extern std::atomic<int_> gCMaaStringImpStatShort, gCMaaStringImpStatLong, gCMaaS
 #endif
 
 //------------------------------------------------------------------------------
-struct CMaaTmpSprintfBuffer : public CMaaSLink
+class CMaaTmpSprintfBuffer : public CMaaSLink
 {
+    friend class sSprintfBuffers;
+    friend class sSprintf2Buffers;
+#if TOOLSLIB_USE_CMAASTRING64 == 2
+    friend class sSprintf2Buffers64;
+#endif
     CMaaPtr_<char, 1> m_Buffer;
-
     CMaaTmpSprintfBuffer(size_t len)
     :   m_Buffer(len)
     {
     }
+public:
+    char* ptr() noexcept { return m_Buffer; }
     ~CMaaTmpSprintfBuffer() = default;
     CMaaTmpSprintfBuffer(const CMaaTmpSprintfBuffer&) = delete;
     CMaaTmpSprintfBuffer& operator = (const CMaaTmpSprintfBuffer&) = delete;
 };
-struct sSprintfBuffers
+class sSprintfBuffers
 {
-    sSprintfBuffers(int a = 1);
-    ~sSprintfBuffers();
+    struct sInstance
+    {
+        CMaaAtomicFastMutex0W& m_mtx;
+        CMaaSList<CMaaTmpSprintfBuffer> m_BuffersList;
+        CMaaSList<CMaaTmpSprintfBuffer> m_FormatBuffersList;
+
+        sInstance(const CMaaAtomicFastMutex0W& m) noexcept
+        :   m_mtx((CMaaAtomicFastMutex0W&)m),
+            m_BuffersList(true),
+            m_FormatBuffersList(true)
+        {
+        }
+    };
+    sInstance& m;
+    static sInstance& GetInstance() noexcept;
+    sSprintfBuffers(const sSprintfBuffers&) = delete;
+    sSprintfBuffers& operator = (const sSprintfBuffers&) = delete;
+public:
     CMaaTmpSprintfBuffer* pTmpBuffer;
     CMaaTmpSprintfBuffer* pTmpFormatBuffer;
-private:
-    void GetRetSprintfBuffers(int a) noexcept;
-    int m_a;
+
+    sSprintfBuffers() noexcept;
+    static void Init() noexcept
+    {
+        sInstance& m(GetInstance());
+        m.m_mtx.unlock();
+    }
+    ~sSprintfBuffers();
 };
 //------------------------------------------------------------------------------
 template <int xThrow = 0, bool bCountMode = false> class CMaaConcatString_;

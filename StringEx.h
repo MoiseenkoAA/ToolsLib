@@ -3930,8 +3930,9 @@ private:
 template <> void CMaaSwap<CMaaString>(CMaaString& a, CMaaString& b) noexcept;
 
 //------------------------------------------------------------------------------
-struct sSprintf2Buffers
+class sSprintf2Buffers
 {
+public:
     struct CMaaTmpSprintf2StringsArray : public CMaaSLink
     {
         struct Rec
@@ -3949,15 +3950,40 @@ struct sSprintf2Buffers
         CMaaTmpSprintf2StringsArray(const CMaaTmpSprintf2StringsArray&) = delete;
         CMaaTmpSprintf2StringsArray& operator = (const CMaaTmpSprintf2StringsArray&) = delete;
     };
-    sSprintf2Buffers(int_ a = 1);
-    ~sSprintf2Buffers();
+private:
+    struct sInstance
+    {
+        CMaaAtomicFastMutex0W& m_mtx;
+        CMaaSList<CMaaTmpSprintfBuffer> m_BuffersList;
+        CMaaSList<CMaaTmpSprintfBuffer> m_FormatBuffersList;
+        CMaaSList<CMaaTmpSprintf2StringsArray> m_StringsArrayList;
+
+        sInstance(const CMaaAtomicFastMutex0W& m) noexcept
+        :   m_mtx((CMaaAtomicFastMutex0W&)m),
+            m_BuffersList(true),
+            m_FormatBuffersList(true),
+            m_StringsArrayList(true)
+        {
+        }
+    };
+    sInstance& m;
+    static sInstance& GetInstance() noexcept;
+    sSprintf2Buffers(const sSprintf2Buffers&) = delete;
+    sSprintf2Buffers& operator = (const sSprintf2Buffers&) = delete;
+public:
     CMaaTmpSprintfBuffer* pTmpBuffer;
     CMaaTmpSprintfBuffer* pTmpFormatBuffer;
     CMaaTmpSprintf2StringsArray* pStringsArray;
-private:
-    void GetRetSprintf2Buffers(int_ a) noexcept;
-    int_ m_a;
+
+    sSprintf2Buffers() noexcept;
+    static void Init() noexcept
+    {
+        sInstance& m(GetInstance());
+        m.m_mtx.unlock();
+    }
+    ~sSprintf2Buffers();
 };
+
 //------------------------------------------------------------------------------
 
 //inline const char * operator+(int x, const CMaaString& str) { return x + (const char *)str; }

@@ -4724,10 +4724,10 @@ int gCMaaToolLib_crt_Initializer() noexcept
 //#endif
             //const CMaaString aaa2 = CMaaStringJsonFloat;
 
-            sSprintfBuffers Buffers(0);
-            sSprintf2Buffers Buffers2(0);
+            sSprintfBuffers::Init();
+            sSprintf2Buffers::Init();
 #if TOOLSLIB_USE_CMAASTRING64 == 2
-            sSprintf2Buffers64 Buffers2_64(0);
+            sSprintf2Buffers64::Init();
 #endif
 
             //CMaaGetCpuCount();
