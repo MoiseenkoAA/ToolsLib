@@ -1352,6 +1352,7 @@
     <ClInclude Include="resize_lim.h" />
     <ClInclude Include="sk2add.h" />
     <ClInclude Include="socket2.h" />
+    <ClInclude Include="SprintfEx.h" />
     <ClInclude Include="StringEx.h" />
     <ClInclude Include="StringEx1.h" />
     <ClInclude Include="StringEx64.h" />

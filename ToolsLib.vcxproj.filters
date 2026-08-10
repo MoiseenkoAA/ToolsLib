@@ -394,6 +394,9 @@
     <ClInclude Include="MaaTL_2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SprintfEx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RecvMulticast.txt" />

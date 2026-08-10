@@ -98,6 +98,133 @@ class CMaaString64;
 #endif
 #endif
 
+//---------------------------------------------------------------------------
+// pre-Strintf[2]Ex begin
+//---------------------------------------------------------------------------
+#ifdef TOOLSLIB_LESS_MEMORY
+#define MAX_proc_s_LEN (64*1024-1)  // added by MAA 17.02.2003
+#else
+//#define MAX_proc_s_LEN (10*64*1024-1)  // added by MAA 17.02.2003
+#define MAX_proc_s_LEN (64*1024-1)  // 23.12.2024 - it is not need to use large buffers (large buffer it is not required: '%s', '%S', '%m' are not limited)
+#endif
+#define MAX_format_s_LEN (32*1024-1)   // for preallocated buffers
+//---------------------------------------------------------------------------
+#ifndef __unix__
+#define TOOLSLIB_SPRINTF_GET_NUMBER( var )                         \
+{                                                 \
+    var = -1;                                    \
+    while( '0' <= c && c <= '9' )               \
+    {                                            \
+        if  ( var == -1 )                      \
+        {                                       \
+            var = 0;                           \
+        }                                       \
+        var = var * 10 + ( int_ )( c - '0' );    \
+        c = Format [ ++i ];                     \
+    }                                            \
+    if  ( c == '*' && var == -1 )                 \
+    {                                            \
+        var = -2;                               \
+        c = Format [ ++i ];                     \
+    }                                            \
+}
+//---------------------------------------------------------------------------
+#define TOOLSLIB_SPRINTF_OUTPUT( arg )                             \
+{                                                 \
+    if  ( width == -2 )                         \
+    {                                            \
+        if  ( precision == -2 )                \
+        {                                       \
+            sprintf ( Buffer, Format + Start, arg_width, arg_precision, arg ); \
+        }                                       \
+        else                                    \
+        {                                       \
+            sprintf ( Buffer, Format + Start, arg_width, arg );        \
+        }                                       \
+    }                                            \
+    else                                         \
+    {                                            \
+        if  ( precision == -2 )                \
+        {                                       \
+            sprintf ( Buffer, Format + Start, arg_precision, arg );    \
+        }                                       \
+        else                                    \
+        {                                       \
+            sprintf ( Buffer, Format + Start, arg );                   \
+        }                                       \
+    }                                            \
+}
+#else
+#define TOOLSLIB_SPRINTF_GET_NUMBER(var) {var=-1;while('0'<=c&&c<='9'){if(var==-1){var=0;}var=var*10+(int_)(c-'0');c=Format[++i];}if(c=='*'&&var==-1){var=-2;c=Format[++i];}}
+//---------------------------------------------------------------------------
+#define TOOLSLIB_SPRINTF_OUTPUT(arg) {if(width==-2){if(precision==-2){sprintf(Buffer,Format+Start,arg_width,arg_precision,arg);}else{sprintf(Buffer,Format+Start,arg_width,arg);}}else{if(precision==-2){sprintf(Buffer,Format+Start,arg_precision,arg);}else{sprintf(Buffer,Format+Start,arg);}}}
+#endif
+//---------------------------------------------------------------------------
+
+#ifdef _WIN32__
+#define TOOLSLIB_SPRINTF_CHECK_POINTERS 2 // 0 - no, 1 - check, 2 - check & log
+#else
+#define TOOLSLIB_SPRINTF_CHECK_POINTERS 0 // 0 - no, 1 - check, 2 - check & log
+#endif
+
+#if TOOLSLIB_SPRINTF_CHECK_POINTERS != 0
+#define TOOLSLIB_SPRINTF_CHECK_STRINGS // check '%S'
+#endif
+
+#ifdef _WIN32
+bool __is_bad_read_ptr(const void* ptr, int_ len, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_write_ptr(void* ptr, int_ len, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_write_ptr(void* ptr, int_ len, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_string_ptr(const char* ptr, int_ maxlen, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_wstring_ptr(const wchar_t* ptr, int_ maxlen, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_wc2string_ptr(const _WC_* ptr, int_ maxlen, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+
+bool __is_bad_read_ptr(const void* ptr, size_t len, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_write_ptr(void* ptr, size_t len, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_string_ptr(const char* ptr, size_t maxlen, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_wstring_ptr(const wchar_t* ptr, size_t maxlen, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_wc2string_ptr(const _WC_* ptr, size_t maxlen, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+#else
+/*
+#ifdef __linux__
+int_ IsBadReadPtr(const void* ptr, size_t s) noexcept;
+int_ IsBadWritePtr(void* ptr, size_t s) noexcept;
+#else
+int_ IsBadWritePtr(void* ptr, size_t s) noexcept;
+#endif
+int_ IsBadStringPtrA(const char* ptr, size_t s) noexcept;
+int_ IsBadStringPtrW(const wchar_t* ptr, size_t s) noexcept;
+int_ IsBadStringPtrWC2(const _WC_* ptr, size_t s) noexcept;
+*/
+bool __is_bad_read_ptr(const void* ptr, int_ len, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_read_ptr(const void* ptr, size_t len, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_write_ptr(void* ptr, int len, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_string_ptr(const char* ptr, int maxlen, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_wstring_ptr(const wchar_t* ptr, int maxlen, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+bool __is_bad_wc2string_ptr(const _WC_* ptr, int maxlen, bool bAccert, const char* SrcFile, int_ SrcLine) noexcept;
+#endif
+
+
+#if TOOLSLIB_SPRINTF_CHECK_POINTERS == 0
+#define _is_bad_read_ptr(ptr, len) 0
+#define _is_bad_write_ptr(ptr, len) 0
+#define _is_bad_string_ptr(ptr, maxlen) 0
+#define _is_bad_wstring_ptr(ptr, maxlen) 0
+#define _is_bad_wc2string_ptr(ptr, maxlen) 0
+#else
+#define _is_bad_read_ptr(ptr, len) __is_bad_read_ptr(ptr, len, TOOLSLIB_SPRINTF_CHECK_POINTERS == 2, SrcFile, SrcLine)
+#define _is_bad_write_ptr(ptr, len) __is_bad_write_ptr(ptr, len, TOOLSLIB_SPRINTF_CHECK_POINTERS == 2, SrcFile, SrcLine)
+#define _is_bad_string_ptr(ptr, maxlen) __is_bad_string_ptr(ptr, maxlen, TOOLSLIB_SPRINTF_CHECK_POINTERS == 2, SrcFile, SrcLine)
+#define _is_bad_wstring_ptr(ptr, maxlen) __is_bad_wstring_ptr(ptr, maxlen, TOOLSLIB_SPRINTF_CHECK_POINTERS == 2, SrcFile, SrcLine)
+#define _is_bad_wc2string_ptr(ptr, maxlen) __is_bad_wc2string_ptr(ptr, maxlen, TOOLSLIB_SPRINTF_CHECK_POINTERS == 2, SrcFile, SrcLine)
+#endif
+
+template<bool bZTerm = true> constexpr void MacToText(char* txt, const _byte* mac) noexcept;
+char* CMaaIpToTextEx(char* txt, _IP ip, int Mode = 0) noexcept;
+char* CMaaIpToTextEx(char* txt, const _byte* ip, int Mode = 0) noexcept;
+//---------------------------------------------------------------------------
+// pre-Strintf[2]Ex end
+//---------------------------------------------------------------------------
 
 _qword maa_wcslen(const _WC_* pText) noexcept;
 _qword maa_wcslen32(const char32_t* pText) noexcept;
@@ -2022,7 +2149,7 @@ public:
         return false;
 #endif
     }
-    static bool IsBadStrPtr(CMaaString *p); // check is the string memory readable/writable
+    static bool IsBadStrPtr(CMaaString *p) noexcept; // check is the string memory readable/writable
 
     //char operator [] ( size_t Index ) const;
 
@@ -3869,8 +3996,6 @@ public:
     const char * GetAdditionalDataA(int_ bDefaultNullAccept = -1, int_ * pchsize = nullptr) const noexcept;
     _WC_ * GetAdditionalDataW(int_ bDefaultNullAccept = -1, int_ * pwsize = nullptr) const noexcept;
 #endif
-    static void Sprintf(const char* strFormat, int FormatLen, CMaaConcatString_<0, false>& NewString, va_list list, int_ SrcLine, const char* SrcFile);
-    static void Sprintf2(const char* strFormat, int FormatLen, const char* strText, int TextLen, CMaaConcatString_<0, false>& NewString, va_list list, int_ SrcLine, const char* SrcFile);
 protected:
     //friend class CMaaConcatString_;
     CMaaString& Sprintf(const char* strFormat, int FormatLen, va_list list, int_ SrcLine = -1, const char* SrcFile = "unknown") noexcept;
@@ -4138,6 +4263,411 @@ inline const CMaaString& CMaaTLGlobalString(int_ _e) noexcept
 #define CMaaString_A CMaaStrCh('A')
 #define CMaaString_Z CMaaStrCh('Z')
 */
+
+#if TOOLSLIB_CMAASTRING64 <= 1
+//-----------------------------------------------------------------------------------------------
+template<class T> int SignedIntegerToString_d(T x, char* Buffer, char mode = 0, int width = -1, char z = 0) noexcept //, int prefix = 0)
+{
+    const bool mode_s = (mode == '+' || mode == ('+' ^ ','));
+    const bool mode_c = (mode == ',' || mode == ('+' ^ ','));
+    //prefix = prefix ? 2 : 0;
+    //prefix = 0;
+    if (width < 0)
+    {
+        z = 0;
+    }
+    int width2 = width >= 0 ? width : -width;
+    int Len;
+    char s;
+    if (!x)
+    {
+        if (z == '0' && width2)
+        {
+            memset(Buffer, '0', width2);
+            Buffer[Len = width2] = 0;
+            return Len;
+        }
+        else
+        {
+            Buffer[0] = '0';
+            Len = 1;
+            s = 0;
+            //prefix = 0;
+        }
+    }
+    else
+    {
+        s = x < 0 ? '-' : mode_s ? '+' : 0;
+        char* p = Buffer;
+        const int_ d10 = 10;
+        int nDigits = 0;
+        for (x = x > 0 ? -x : x; x; x /= d10)
+        {
+            if (mode_c)
+            {
+                if (nDigits && !(nDigits % 3))
+                {
+                    *p++ = ',';
+                }
+                nDigits++;
+            }
+            *p++ = '0' - (char)(x % d10);
+        }
+        Len = (int)(p - Buffer);
+        if (z != '0' || ((s /* || prefix*/) && width > 0 && width <= Len + (s ? 1 : 0) /* +prefix */))
+        {
+            /*
+            if (prefix)
+            {
+                *p++ = 'x';
+                *p++ = '0';
+            }
+            */
+            if (s)
+            {
+                *p++ = s;
+            }
+            //s = prefix = 0;
+            s = 0;
+            Len = (int)(p - Buffer);
+        }
+        else if (width <= 0)
+        {
+            /*
+            if (prefix)
+            {
+                *p++ = 'x';
+                *p++ = '0';
+            }
+            */
+            if (s)
+            {
+                *p++ = s;
+                // s = 0;
+            }
+            Len = (int)(p - Buffer);
+        }
+        for (int i = 0; i < Len / 2; i++)
+        {
+            char c = Buffer[i];
+            Buffer[i] = Buffer[Len - 1 - i];
+            Buffer[Len - 1 - i] = c;
+        }
+    }
+    if (width < 0 && width2 > Len)
+    {
+        memset(Buffer + Len, ' ', width2 - Len);
+        Len = width2;
+    }
+    else if (width > Len + (s ? 1 : 0) /* +prefix */)
+    {
+        memmove(Buffer + width - Len, Buffer, Len);
+        memset(Buffer, z == '0' ? '0' : ' ', width - Len);
+        if (s)
+        {
+            Buffer[0] = s;
+            /*
+            if (prefix)
+            {
+                Buffer[1] = '0';
+                Buffer[2] = 'x';
+            }
+            */
+        }
+        /*
+        else if (prefix)
+        {
+            Buffer[0] = '0';
+            Buffer[1] = 'x';
+        }
+        */
+        Len = width;
+    }
+    Buffer[Len] = 0;
+    return Len;
+}
+//-----------------------------------------------------------------------------------------------
+template<class T> int UnsignedIntegerToString_d(T x, char* Buffer, char mode = 0, int width = -1, char z = 0) noexcept //, int prefix = 0)
+{
+    const bool mode_s = (mode == '+' || mode == ('+' ^ ','));
+    const bool mode_c = (mode == ',' || mode == ('+' ^ ','));
+    //prefix = prefix ? 2 : 0;
+    //prefix = 0;
+    if (width < 0)
+    {
+        z = 0;
+    }
+    int width2 = width >= 0 ? width : -width;
+    int Len;
+    char s;
+    if (!x)
+    {
+        if (z == '0' && width2)
+        {
+            memset(Buffer, '0', width2);
+            Buffer[Len = width2] = 0;
+            return Len;
+        }
+        else
+        {
+            Buffer[0] = '0';
+            Len = 1;
+            s = 0;
+            //prefix = 0;
+        }
+    }
+    else
+    {
+        s = /*x < 0 ? '-' :*/ mode_s ? '+' : 0;
+        char* p = Buffer;
+        const uint_ d10 = 10;
+        int nDigits = 0;
+        for (; x; x /= d10)
+        {
+            if (mode_c)
+            {
+                if (nDigits && !(nDigits % 3))
+                {
+                    *p++ = ',';
+                }
+                nDigits++;
+            }
+            *p++ = '0' + (char)(x % d10);
+        }
+        Len = (int)(p - Buffer);
+        if (z != '0' || ((s /* || prefix*/) && width > 0 && width <= Len + (s ? 1 : 0) /* +prefix */))
+        {
+            /*
+            if (prefix)
+            {
+                *p++ = 'x';
+                *p++ = '0';
+            }
+            */
+            if (s)
+            {
+                *p++ = s;
+            }
+            //s = prefix = 0;
+            s = 0;
+            Len = (int)(p - Buffer);
+        }
+        else if (width <= 0)
+        {
+            /*
+            if (prefix)
+            {
+                *p++ = 'x';
+                *p++ = '0';
+            }
+            */
+            if (s)
+            {
+                *p++ = s;
+                // s = 0;
+            }
+            Len = (int)(p - Buffer);
+        }
+        for (int i = 0; i < Len / 2; i++)
+        {
+            char c = Buffer[i];
+            Buffer[i] = Buffer[Len - 1 - i];
+            Buffer[Len - 1 - i] = c;
+        }
+    }
+    if (width < 0 && width2 > Len)
+    {
+        memset(Buffer + Len, ' ', width2 - Len);
+        Len = width2;
+    }
+    else if (width > Len + (s ? 1 : 0) /* +prefix */)
+    {
+        memmove(Buffer + width - Len, Buffer, Len);
+        memset(Buffer, z == '0' ? '0' : ' ', width - Len);
+        if (s)
+        {
+            Buffer[0] = s;
+            /*
+            if (prefix)
+            {
+                Buffer[1] = '0';
+                Buffer[2] = 'x';
+            }
+            */
+        }
+        /*
+        else if (prefix)
+        {
+            Buffer[0] = '0';
+            Buffer[1] = 'x';
+        }
+        */
+        Len = width;
+    }
+    Buffer[Len] = 0;
+    return Len;
+}
+//-----------------------------------------------------------------------------------------------
+template<class T> int UnsignedIntegerToString_x(T x, char* Buffer, int width = -1, char mode = 'x', char z = 0, char prefix = 0) noexcept
+{
+    mode = mode == 'X' ? 'A' - 10 : 'a' - 10;
+    int width2 = width >= 0 ? width : -width;
+    if (width < 0)
+    {
+        z = 0;
+    }
+    int Len;
+    if (!x)
+    {
+        Buffer[0] = '0';
+        Len = 1;
+    }
+    else
+    {
+        char* p = Buffer;
+        int nDigits = 0;
+        for (; x; x >>= 4)
+        {
+            char c = (char)(x & 0x0f);
+            c = c < 10 ? c + '0' : c + mode;
+            *p++ = c;
+        }
+        Len = (int)(p - Buffer);
+        {
+            if (prefix)
+            {
+                *p++ = prefix == 'X' ? 'X' : 'x';
+                *p++ = '0';
+                Len += 2;
+            }
+        }
+        for (int i = 0; i < Len / 2; i++)
+        {
+            char c = Buffer[i];
+            Buffer[i] = Buffer[Len - 1 - i];
+            Buffer[Len - 1 - i] = c;
+        }
+    }
+    if (width < 0 && width2 > Len)
+    {
+        memset(Buffer + Len, ' ', width2 - Len);
+        Len = width2;
+    }
+    else if (width > Len)
+    {
+        memmove(Buffer + width - Len, Buffer, Len);
+        if (z == '0')
+        {
+            memset(Buffer, '0', width - Len + (prefix ? 2 : 0));
+            if (prefix)
+            {
+                Buffer[0] = '0';
+                Buffer[1] = prefix == 'X' ? 'X' : 'x';
+            }
+        }
+        else
+        {
+            memset(Buffer, ' ', width - Len);
+        }
+        Len = width;
+    }
+    Buffer[Len] = 0;
+    return Len;
+}
+//-----------------------------------------------------------------------------------------------
+template<class T> int UnsignedIntegerToString_o(T x, char* Buffer, int width = -1, char z = 0, char prefix = 0) noexcept
+{
+    //mode = mode == 'X' ? 'A' - 10 : 'a' - 10;
+    int width2 = width >= 0 ? width : -width;
+    if (width < 0)
+    {
+        z = 0;
+    }
+    int Len;
+    if (!x)
+    {
+        Buffer[0] = '0';
+        Len = 1;
+    }
+    else
+    {
+        char* p = Buffer;
+        int nDigits = 0;
+        for (; x; x >>= 3)
+        {
+            *p++ = (char)(x & 0x07) + '0';
+        }
+        Len = (int)(p - Buffer);
+        {
+            if (prefix)
+            {
+                *p++ = '0';
+                Len++;
+            }
+        }
+        for (int i = 0; i < Len / 2; i++)
+        {
+            char c = Buffer[i];
+            Buffer[i] = Buffer[Len - 1 - i];
+            Buffer[Len - 1 - i] = c;
+        }
+    }
+    if (width < 0 && width2 > Len)
+    {
+        memset(Buffer + Len, ' ', width2 - Len);
+        Len = width2;
+    }
+    else if (width > Len)
+    {
+        memmove(Buffer + width - Len, Buffer, Len);
+        memset(Buffer, z == '0' ? '0' : ' ', width - Len);
+        Len = width;
+    }
+    Buffer[Len] = 0;
+    return Len;
+}
+//-----------------------------------------------------------------------------------------------
+template<class T> int UnsignedIntegerToString_p(T x, char* Buffer, int width = -1, char mode = 'x', char prefix = 0) noexcept
+{
+    mode = mode == 'X' ? 'A' - 10 : 'a' - 10;
+    int width2 = width >= 0 ? width : -width;
+    int Len;
+    if (prefix)
+    {
+        Buffer[0] = '0';
+        Buffer[1] = prefix == 'X' ? 'X' : 'x';
+        Len = 2;
+    }
+    else
+    {
+        Len = 0;
+    }
+    {
+        char* p = Buffer + Len + 2 * sizeof(T);
+        for (; p > Buffer + Len; x >>= 4)
+        {
+            char c = (char)(x & 0x0f);
+            c = c < 10 ? c + '0' : c + mode;
+            *(--p) = c;
+        }
+        Len += (int)(2 * sizeof(T));
+    }
+    if (width < 0 && width2 > Len)
+    {
+        memset(Buffer + Len, ' ', width2 - Len);
+        Len = width2;
+    }
+    else if (width > Len)
+    {
+        memmove(Buffer + width - Len, Buffer, Len);
+        memset(Buffer, ' ', width - Len);
+        Len = width;
+    }
+    Buffer[Len] = 0;
+    return Len;
+}
+//-----------------------------------------------------------------------------------------------
+#endif
 
 #if TOOLSLIB_CMAASTRING64 <= 1
 
@@ -4444,37 +4974,18 @@ public:
     }
     template<class S> Helper Append(S format, ...) noexcept((xThrow <= 0 || bCountMode) && noexcept(S(format)))
     {
-        /*
-        CMaaString32_ txt;
-
         va_list list;
         va_start(list, format);
-        txt._FormatV(-1, "unknown", format, list);
+        AppendSprintf((const char *)format, -1, list/*, __LINE__, __FILE__*/);
         va_end(list);
-
-        Add((const char*)txt, txt.Length());
-        */
-        
-        char csBuffer[TOOLSLIB_CS_64K];
-
-        CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
-        va_list list;
-        va_start(list, format);
-        NewString.Sprintf((const char *)format, -1, list, __LINE__, __FILE__);
-        va_end(list);
-        Add(NewString.const_ptr(), (int)NewString.Length());
         return *this;
     }
     Helper Append(CMaaString format, ...) noexcept((xThrow <= 0 || bCountMode))
     {
-        char csBuffer[TOOLSLIB_CS_64K];
-
-        CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
         va_list list;
         va_start(list, format);
-        NewString.Sprintf(format, format.Length(), list, __LINE__, __FILE__);
+        AppendSprintf(format, format.Length(), list/*, __LINE__, __FILE__*/);
         va_end(list);
-        Add(NewString.const_ptr(), (int)NewString.Length());
         return *this;
     }
 #if 0
@@ -4507,49 +5018,26 @@ public:
 #endif
     template<class S1, class S2> Helper Append2(const S1& format, S2 text, ...) noexcept((xThrow <= 0 || bCountMode) && noexcept(S2(text)))
     {
-        /*
-        CMaaString32_ txt;
-
         va_list list;
         va_start(list, text);
-        txt._FormatV2(-1, "unknown", format, text, list);
+        AppendSprintf2((const char*)format, -1, (const char*)text, -1, list/*, __LINE__, __FILE__*/);
         va_end(list);
-
-        Add((const char*)txt, txt.Length());
-        */
-
-        char csBuffer[TOOLSLIB_CS_64K];
-
-        CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
-        va_list list;
-        va_start(list, text);
-        NewString.Sprintf2((const char*)format, -1, (const char*)text, -1, list, __LINE__, __FILE__);
-        va_end(list);
-        Add(NewString.const_ptr(), (int)NewString.Length());
         return *this;
     }
     Helper Append2(const CMaaString& format, const char * text, ...) noexcept((xThrow <= 0 || bCountMode))
     {
-        char csBuffer[TOOLSLIB_CS_64K];
-
-        CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
         va_list list;
         va_start(list, text);
-        NewString.Sprintf2(format, format.Length(), text, -1, list, __LINE__, __FILE__);
+        AppendSprintf2(format, format.Length(), text, -1, list/*, __LINE__, __FILE__*/);
         va_end(list);
-        Add(NewString.const_ptr(), (int)NewString.Length());
         return *this;
     }
     Helper Append2(const CMaaString& format, CMaaString text, ...) noexcept((xThrow <= 0 || bCountMode))
     {
-        char csBuffer[TOOLSLIB_CS_64K];
-
-        CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer)); // CMaaConcatString_<0, false>
         va_list list;
         va_start(list, text);
-        NewString.Sprintf2(format, format.Length(), text, text.Length(), list, __LINE__, __FILE__);
+        AppendSprintf2(format, format.Length(), text, text.Length(), list/*, __LINE__, __FILE__*/);
         va_end(list);
-        Add(NewString.const_ptr(), (int)NewString.Length());
         return *this;
     }
 #if 0
@@ -4964,9 +5452,9 @@ public:
     }
 #endif
     //---------------------------------------------------------------------------
-    void Sprintf(const char* Format, int FormatLen, va_list list, int_ SrcLine = -1, const char* SrcFile = "unknown") noexcept
+    void AppendSprintf(const char* Format, int FormatLen, va_list list, int_ SrcLine = -1, const char* SrcFile = "unknown") noexcept
     {
-        Empty();
+        //Empty();
         if (!Format)
         {
             try
@@ -4990,29 +5478,20 @@ public:
         else
         {
             FormatLen = FormatLen >= 0 ? FormatLen : (int)strlen(Format);
+            size_t Length0 = Length();
             try
             {
-                if constexpr (xThrow == 0 && !bCountMode)
-                {
-                    CMaaString::Sprintf(Format, FormatLen, *this, list, SrcLine, SrcFile);
-                }
-                else
-                {
-                    char csBuffer[TOOLSLIB_CS_64K];
-                    CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer));
-                    CMaaString::Sprintf(Format, FormatLen, NewString, list, SrcLine, SrcFile);
-                    Add(NewString.const_ptr(), (int)NewString.Length());
-                }
+                SprintfEx(Format, FormatLen, list, SrcLine, SrcFile);
             }
             catch (...)
             {
-                Empty();
+                SetNewLengthValue((int)Length0); // Empty();
             }
         }
     }
-    void Sprintf2(const char* Format, int FormatLen, const char* Text, int TextLen, va_list list, int_ SrcLine = -1, const char* SrcFile = "unknown") noexcept
+    void AppendSprintf2(const char* Format, int FormatLen, const char* Text, int TextLen, va_list list, int_ SrcLine = -1, const char* SrcFile = "unknown") noexcept
     {
-        Empty();
+        //Empty();
         if (!Format)
         {
             return *this += CMaaTLGlobalString2(CMaaTLGlobalStrings::eNullFormatErr);
@@ -5033,26 +5512,20 @@ public:
         {
             FormatLen = FormatLen >= 0 ? FormatLen : (int)strlen(Format);
             TextLen = TextLen >= 0 ? TextLen : (int)strlen(Text);
+            size_t Length0 = Length();
             try
             {
-                if constexpr (xThrow == 0 && !bCountMode)
-                {
-                    CMaaString::Sprintf2(Format, FormatLen, Text, TextLen, *this, list, SrcLine, SrcFile);
-                }
-                else
-                {
-                    char csBuffer[TOOLSLIB_CS_64K];
-                    CMaaConcatString_<0, false> NewString(csBuffer, sizeof(csBuffer));
-                    CMaaString::Sprintf2(Format, FormatLen, Text, TextLen, NewString, list, SrcLine, SrcFile);
-                    Add(NewString.const_ptr(), (int)NewString.Length());
-                }
+                Sprintf2Ex(Format, FormatLen, Text, TextLen, list, SrcLine, SrcFile);
             }
             catch (...)
             {
-                Empty();
+                SetNewLengthValue((int)Length0); // Empty();
             }
         }
     }
+//---------------------------------------------------------------------------
+#include "SprintfEx.h"
+//---------------------------------------------------------------------------
 protected:
     void Required(int len) noexcept(xThrow <= 0 || bCountMode)
     {
@@ -5370,408 +5843,6 @@ CMaaString NormalizeSummSpComma(const CMaaString &input);
 //------------------------------------------------------------------------------
 
 #if TOOLSLIB_CMAASTRING64 <= 1
-//-----------------------------------------------------------------------------------------------
-template<class T> int SignedIntegerToString_d(T x, char* Buffer, char mode = 0, int width = -1, char z = 0) noexcept //, int prefix = 0)
-{
-    const bool mode_s = (mode == '+' || mode == ('+' ^ ','));
-    const bool mode_c = (mode == ',' || mode == ('+' ^ ','));
-    //prefix = prefix ? 2 : 0;
-    //prefix = 0;
-    if (width < 0)
-    {
-        z = 0;
-    }
-    int width2 = width >= 0 ? width : -width;
-    int Len;
-    char s;
-    if (!x)
-    {
-        if (z == '0' && width2)
-        {
-            memset(Buffer, '0', width2);
-            Buffer[Len = width2] = 0;
-            return Len;
-        }
-        else
-        {
-            Buffer[0] = '0';
-            Len = 1;
-            s = 0;
-            //prefix = 0;
-        }
-    }
-    else
-    {
-        s = x < 0 ? '-' : mode_s ? '+' : 0;
-        char* p = Buffer;
-        const int_ d10 = 10;
-        int nDigits = 0;
-        for (x = x > 0 ? -x : x; x; x /= d10)
-        {
-            if (mode_c)
-            {
-                if (nDigits && !(nDigits % 3))
-                {
-                    *p++ = ',';
-                }
-                nDigits++;
-            }
-            *p++ = '0' - (char)(x % d10);
-        }
-        Len = (int)(p - Buffer);
-        if (z != '0' || ((s /* || prefix*/) && width > 0 && width <= Len + (s ? 1 : 0) /* +prefix */))
-        {
-            /*
-            if (prefix)
-            {
-                *p++ = 'x';
-                *p++ = '0';
-            }
-            */
-            if (s)
-            {
-                *p++ = s;
-            }
-            //s = prefix = 0;
-            s = 0;
-            Len = (int)(p - Buffer);
-        }
-        else if (width <= 0)
-        {
-            /*
-            if (prefix)
-            {
-                *p++ = 'x';
-                *p++ = '0';
-            }
-            */
-            if (s)
-            {
-                *p++ = s;
-                // s = 0;
-            }
-            Len = (int)(p - Buffer);
-        }
-        for (int i = 0; i < Len / 2; i++)
-        {
-            char c = Buffer[i];
-            Buffer[i] = Buffer[Len - 1 - i];
-            Buffer[Len - 1 - i] = c;
-        }
-    }
-    if (width < 0 && width2 > Len)
-    {
-        memset(Buffer + Len, ' ', width2 - Len);
-        Len = width2;
-    }
-    else if (width > Len + (s ? 1 : 0) /* +prefix */)
-    {
-        memmove(Buffer + width - Len, Buffer, Len);
-        memset(Buffer, z == '0' ? '0' : ' ', width - Len);
-        if (s)
-        {
-            Buffer[0] = s;
-            /*
-            if (prefix)
-            {
-                Buffer[1] = '0';
-                Buffer[2] = 'x';
-            }
-            */
-        }
-        /*
-        else if (prefix)
-        {
-            Buffer[0] = '0';
-            Buffer[1] = 'x';
-        }
-        */
-        Len = width;
-    }
-    Buffer[Len] = 0;
-    return Len;
-}
-//-----------------------------------------------------------------------------------------------
-template<class T> int UnsignedIntegerToString_d(T x, char* Buffer, char mode = 0, int width = -1, char z = 0) noexcept //, int prefix = 0)
-{
-    const bool mode_s = (mode == '+' || mode == ('+' ^ ','));
-    const bool mode_c = (mode == ',' || mode == ('+' ^ ','));
-    //prefix = prefix ? 2 : 0;
-    //prefix = 0;
-    if (width < 0)
-    {
-        z = 0;
-    }
-    int width2 = width >= 0 ? width : -width;
-    int Len;
-    char s;
-    if (!x)
-    {
-        if (z == '0' && width2)
-        {
-            memset(Buffer, '0', width2);
-            Buffer[Len = width2] = 0;
-            return Len;
-        }
-        else
-        {
-            Buffer[0] = '0';
-            Len = 1;
-            s = 0;
-            //prefix = 0;
-        }
-    }
-    else
-    {
-        s = /*x < 0 ? '-' :*/ mode_s ? '+' : 0;
-        char* p = Buffer;
-        const uint_ d10 = 10;
-        int nDigits = 0;
-        for (; x; x /= d10)
-        {
-            if (mode_c)
-            {
-                if (nDigits && !(nDigits % 3))
-                {
-                    *p++ = ',';
-                }
-                nDigits++;
-            }
-            *p++ = '0' + (char)(x % d10);
-        }
-        Len = (int)(p - Buffer);
-        if (z != '0' || ((s /* || prefix*/) && width > 0 && width <= Len + (s ? 1 : 0) /* +prefix */))
-        {
-            /*
-            if (prefix)
-            {
-                *p++ = 'x';
-                *p++ = '0';
-            }
-            */
-            if (s)
-            {
-                *p++ = s;
-            }
-            //s = prefix = 0;
-            s = 0;
-            Len = (int)(p - Buffer);
-        }
-        else if (width <= 0)
-        {
-            /*
-            if (prefix)
-            {
-                *p++ = 'x';
-                *p++ = '0';
-            }
-            */
-            if (s)
-            {
-                *p++ = s;
-                // s = 0;
-            }
-            Len = (int)(p - Buffer);
-        }
-        for (int i = 0; i < Len / 2; i++)
-        {
-            char c = Buffer[i];
-            Buffer[i] = Buffer[Len - 1 - i];
-            Buffer[Len - 1 - i] = c;
-        }
-    }
-    if (width < 0 && width2 > Len)
-    {
-        memset(Buffer + Len, ' ', width2 - Len);
-        Len = width2;
-    }
-    else if (width > Len + (s ? 1 : 0) /* +prefix */)
-    {
-        memmove(Buffer + width - Len, Buffer, Len);
-        memset(Buffer, z == '0' ? '0' : ' ', width - Len);
-        if (s)
-        {
-            Buffer[0] = s;
-            /*
-            if (prefix)
-            {
-                Buffer[1] = '0';
-                Buffer[2] = 'x';
-            }
-            */
-        }
-        /*
-        else if (prefix)
-        {
-            Buffer[0] = '0';
-            Buffer[1] = 'x';
-        }
-        */
-        Len = width;
-    }
-    Buffer[Len] = 0;
-    return Len;
-}
-//-----------------------------------------------------------------------------------------------
-template<class T> int UnsignedIntegerToString_x(T x, char* Buffer, int width = -1, char mode = 'x', char z = 0, char prefix = 0) noexcept
-{
-    mode = mode == 'X' ? 'A' - 10 : 'a' - 10;
-    int width2 = width >= 0 ? width : -width;
-    if (width < 0)
-    {
-        z = 0;
-    }
-    int Len;
-    if (!x)
-    {
-        Buffer[0] = '0';
-        Len = 1;
-    }
-    else
-    {
-        char* p = Buffer;
-        int nDigits = 0;
-        for (; x; x >>= 4)
-        {
-            char c = (char)(x & 0x0f);
-            c = c < 10 ? c + '0' : c + mode;
-            *p++ = c;
-        }
-        Len = (int)(p - Buffer);
-        {
-            if (prefix)
-            {
-                *p++ = prefix == 'X' ? 'X' : 'x';
-                *p++ = '0';
-                Len += 2;
-            }
-        }
-        for (int i = 0; i < Len / 2; i++)
-        {
-            char c = Buffer[i];
-            Buffer[i] = Buffer[Len - 1 - i];
-            Buffer[Len - 1 - i] = c;
-        }
-    }
-    if (width < 0 && width2 > Len)
-    {
-        memset(Buffer + Len, ' ', width2 - Len);
-        Len = width2;
-    }
-    else if (width > Len)
-    {
-        memmove(Buffer + width - Len, Buffer, Len);
-        if (z == '0')
-        {
-            memset(Buffer, '0', width - Len + (prefix ? 2 : 0));
-            if (prefix)
-            {
-                Buffer[0] = '0';
-                Buffer[1] = prefix == 'X' ? 'X' : 'x';
-            }
-        }
-        else
-        {
-            memset(Buffer, ' ', width - Len);
-        }
-        Len = width;
-    }
-    Buffer[Len] = 0;
-    return Len;
-}
-//-----------------------------------------------------------------------------------------------
-template<class T> int UnsignedIntegerToString_o(T x, char* Buffer, int width = -1, char z = 0, char prefix = 0) noexcept
-{
-    //mode = mode == 'X' ? 'A' - 10 : 'a' - 10;
-    int width2 = width >= 0 ? width : -width;
-    if (width < 0)
-    {
-        z = 0;
-    }
-    int Len;
-    if (!x)
-    {
-        Buffer[0] = '0';
-        Len = 1;
-    }
-    else
-    {
-        char* p = Buffer;
-        int nDigits = 0;
-        for (; x; x >>= 3)
-        {
-            *p++ = (char)(x & 0x07) + '0';
-        }
-        Len = (int)(p - Buffer);
-        {
-            if (prefix)
-            {
-                *p++ = '0';
-                Len++;
-            }
-        }
-        for (int i = 0; i < Len / 2; i++)
-        {
-            char c = Buffer[i];
-            Buffer[i] = Buffer[Len - 1 - i];
-            Buffer[Len - 1 - i] = c;
-        }
-    }
-    if (width < 0 && width2 > Len)
-    {
-        memset(Buffer + Len, ' ', width2 - Len);
-        Len = width2;
-    }
-    else if (width > Len)
-    {
-        memmove(Buffer + width - Len, Buffer, Len);
-        memset(Buffer, z == '0' ? '0' : ' ', width - Len);
-        Len = width;
-    }
-    Buffer[Len] = 0;
-    return Len;
-}
-//-----------------------------------------------------------------------------------------------
-template<class T> int UnsignedIntegerToString_p(T x, char* Buffer, int width = -1, char mode = 'x', char prefix = 0) noexcept
-{
-    mode = mode == 'X' ? 'A' - 10 : 'a' - 10;
-    int width2 = width >= 0 ? width : -width;
-    int Len;
-    if (prefix)
-    {
-        Buffer[0] = '0';
-        Buffer[1] = prefix == 'X' ? 'X' : 'x';
-        Len = 2;
-    }
-    else
-    {
-        Len = 0;
-    }
-    {
-        char* p = Buffer + Len + 2 * sizeof(T);
-        for (; p > Buffer + Len; x >>= 4)
-        {
-            char c = (char)(x & 0x0f);
-            c = c < 10 ? c + '0' : c + mode;
-            *(--p) = c;
-        }
-        Len += (int)(2 * sizeof(T));
-    }
-    if (width < 0 && width2 > Len)
-    {
-        memset(Buffer + Len, ' ', width2 - Len);
-        Len = width2;
-    }
-    else if (width > Len)
-    {
-        memmove(Buffer + width - Len, Buffer, Len);
-        memset(Buffer, ' ', width - Len);
-        Len = width;
-    }
-    Buffer[Len] = 0;
-    return Len;
-}
-//-----------------------------------------------------------------------------------------------
 
 #ifdef __linux__
 int_ IsBadReadPtr(const void *ptr, size_t s) noexcept;

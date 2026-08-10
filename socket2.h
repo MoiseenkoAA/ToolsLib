@@ -137,7 +137,7 @@ inline _qword my_htonq_le(_qword x) noexcept
 
 #endif
 
-template<bool bZTerm = true> constexpr void MacToText(char* txt, const _byte* mac) noexcept
+template<bool bZTerm /*= true*/> constexpr void MacToText(char* txt, const _byte* mac) noexcept
 {
     Byte2Hex_nzt_LT(txt + 0 * 3, mac[0], ':');
     Byte2Hex_nzt_LT(txt + 1 * 3, mac[1], ':');
@@ -188,7 +188,7 @@ ToolsExport const char * CMaaIpToText(_IP ip, int Mode = 0) noexcept = delete;
 #else
 ToolsExport const char * CMaaIpToText(_IP ip, int Mode = 0) noexcept;
 #endif
-ToolsExport char * CMaaIpToTextEx(char * txt, _IP ip, int Mode = 0) noexcept;
+ToolsExport char * CMaaIpToTextEx(char * txt, _IP ip, int Mode /*= 0*/) noexcept;
 // Mode flag 4 - with ipv4 part, flag 16 - full 40 byte output (not condensed), flags 4 + 1 or 2 - with ipv4, ::ffff:000.000.000.000 format
 #ifdef TOOLSLIB_DELETE_UNSAFE
 ToolsExport const char* CMaaIpToText(const _byte* ip, int Mode = 0) noexcept = delete;
@@ -197,7 +197,7 @@ ToolsExport const char* CMaaIpToText(const _byte* ip, int Mode = 0) noexcept;
 #endif
 // min txt size is 40 bytes
 // Mode flag 4 - with ipv4 part, flag 16 - full 40 byte output (not condensed), flags 4 + 1 or 2 - with ipv4, ::ffff:000.000.000.000 format
-ToolsExport char * CMaaIpToTextEx(char * txt, const _byte * ip, int Mode = 0) noexcept;
+ToolsExport char * CMaaIpToTextEx(char * txt, const _byte * ip, int Mode /*= 0*/) noexcept;
 
 //---------------------------------------------------------------------------
 // returns 0 -- means: Ok, * RetIp = converted ip ( machine-depended byte order )
