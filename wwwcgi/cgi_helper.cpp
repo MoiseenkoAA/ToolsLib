@@ -205,7 +205,7 @@ CCGIHelper::CCGIHelper(_qword MaxContentLength,
     void *
 #endif
         pFastCgiRequest, CMaaUnivHash<CMaaString, CMaaString> *phCgiParamOverride, const CMaaString &ProgressFn, const CMaaString &ProgressFmt)
-:   m_hSubstCgiParamOverride(0)
+:   m_hSubstCgiParamOverride(0, phCgiParamOverride, 0)
     //, m_fProgress((const char *)nullptr, CMaaFile::eNoMode, false)
 {
     m_subst_imp = g_imp;
