@@ -529,7 +529,7 @@ protected:
         m_File.WriteVerify ( &h, sizeof ( h ) );
         m_File.WriteVerify ( pszIndex, 16 );
 
-        const _qword x = MAA_HT_NULL;
+        constexpr _qword x = MAA_HT_NULL;
         _qword i;
         for ( i = 0; i < h.m_HashSize; i++ )
         {
