@@ -4685,8 +4685,8 @@ template<class T> int UnsignedIntegerToString_p(T x, char* Buffer, int width = -
 
 #endif
 
-CMaaString UnicodeToAnsi(const CMaaString &Text, bool RemoveLastNullChar = true, _dword cp = CP_ACP) noexcept(noexcept_new);
-CMaaString AnsiToUnicode(const CMaaString &Text, bool AddTerminatingNullChar = false, _dword cp = CP_ACP) noexcept(noexcept_new);
+CMaaString UnicodeToAnsi(const CMaaString &Text, bool RemoveLastNullChar = true, _dword cp = CP_ACP) noexcept;
+CMaaString AnsiToUnicode(const CMaaString &Text, bool AddTerminatingNullChar = false, _dword cp = CP_ACP) noexcept;
 
 inline CMaaString Utf8ToAnsi(const CMaaString& Text, int_ bDefaultNullAccept = false) noexcept(noexcept_new) { return UnicodeToAnsi(std::move(Utf8ToUnicode(Text, bDefaultNullAccept ? 1 : 0)), false); }
 //inline CMaaString AnsiToUtf8(const CMaaString& Text, int_ AddTerminatingNullChar  = false) { return UnicodeToUtf8(std::move(AnsiToUnicode(Text, AddTerminatingNullChar ? 1 : 0)), false); }
@@ -5478,7 +5478,7 @@ public:
         else
         {
             FormatLen = FormatLen >= 0 ? FormatLen : (int)strlen(Format);
-            size_t Length0 = Length();
+            const size_t Length0 = Length();
             try
             {
                 SprintfEx(Format, FormatLen, list, SrcLine, SrcFile);
@@ -5512,7 +5512,7 @@ public:
         {
             FormatLen = FormatLen >= 0 ? FormatLen : (int)strlen(Format);
             TextLen = TextLen >= 0 ? TextLen : (int)strlen(Text);
-            size_t Length0 = Length();
+            const size_t Length0 = Length();
             try
             {
                 Sprintf2Ex(Format, FormatLen, Text, TextLen, list, SrcLine, SrcFile);

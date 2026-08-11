@@ -646,7 +646,7 @@ public:
     //_dword Lock_us(_qword us) noexcept;
     //_dword Lock(_dword ms) noexcept;
     bool TryLock() noexcept { if (m.try_lock()) { ++n; return true; } return false; }
-    int UnLock() noexcept { int r = --n; m.unlock(); return r; }
+    int UnLock() noexcept { const int r = --n; m.unlock(); return r; }
     void AddRef() const noexcept {}
     int UnRef() const noexcept { return 1; }
     bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept { return false; }

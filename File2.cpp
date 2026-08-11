@@ -714,12 +714,12 @@ bool CMaaFile::CopyFile(const CMaaString& src, const CMaaString& dst, int Flags,
     _qword TotLen = 0;
     while(1)
     {
-        _dword x = fsrc.Read(Buffer, sizeof(Buffer));
+        const _dword x = fsrc.Read(Buffer, sizeof(Buffer));
         if  (x == 0 /*|| x == (_dword)-1*/)
         {
             break;
         }
-        _dword y = fdst.Write(Buffer, x);
+        const _dword y = fdst.Write(Buffer, x);
         TotLen += y;
         if  (y != x)
         {
@@ -742,7 +742,7 @@ bool CMaaFile::CopyFile(const CMaaString& src, const CMaaString& dst, int Flags,
     fsrc.Close();
     {
         int usec = 0;
-        time_t t = GetDateTime(src, &usec, false);
+        const time_t t = GetDateTime(src, &usec, false);
         if  (t != (time_t)-1)
         {
             SetDateTime(dst, t, usec, false);
@@ -906,7 +906,7 @@ void FileTimeMy__Nsec_ToTimetAndNsec(_qword ft, time_t * pt, _qword * pnsec) noe
 //---------------------------------------------------------------------------
 void TimetAndUsecToFileTime(time_t t, int usec, FILETIME *pft) noexcept
 {
-    LONGLONG ll = Int32x32To64(t, 10000000) + Int32x32To64(usec, 10) + FT_MAGIC;
+    const LONGLONG ll = Int32x32To64(t, 10000000) + Int32x32To64(usec, 10) + FT_MAGIC;
     pft->dwLowDateTime = (DWORD)ll;
     pft->dwHighDateTime = ll >> 32;
 }
@@ -1378,7 +1378,7 @@ CMaaString CMaaFile::GetSystemDirectory(bool bThrow)
 {
     TCHAR path[1024 + 2 * MAX_PATH];
     path[0] = 0;
-    UINT n = ::GetSystemDirectory(path, sizeof(path)/ sizeof(TCHAR));
+    const UINT n = ::GetSystemDirectory(path, sizeof(path)/ sizeof(TCHAR));
     if  (n == 0 || n > sizeof(path)/ sizeof(TCHAR))
     {
         if  (bThrow)
@@ -1395,7 +1395,7 @@ CMaaString CMaaFile::GetWindowsDirectory(bool bThrow)
 {
     TCHAR path[1024 + 2 * MAX_PATH];
     path[0] = 0;
-    UINT n = ::GetWindowsDirectory(path, sizeof(path)/ sizeof(TCHAR));
+    const UINT n = ::GetWindowsDirectory(path, sizeof(path)/ sizeof(TCHAR));
     if  (n == 0 || n > sizeof(path)/ sizeof(TCHAR))
     {
         if  (bThrow)
@@ -1566,7 +1566,7 @@ CMaaString CMaaFile::AppendPath(CMaaString src, CMaaString append, bool * pError
     }
     else if (src[0] == FILESYSTEM_SLASH && src[1] == FILESYSTEM_SLASH)
     {
-        int n = (warning_int)src.Find(2, FILESYSTEM_SLASH);
+        const int n = (warning_int)src.Find(2, FILESYSTEM_SLASH);
         if  (n > 0)
         {
             Drive = src.Left(n + 1);
@@ -1816,7 +1816,7 @@ bool CMaaFile::LockFile(_dword TimeOut)
     {
 #ifdef _WIN32
         _qword l = Length();
-        _qword o = GetCurPos();
+        const _qword o = GetCurPos();
         l -= o;
         OVERLAPPED ov;
         memset(&ov, 0, sizeof(ov));
@@ -1831,7 +1831,7 @@ bool CMaaFile::LockFile(_dword TimeOut)
         bool Ret = false;
         if  (!LockFileEx(GetHandle(), LOCKFILE_EXCLUSIVE_LOCK /*| LOCKFILE_FAIL_IMMEDIATELY*/ /*? or 0*/, 0, (DWORD)l, (DWORD)(l >> 32), &ov))
         {
-            DWORD err = GetLastError();
+            const DWORD err = GetLastError();
             if  (err == ERROR_IO_PENDING)// || err == ERROR_LOCK_VIOLATION)
             {
                 if  (WaitForSingleObject(ov.hEvent, TimeOut) == WAIT_OBJECT_0)
@@ -5627,7 +5627,7 @@ _qword CMaaFile::Length()
     {
         Clear();
         //#ifdef __unix__
-        _qword pos = CurPos();
+        const _qword pos = CurPos();
         Seek(0, SEEK_END);
         Length = CurPos();
         Seek(pos);
@@ -6021,7 +6021,7 @@ char * CMaaFile::rfgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * p
     {
         return nullptr;
     }
-    _qword FilePos = GetCurPos();
+    const _qword FilePos = GetCurPos();
     if  (FilePos <= 0)
     {
         /*
@@ -6046,7 +6046,7 @@ char * CMaaFile::rfgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * p
     int OriginalSize = Size;
     int StrLen = 0;
     int fmt = IsOpen() ? (int)m_pImp->m_SrcFormat : 0;
-    int dstfmt = IsOpen() ? (int)m_pImp->m_DstFormat : 0;
+    const int dstfmt = IsOpen() ? (int)m_pImp->m_DstFormat : 0;
     if  (fmt == ePfxUnicode || fmt == ePfxUnicodeBigEndian)
     {
         Size--;
@@ -6086,10 +6086,10 @@ char * CMaaFile::rfgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * p
             case ePfxUnicode:
                 for (i = x - 2; i >= 1 && i >= x - 4; i--)
                 {
-                    _WC_ wch = (_WC_)(unsigned char)pszBuffer[i] + (((_WC_)(unsigned char)pszBuffer[i + 1]) << 8);
-                    if  ((wch == 0 && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
+                    const _WC_ wch = (_WC_)(unsigned char)pszBuffer[i] + (((_WC_)(unsigned char)pszBuffer[i + 1]) << 8);
+                    if  ((!wch && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
                     {
-                        if  (wch == 0)
+                        if  (!wch)
                         {
                             x2 = i;
                             break;
@@ -6110,10 +6110,10 @@ char * CMaaFile::rfgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * p
                 //fmt = ePfxUnicode;
                 for (i = x - 2; i >= 1 && i >= x - 4; i--)
                 {
-                    _WC_ wch = (_WC_)(unsigned char)pszBuffer[i+1] + (((_WC_)(unsigned char)pszBuffer[i]) << 8);
-                    if  ((wch == 0 && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
+                    const _WC_ wch = (_WC_)(unsigned char)pszBuffer[i+1] + (((_WC_)(unsigned char)pszBuffer[i]) << 8);
+                    if  ((!wch && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
                     {
-                        if  (wch == 0)
+                        if  (!wch)
                         {
                             x2 = i;
                             break;
@@ -6134,10 +6134,10 @@ char * CMaaFile::rfgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * p
             default:
                 for (i = x - 1; i >= 0 && i >= x - 2; i--)
                 {
-                    _WC_ wch = (_WC_)(unsigned char)pszBuffer[i];
-                    if  ((wch == 0 && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
+                    const _WC_ wch = (_WC_)(unsigned char)pszBuffer[i];
+                    if  ((!wch && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
                     {
-                        if  (wch == 0)
+                        if  (!wch)
                         {
                             x2 = i;
                             break;
@@ -6164,8 +6164,8 @@ char * CMaaFile::rfgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * p
             case ePfxUnicode:
                 for (i = x2 - 2; i >= 0; i--)
                 {
-                    _WC_ wch = (_WC_)(unsigned char)pszBuffer[i] + (((_WC_)(unsigned char)pszBuffer[i + 1]) << 8);
-                    if  ((wch == 0 && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
+                    const _WC_ wch = (_WC_)(unsigned char)pszBuffer[i] + (((_WC_)(unsigned char)pszBuffer[i + 1]) << 8);
+                    if  ((!wch && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
                     {
                         x0_ = i + 2;
                         break;
@@ -6175,8 +6175,8 @@ char * CMaaFile::rfgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * p
             case ePfxUnicodeBigEndian:
                 for (i = x2 - 2; i >= 0; i--)
                 {
-                    _WC_ wch = (_WC_)(unsigned char)pszBuffer[i+1] + (((_WC_)(unsigned char)pszBuffer[i]) << 8);
-                    if  ((wch == 0 && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
+                    const _WC_ wch = (_WC_)(unsigned char)pszBuffer[i+1] + (((_WC_)(unsigned char)pszBuffer[i]) << 8);
+                    if  ((!wch && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
                     {
                         x0_ = i + 2;
                         break;
@@ -6187,8 +6187,8 @@ char * CMaaFile::rfgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * p
             default:
                 for (i = x2 - 1; i >= 0; i--)
                 {
-                    _WC_ wch = (_WC_)(unsigned char)pszBuffer[i];
-                    if  ((wch == 0 && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
+                    const _WC_ wch = (_WC_)(unsigned char)pszBuffer[i];
+                    if  ((!wch && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
                     {
                         x0_ = i + 1;
                         break;
@@ -6204,7 +6204,7 @@ char * CMaaFile::rfgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * p
                 fmt = ePfxUnicode;
                 for (i = x0_; i < x; i += 2)
                 {
-                    char ch2[2] = {pszBuffer[i + 1], pszBuffer[i]};
+                    const char ch2[2] = {pszBuffer[i + 1], pszBuffer[i]};
                     pszBuffer[i] = ch2[0];
                     pszBuffer[i + 1] = ch2[1];
                     pszBuffer[i] = ch2[0];
@@ -6216,7 +6216,7 @@ char * CMaaFile::rfgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * p
             }
             memmove(pszBuffer, pszBuffer + x0_, x -= x0_);
             x2 -= x0_;
-            int tmp = fmt == ePfxUnicode ? 1 : 0;
+            const int tmp = fmt == ePfxUnicode ? 1 : 0;
             if  (bRemoveCutCrLf)
             {
                 StrLen = x2;
@@ -6341,7 +6341,7 @@ char * CMaaFile::fgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * pS
     int OriginalSize = Size;
     int StrLen = 0;
     int fmt = IsOpen() ? (int)m_pImp->m_SrcFormat : 0;
-    int dstfmt = IsOpen() ? (int)m_pImp->m_DstFormat : 0;
+    const int dstfmt = IsOpen() ? (int)m_pImp->m_DstFormat : 0;
     if  (fmt == ePfxUnicode || fmt == ePfxUnicodeBigEndian)
     {
         Size--;
@@ -6350,7 +6350,7 @@ char * CMaaFile::fgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * pS
     {
         Clear();
 
-        _qword pos = CurPos();
+        const _qword pos = CurPos();
         int x = (int)Read(pszBuffer, Size - 1);
         if  (x > 0)
         {
@@ -6370,8 +6370,8 @@ char * CMaaFile::fgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * pS
             case ePfxUnicode:
                 for (i = 0; i < x - 1; i += 2)
                 {
-                    _WC_ wch = (_WC_)(unsigned char)pszBuffer[i] + (((_WC_)(unsigned char)pszBuffer[i + 1]) << 8);
-                    if  ((wch == 0 && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
+                    const _WC_ wch = (_WC_)(unsigned char)pszBuffer[i] + (((_WC_)(unsigned char)pszBuffer[i + 1]) << 8);
+                    if  ((!wch && !(Flags & 0x100)) || wch == '\r' || wch == '\n')
                     {
                         break;
                     }
@@ -6381,11 +6381,11 @@ char * CMaaFile::fgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * pS
                 fmt = ePfxUnicode;
                 for (i = 0; i < x - 1; i += 2)
                 {
-                    char ch2[2] = {pszBuffer[i + 1], pszBuffer[i]};
+                    const char ch2[2] = {pszBuffer[i + 1], pszBuffer[i]};
                     pszBuffer[i] = ch2[0];
                     pszBuffer[i + 1] = ch2[1];
-                    _WC_ wch = (_WC_)(unsigned char)ch2[0] + (((_WC_)(unsigned char)ch2[1]) << 8);
-                    if  (wch == 0 && !(Flags & 0x100))
+                    const _WC_ wch = (_WC_)(unsigned char)ch2[0] + (((_WC_)(unsigned char)ch2[1]) << 8);
+                    if  (!wch && !(Flags & 0x100))
                     {
                         break;
                     }
@@ -6393,7 +6393,7 @@ char * CMaaFile::fgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * pS
                     {
                         if  (i + 2 < x - 1)
                         {
-                            char ch2[2] = {pszBuffer[i + 2 + 1], pszBuffer[i + 2]};
+                            const char ch2[2] = {pszBuffer[i + 2 + 1], pszBuffer[i + 2]};
                             pszBuffer[i + 2] = ch2[0];
                             pszBuffer[i + 2 + 1] = ch2[1];
                         }
@@ -6411,7 +6411,7 @@ char * CMaaFile::fgets(char * pszBuffer, int Size, bool bRemoveCutCrLf, int * pS
                     }
                 }
             }
-            int tmp = fmt == ePfxUnicode ? 1 : 0;
+            const int tmp = fmt == ePfxUnicode ? 1 : 0;
             if  (i < x - tmp)
             {
                 _WC_ wch, wch2;
@@ -6853,7 +6853,7 @@ bool CMaaFile::_RemoveDirRecursively(const CMaaString &path, bool bThrow, bool R
     if  (!bOK)
     {
 #ifdef _WIN32
-        DWORD err = GetLastError();
+        const DWORD err = GetLastError();
         //FileDelErrorLog(path, true);
         if  (err == 32)    // busy by other process
         {
@@ -6861,7 +6861,7 @@ bool CMaaFile::_RemoveDirRecursively(const CMaaString &path, bool bThrow, bool R
             bOK = RmDir(path, false);
             if  (!bOK)
             {
-                DWORD err = GetLastError();
+                const DWORD err = GetLastError();
                 //FileDelErrorLog(path, true);
             }
         }
@@ -7586,7 +7586,7 @@ CMaaString CMaaFile::Read(_dword MaxLen, int _Convert)
 {
     CMaaString Txt;
     int fmt = _Convert && IsOpen() ? (int)m_pImp->m_SrcFormat : 0;
-    int dstfmt = _Convert && IsOpen() ? (int)m_pImp->m_DstFormat : 0;
+    const int dstfmt = _Convert && IsOpen() ? (int)m_pImp->m_DstFormat : 0;
     _dword t = 0;
     try
     {
@@ -7600,7 +7600,7 @@ CMaaString CMaaFile::Read(_dword MaxLen, int _Convert)
                 {
                     l0 = sizeof(Buffer);
                 }
-                _dword l = Read(Buffer, l0);
+                const _dword l = Read(Buffer, l0);
                 t += l;
                 str.Add(Buffer, (int)l);
                 if  (l != l0)
@@ -7643,7 +7643,7 @@ CMaaString CMaaFile::Read(_dword MaxLen, int _Convert)
                 fmt = ePfxUnicode;
                 for (i = 0; i < x - 1; i += 2)
                 {
-                    char ch2[2] = {pszBuffer[i + 1], pszBuffer[i]};
+                    const char ch2[2] = {pszBuffer[i + 1], pszBuffer[i]};
                     pszBuffer[i] = ch2[0];
                     pszBuffer[i + 1] = ch2[1];
                 }
@@ -7962,7 +7962,7 @@ void CMaaSetConsoleUtf8AndLocale::Restore()
 //---------------------------------------------------------------------------
 constexpr int Utf8CharLen(char u0) noexcept
 {
-    unsigned char c = (unsigned char)u0;
+    const unsigned char c = (unsigned char)u0;
     if  ((c & 0xE0) == 0xC0)
     {
         return 2;
@@ -7991,9 +7991,9 @@ CMaaString MaaReadUtf8ConsoleLine1(CMaaString term_ch, int max_chars, bool bEcho
             n = (warning_int)tmp.Utf8CharCount(true);
             if  (n > 0)
             {
-                int pos = (warning_int)tmp.Utf8Pos(--n, true);
-                int l = Utf8CharLen(tmp[pos]);
-                int t = (warning_int)tmp.Length() - pos;
+                const int pos = (warning_int)tmp.Utf8Pos(--n, true);
+                const int l = Utf8CharLen(tmp[pos]);
+                const int t = (warning_int)tmp.Length() - pos;
                 if  (t >= l)
                 {
                     n++;
@@ -8066,12 +8066,12 @@ CMaaString MaaReadUtf8ConsoleLine1(CMaaString term_ch, int max_chars, bool bEcho
             {
                 if  (ch != 0x08)
                 {
-                    int l = Utf8CharLen((char)ch);
+                    const int l = Utf8CharLen((char)ch);
                     s += (char)ch;
                     for (int i = 1; i < l; i++)
                     {
 #ifdef _WIN32
-                        int ch2 = getch();
+                        const int ch2 = getch();
 #else
                         int ch2 = getchar();
                         //if (ch == EOF)
@@ -8253,7 +8253,7 @@ int __utf8_printf_out(CMaaString txt) noexcept
 #endif
     if (h__utf8_printf_StdOutHandle == nullptr)
     {
-        CMaaFile fstdout(CMaaFileStdout, CMaaFile::eW, false);
+        CMaaFile fstdout(CMaaFileStdout, CMaaFile::eW, eNoExcept);
         h__utf8_printf_StdOutHandle = fstdout.GetHandle(true);
     }
     if (h__utf8_printf_StdOutHandle)
@@ -8306,7 +8306,7 @@ int __log(CMaaString format, ...)
     txt.FormatV(format, list);
     va_end(list);
     static CMaaTime _t;
-    _qword t = _t.GetTime();
+    const _qword t = _t.GetTime();
     txt.Format("%4D.%06D %S", t / 1000000, t % 1000000, &txt);
 #ifdef _WIN32
     txt = UnicodeToAnsi(Utf8ToUnicode(txt)).CharToOem();

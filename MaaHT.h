@@ -651,7 +651,7 @@ private:
             Size = 0;
         }
         Flags &= ~ eNothingMask;
-        const size_t MaxSz = ((size_t)-1) / sizeof(Record *) / 2;
+        constexpr size_t MaxSz = ((size_t)-1) / sizeof(Record *) / 2;
         m_HashSize     = (Size + Size / 10 <= MaxSz ? Size + Size / 10 : MaxSz);
         m_TableSize    = Size;
         m_ItemsCount   = 0;

@@ -120,7 +120,7 @@ public:
             m_Expr(expr)
         {
         }
-        CMaaString GetMsg(CMaaString PrefixText = "error", int PrefixTextLength = -1) const
+        CMaaString GetMsg(CMaaString PrefixText = "error", int PrefixTextLength = -1) const noexcept
         {
             PrefixTextLength = PrefixTextLength < 0 ? (warning_int)PrefixText.Length() : PrefixTextLength;
             CMaaString szText;
@@ -214,7 +214,7 @@ public:
         CFuncCaller() noexcept
         {
         }
-        ~CFuncCaller() noexcept
+        virtual ~CFuncCaller() noexcept
         {
         }
         virtual int Func1(int Fn, CMaaString FunctionName, CMaaUnivHash<int, CMaaString> &hArgs, CMaaUnivHash<int, CMaaString> &hlArgs, int index, int nArgs, _qword &qResult, bool &bResult, int Mode, CArithmeticExpression &ArithmeticExpression)
@@ -255,7 +255,7 @@ public:
             qResult = 0;
             return eInt;     // eBool, eInt, eBool2
         }
-        virtual _dword GetTime()
+        virtual _dword GetTime() noexcept
         {
 #ifdef _WIN32
             return (_dword)GetTickCount();

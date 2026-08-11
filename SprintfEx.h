@@ -66,7 +66,7 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
     {
         return;
     }
-    size_t Length0 = Length();
+    const size_t Length0 = Length();
     sSprintfBuffers Buffers;
     char* Buffer = Buffers.pTmpBuffer ? Buffers.pTmpBuffer->ptr() : nullptr;
     char* FormatBuffer = Buffers.pTmpFormatBuffer ? Buffers.pTmpFormatBuffer->ptr() : nullptr;

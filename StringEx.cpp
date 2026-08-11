@@ -14963,7 +14963,7 @@ CMaaString wchar_t_ToUtf8(const wchar_t * pText, int Len, int_ AddRemLastCh) noe
     return CMaaStringZ; // error
 }
 
-CMaaString UnicodeToAnsi(const CMaaString &Text, bool RemoveLastNullChar, _dword cp) noexcept(noexcept_new)
+CMaaString UnicodeToAnsi(const CMaaString &Text, bool RemoveLastNullChar, _dword cp) noexcept
 {
     CMaaString Result;
 
@@ -15039,7 +15039,7 @@ CMaaString UnicodeToAnsi(const CMaaString &Text, bool RemoveLastNullChar, _dword
     return Result;
 }
 
-CMaaString AnsiToUnicode(const CMaaString &Text, bool AddTerminatingNullChar, _dword cp) noexcept(noexcept_new)
+CMaaString AnsiToUnicode(const CMaaString &Text, bool AddTerminatingNullChar, _dword cp) noexcept
 {
     if  (cp == (_dword)-2)
     {

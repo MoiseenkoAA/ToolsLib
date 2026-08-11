@@ -1965,6 +1965,16 @@ public:
             }
         }
     }
+    
+    CMaaPtr_(CMaaPtr_<T, xThrow>&& That) noexcept
+    :   m_Ptr(That.m_Ptr),
+        m_MaxIndex(That.m_MaxIndex),
+        m_TotalItems(That.m_TotalItems)
+    {
+        That.m_Ptr = nullptr;
+        That.m_MaxIndex = 0;
+        That.m_TotalItems = 0;
+    }
 
     void operator += (const CMaaPtr_<T, xThrow> &x) noexcept((xThrow < 0 || (!xThrow && std_is_nothrow_move_constructible0(T))) && std_is_nothrow_copy_assignable(T, m_Ptr[0] = m_Ptr[0]))
     {
@@ -2078,7 +2088,7 @@ public:
         return *this;
     }
 
-    CMaaPtr_<T, xThrow>& operator = (const CMaaPtr_<T, xThrow>&& That) noexcept
+    CMaaPtr_<T, xThrow>& operator = (CMaaPtr_<T, xThrow>&& That) noexcept
     {
         Swap(That);
         return *this;
@@ -3010,7 +3020,7 @@ template<class T, int AllocatorType = 1
 
     static constexpr size_t ItemSize() noexcept
     {
-        const size_t s7 = sizeof(void*) - 1;
+        constexpr size_t s7 = sizeof(void*) - 1;
 #ifdef __ALLOCATOR_RESERVE_PTR
         return ((sizeof(T) + sizeof(void*)) + s7) & ~s7;
 #else
@@ -3182,7 +3192,7 @@ protected:
         {
             const int i = m_pMemIndex;
             const size_t n = ((size_t)1) << i;
-            size_t sz = ItemSize();
+            constexpr size_t sz = ItemSize();
             //try
             //{
                 /*

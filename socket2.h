@@ -330,14 +330,14 @@ struct _IP6
     _IP6 & operator |= (const _byte * ip) noexcept;
     _IP6 operator++(int) noexcept
     {
-        _IP6 tmp(*this);
+        const _IP6 tmp(*this);
         ++(*this);
         return tmp;
     }
     _IP6 & operator++() noexcept;
     _IP6 operator--(int) noexcept
     {
-        _IP6 tmp(*this);
+        const _IP6 tmp(*this);
         --(*this);
         return tmp;
     }

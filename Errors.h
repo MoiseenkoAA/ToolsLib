@@ -311,7 +311,7 @@ public:
         }
         CMaaString s(m_pImp->GetMsg());
 #ifdef _WIN32
-        CharToOemA(s, (char *)(const char *)s);
+        CharToOemA(s, s.GetBuffer());
 #endif
         return s;
     }

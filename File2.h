@@ -254,7 +254,7 @@ public:
     static const CMaaString & GetUnicodePrefix() noexcept          { return GetPrefix(ePfxUnicode); }
     static const CMaaString & GetUnicodeBigEndianPrefix() noexcept { return GetPrefix(ePfxUnicodeBigEndian); }
 
-    static CMaaString _FileNameToUnicode(CMaaString txt)
+    static CMaaString _FileNameToUnicode(CMaaString txt) noexcept
     {
 #if defined(_WIN32) && defined(_UNICODE)
         return Utf8ToUnicode(txt);
@@ -262,7 +262,7 @@ public:
         return AnsiToUnicode(txt);
 #endif
     }
-    static int _FileNameCompare(CMaaString &a, CMaaString &b, bool bqSortOptimmizationWithStringInjection = false)
+    static int _FileNameCompare(const CMaaString &a, const CMaaString &b, bool bqSortOptimmizationWithStringInjection = false)
     {
         //#if defined(_WIN32) && defined(_UNICODE)
 #if defined(_UNICODE)
@@ -409,7 +409,7 @@ public:
     }
     static bool CopyFile(const CMaaString& Source, const CMaaString& Destination)
     {
-        const bool fFailIfExists = false;
+        constexpr bool fFailIfExists = false;
         return CopyFile(Source, Destination, fFailIfExists, true);
     }
     static bool CopyFile(const CMaaString& Source, const CMaaString& Destination, bool fFailIfExists, bool bThrow = true)
