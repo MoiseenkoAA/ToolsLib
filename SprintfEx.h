@@ -62,10 +62,6 @@
 //---------------------------------------------------------------------------
 void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine, const char* SrcFile)
 {
-    if constexpr (bCountMode)
-    {
-        return;
-    }
     const size_t Length0 = Length();
     sSprintfBuffers Buffers;
     char* Buffer = Buffers.pTmpBuffer ? Buffers.pTmpBuffer->ptr() : nullptr;
@@ -402,7 +398,7 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
                         {
                             *pp++ = tmp[0];
                         }
-                        int_ l = (int_)strlen(pChar);
+                        const int_ l = (int_)strlen(pChar);
                         pp += l + (l - 1) / 3;
                         *pp-- = 0;
 
@@ -503,7 +499,7 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
         case 'm':
             //if (c == 'm')
         {
-            unsigned char* ptr = va_arg(list, unsigned char*);
+            const unsigned char* ptr = va_arg(list, unsigned char*);
             int_ len = va_arg(list, int_);
             if (!ptr)
             {
@@ -555,7 +551,15 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
                     bf.Add(tmp, (int_)(p - tmp));
                 }
 #endif
-                S_String = (CMaaString)bf;
+                if constexpr (bCountMode)
+                {
+                    BufStrLen = (int)bf.Length();
+                    break;
+                }
+                else
+                {
+                    S_String = (CMaaString)bf;
+                }
             }
         }
         CMaa_fallthrough;
@@ -563,8 +567,8 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
         case 't':
             if (c == 'T' || c == 't')
             {
-                time_t t = va_arg(list, time_t);
-                int_ mode = c == 'T' ? va_arg(list, int_) : 0;
+                const time_t t = va_arg(list, time_t);
+                const int_ mode = c == 'T' ? va_arg(list, int_) : 0;
                 S_String = GetTextDateTime(t, mode);
             }
             CMaa_fallthrough;
@@ -583,7 +587,7 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
                 txt = txt.Left(n);
                 S_String = txt;
 #else
-                wchar_t* p = va_arg(list, wchar_t*);
+                const wchar_t* p = va_arg(list, wchar_t*);
                 if (!p)
                 {
                     S_String = CMaaTLGlobalString2(CMaaTLGlobalStrings::eNullErr);
@@ -602,7 +606,7 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
         case 'U':
             if (c == 'U')
             {
-                _WC_* p = va_arg(list, _WC_*);
+                const _WC_* p = va_arg(list, _WC_*);
                 if (!p)
                 {
                     S_String = CMaaTLGlobalString2(CMaaTLGlobalStrings::eNullErr);
@@ -744,9 +748,9 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
 #endif
                         if (f)
                         {
-                            time_t t = time(nullptr);
+                            const time_t t = time(nullptr);
                             tm t0;
-                            tm* p = localtime(&t);
+                            const tm* p = localtime(&t);
                             if (p)
                             {
                                 memcpy(&t0, p, sizeof(t0));
@@ -1018,10 +1022,6 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
 //---------------------------------------------------------------------------
 void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int TextLen, va_list list, int_ SrcLine, const char* SrcFile)
 {
-    if constexpr (bCountMode)
-    {
-        return;
-    }
     size_t Length0 = Length();
     sSprintf2Buffers Buffers;
     char* Buffer = Buffers.pTmpBuffer ? Buffers.pTmpBuffer->ptr() : nullptr;
@@ -1383,7 +1383,7 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
                         {
                             *pp++ = tmp[0];
                         }
-                        int_ l = (int_)strlen(pChar);
+                        const int_ l = (int_)strlen(pChar);
                         pp += l + (l - 1) / 3;
                         *pp-- = 0;
 
@@ -1483,7 +1483,7 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
         case 'm':
             //if (c == 'm')
         {
-            unsigned char* ptr = va_arg(list, unsigned char*);
+            const unsigned char* ptr = va_arg(list, unsigned char*);
             int_ len = va_arg(list, int_);
             if (!ptr)
             {
@@ -1534,7 +1534,18 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
                     bf.Add(tmp, (int_)(p - tmp));
                 }
 #endif
-                S_String = (CMaaString)bf;
+                if constexpr (bCountMode)
+                {
+                    bFastStrCpy = true;
+                    pChar = nullptr;
+                    BufStrLen = (int)bf.Length();
+                    l = r = 0;
+                    break;
+                }
+                else
+                {
+                    S_String = (CMaaString)bf;
+                }
             }
         }
         CMaa_fallthrough;
@@ -1542,8 +1553,8 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
         case 't':
             if (c == 'T' || c == 't')
             {
-                time_t t = va_arg(list, time_t);
-                int_ mode = c == 'T' ? va_arg(list, int_) : 0;
+                const time_t t = va_arg(list, time_t);
+                const int_ mode = c == 'T' ? va_arg(list, int_) : 0;
                 S_String = GetTextDateTime(t, mode);
             }
             CMaa_fallthrough;
@@ -1562,7 +1573,7 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
                 txt = txt.Left(n);
                 S_String = txt;
 #else
-                wchar_t* p = va_arg(list, wchar_t*);
+                const wchar_t* p = va_arg(list, wchar_t*);
                 if (!p)
                 {
                     S_String = CMaaTLGlobalString2(CMaaTLGlobalStrings::eNullErr);
@@ -1581,7 +1592,7 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
         case 'U':
             if (c == 'U')
             {
-                _WC_* p = va_arg(list, _WC_*);
+                const _WC_* p = va_arg(list, _WC_*);
                 if (!p)
                 {
                     S_String = CMaaTLGlobalString2(CMaaTLGlobalStrings::eNullErr);
@@ -1609,7 +1620,7 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
         {
             if (c == 'S' || c == 'M')
             {
-                void* pS = va_arg(list, void*);
+                const void* pS = va_arg(list, void*);
                 int_ nFirst = 0, nCount = 0;
                 if (c == 'M')
                 {
@@ -1723,9 +1734,9 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
 #endif
                         if (f)
                         {
-                            time_t t = time(nullptr);
+                            const time_t t = time(nullptr);
                             tm t0;
-                            tm* p = localtime(&t);
+                            const tm* p = localtime(&t);
                             if (p)
                             {
                                 memcpy(&t0, p, sizeof(t0));
@@ -2005,7 +2016,7 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
 
     {
         //SetNewLengthValue(Length0); // Empty();
-        Required((int)Length0 + CMaaMax(NewStringApproxLen + 100, MAX_proc_s_LEN + 1));
+        Required((int)Length0 + NewStringApproxLen); // +100);
         int j = 0;
         const char* p = strText;
         for (int i = 0; i < TextLen; )
