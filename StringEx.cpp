@@ -6408,7 +6408,7 @@ int CMaaString::ReplaceNN(char What, char By, int StartPos, int EndPos) noexcept
     e = EndPos < 0 ? e : p + EndPos < e ? p + EndPos : e;
     if (e == p)
     {
-        // TL_NEW[] error
+        // new[] error
         return -1;
     }
     int n = 1;
@@ -6441,7 +6441,7 @@ int CMaaString::ReplaceNN(const CMaa256Bits& What, char By, int StartPos, int En
     e = EndPos < 0 ? e : p + EndPos < e ? p + EndPos : e;
     if (e == p)
     {
-        // TL_NEW[] error
+        // new[] error
         return -1;
     }
     int n = 1;
@@ -6469,9 +6469,9 @@ int CMaaString::ReplaceNN(char What, const CMaaString &By, int StartPos, int End
     }
     const int SrcLen = Length();
     const int Len = EndPos < 0 || EndPos > SrcLen ? SrcLen : EndPos;
-    CMaaConcatString r(Buffer, sizeof(Buffer), SrcLen + 1024/*, 0, false /*bCountOnly*/);
+    CMaaConcatString r(Buffer, sizeof(Buffer), SrcLen + 1024);
     int n = 1;
-    const char* ptr = *this;
+    const char* ptr = *m_pImp;
     r.Add(ptr, p);
     r += By;
     int pos = ++p;
@@ -6488,14 +6488,11 @@ int CMaaString::ReplaceNN(char What, const CMaaString &By, int StartPos, int End
         pos = ++p;
     }
     r.Add(pos + ptr, SrcLen - pos);
-    //if (!bCountOnly)
+    *this = (CMaaString)r;
+    if (!IsValid() && r.GetLength())
     {
-        *this = (CMaaString)r;
-        if (!IsValid() && r.GetLength())
-        {
-            // TL_NEW[] error
-            return -1;
-        }
+        // new[] error
+        return -1;
     }
     return n;
 }
@@ -6511,9 +6508,9 @@ int CMaaString::ReplaceNN(const CMaa256Bits& What, const CMaaString& By, int Sta
     }
     const int SrcLen = Length();
     const int Len = EndPos < 0 || EndPos > SrcLen ? SrcLen : EndPos;
-    CMaaConcatString r(Buffer, sizeof(Buffer), SrcLen + 1024/*, 0, false /*bCountOnly*/);
+    CMaaConcatString r(Buffer, sizeof(Buffer), SrcLen + 1024);
     int n = 1;
-    const char* ptr = *this;
+    const char* ptr = *m_pImp;
     r.Add(ptr, p);
     r += By;
     int pos = ++p;
@@ -6530,14 +6527,11 @@ int CMaaString::ReplaceNN(const CMaa256Bits& What, const CMaaString& By, int Sta
         pos = ++p;
     }
     r.Add(pos + ptr, SrcLen - pos);
-    //if (!bCountOnly)
+    *this = (CMaaString)r;
+    if (!IsValid() && r.GetLength())
     {
-        *this = (CMaaString)r;
-        if (!IsValid() && r.GetLength())
-        {
-            // TL_NEW[] error
-            return -1;
-        }
+        // new[] error
+        return -1;
     }
     return n;
 }
@@ -6695,11 +6689,7 @@ int CMaaString::ReplaceNN(const CMaaString &What, const CMaaString &By, bool bCo
     int n = 1;
     if (bCountOnly)
     {
-        //const bool bOverride = m_pImp->IsRWSingleOwner() && WLen >= By.Length();
-        //CMaaConcatString_<0, true> r;
-        const char* ptr = *this;
-        //r.Add(ptr, p);
-        //r += By;
+        const char* ptr = *m_pImp;
         int pos = p + WLen;
         while (pos < Len)
         {
@@ -6709,17 +6699,14 @@ int CMaaString::ReplaceNN(const CMaaString &What, const CMaaString &By, bool bCo
                 break;
             }
             n++;
-            //r.Add(pos + ptr, p - pos);
-            //r += By;
             pos = p + WLen;
         }
-        //r.Add(pos + ptr, SrcLen - pos);
     }
     else
     {
         const bool bOverride = m_pImp->IsRWSingleOwner() && WLen >= By.Length();
         CMaaConcatString r(bOverride ? (char*)*m_pImp : Buffer, bOverride ? SrcLen : sizeof(Buffer), bOverride ? SrcLen : SrcLen + 1024);
-        const char* ptr = *this;
+        const char* ptr = *m_pImp;
         r.Add(ptr, p);
         r += By;
         int pos = p + WLen;
@@ -6736,20 +6723,17 @@ int CMaaString::ReplaceNN(const CMaaString &What, const CMaaString &By, bool bCo
             pos = p + WLen;
         }
         r.Add(pos + ptr, SrcLen - pos);
-        //if (!bCountOnly)
+        if (bOverride)
         {
-            if (bOverride)
+            TruncateRWS((int)r.Length());
+        }
+        else
+        {
+            *this = (CMaaString)r;
+            if (!IsValid() && r.GetLength())
             {
-                TruncateRWS((int)r.Length());
-            }
-            else
-            {
-                *this = (CMaaString)r;
-                if (!IsValid() && r.GetLength())
-                {
-                    // TL_NEW[] error
-                    return -1;
-                }
+                // new[] error
+                return -1;
             }
         }
     }
@@ -6802,16 +6786,12 @@ int CMaaString::KMPReplaceNN(const CMaaString &What, const CMaaString &By, bool 
     const int WLen = What.Length();
     if (bCountOnly)
     {
-        //CMaaConcatString_<0, true> r;
         int pos = 0;
         const char* ptr = *this;
-        const int n = KMPFindAll(0, What, What.Length(), -1, [/*&r,*/ &pos, &ptr, &WLen, &By](int x)
-            //const int n = KMPFindAll(0, What, What.Length(), -1, [&](int x)
+        const int n = KMPFindAll(0, What, What.Length(), -1, [&pos, &ptr, &WLen, &By](int x)
             {
                 if (x >= pos)
                 {
-                    //r.Add(pos + ptr, x - pos);
-                    //r += By;
                     pos = x + WLen;
                     return true;
                 }
@@ -6819,18 +6799,6 @@ int CMaaString::KMPReplaceNN(const CMaaString &What, const CMaaString &By, bool 
             });
         if (n > 0)
         {
-            /*
-            r.Add(pos + ptr, Len - pos);
-            if (!bCountOnly)
-            {
-                *this = r;
-                if (!IsValid() && r.GetLength())
-                {
-                    // TL_NEW[] error
-                    return -1;
-                }
-            }
-            */
             return n;
         }
     }
@@ -6840,7 +6808,6 @@ int CMaaString::KMPReplaceNN(const CMaaString &What, const CMaaString &By, bool 
         int pos = 0;
         const char* ptr = *this;
         const int n = KMPFindAll(0, What, What.Length(), -1, [&r, &pos, &ptr, &WLen, &By](int x)
-            //const int n = KMPFindAll(0, What, What.Length(), -1, [&](int x)
             {
                 if (x >= pos)
                 {
@@ -6854,14 +6821,11 @@ int CMaaString::KMPReplaceNN(const CMaaString &What, const CMaaString &By, bool 
         if (n > 0)
         {
             r.Add(pos + ptr, Len - pos);
-            if (!bCountOnly)
+            *this = (CMaaString)r;
+            if (!IsValid() && r.GetLength())
             {
-                *this = (CMaaString)r;
-                if (!IsValid() && r.GetLength())
-                {
-                    // TL_NEW[] error
-                    return -1;
-                }
+                // new[] error
+                return -1;
             }
             return n;
         }
@@ -7162,8 +7126,6 @@ static bool CmpQStrSimpleRegExp(QString txt, QString reg, CMaaPtr_<unsigned char
     int RegLen;
     do
     {
-        //RegLen = reg.length();
-        //reg.replace("**", "*");
         RegLen = reg.Length();
         reg.ReplaceNN("**", "*");
 
@@ -7171,7 +7133,6 @@ static bool CmpQStrSimpleRegExp(QString txt, QString reg, CMaaPtr_<unsigned char
 
     const int TxtLen = txt.Length();
     Bit2_2 dt(TxtLen + 1, RegLen + 1, pm);
-    //int_ c = Comb(txt.unicode(), TxtLen, reg.unicode(), RegLen, dt);
     const int_ c = Comb<char>(txt, TxtLen, reg, RegLen, dt);
     return (c == 1 || c == 2); // enough: return c == 1;
 }
@@ -7194,55 +7155,12 @@ static bool CmpWCStrSimpleRegExp(CMaaString txt, CMaaString reg, CMaaPtr_<unsign
             }
         }
         reg = reg.Left(j * (int_)sizeof(_WC_));
-        //CMaaFile f("/var/ram/maa/reg.txt", CMaaFile::eACD_SrSw, eNoExcept);
-        //f.fprintf("\n\n%S\n\n", &reg);
     }
-
-    /*
-    int RegLen = reg.Length() / (int_)(sizeof(_WC_));
-    CMaaConcatString reg2;
-    _WC_ * p0 = (_WC_ *)(const char *)reg;
-    _WC_ * p00 = p0;
-    _WC_ * e = p0 + RegLen;
-    _WC_ * p = p0;
-    while(p < e)
-    {
-        if   (*p == (_WC_)'*' && p[1] == p[0])
-        {
-            reg2.Add((const char *)p0, (warning_int)((p + 1 - p0) * sizeof(_WC_)));
-            while(*p == (_WC_)'*')
-            {
-                p++;
-            }
-            p0 = p;
-        }
-        else
-        {
-            p++;
-        }
-    }
-    if   (p0 != p00)
-    {
-        reg2.Add((const char *)p0, (warning_int)((e - p0) * sizeof(_WC_)));
-        reg = reg2;
-    }
-    */
 
     const int RegLen = reg.Length() / (int_)(sizeof(_WC_));
-
-    /*
-        CMaaFile f("/var/ram/maa/big.txt", CMaaFile::eACD_SrSw, eNoExcept);
-    {
-        CMaaString r = UnicodeToUtf8(reg);
-        CMaaString t = UnicodeToUtf8(txt).Left(100);
-        f.fprintf("\n%S\n%S\n-", &r, &t);
-    }
-    */
     const int TxtLen = txt.Length() / (int_)(sizeof(_WC_));
     Bit2_2 dt(TxtLen + 1, RegLen + 1, pm);
-    //int_ c = Comb(txt.unicode(), TxtLen, reg.unicode(), RegLen, dt);
     const int_ c = Comb<_WC_>((_WC_ *)(const char *)txt, TxtLen, (_WC_ *)(const char *)reg, RegLen, dt);
-    //    f.fprintf("%d (%s)\n-", c, c == 1 || c == 2 ? "+" : "-");
     return (c == 1 || c == 2); // enough: return c == 1;
 }
 //--------------------------------------------------------------------------
@@ -7251,8 +7169,6 @@ static bool CmpQStrSimpleFileExp(QString txt, QString reg, bool IsCaseSensitive,
     int RegLen;
     do
     {
-        //RegLen = reg.length();
-        //reg.replace ("**", "*");
         RegLen = reg.Length();
         reg.ReplaceNN("**", "*");
         reg.ReplaceNN("*.*", "*");
@@ -7275,13 +7191,14 @@ static bool CmpQStrSimpleFileExp(QString txt, QString reg, bool IsCaseSensitive,
     }
     if  (reg == "*.")
     {
+        const char* p = txt;
         for (int i = txt.Length(); i--;)
         {
-            if  (txt[/*(size_t)*/i] == cSlash)
+            if  (p[i] == cSlash)
             {
                 return true;
             }
-            if  (txt[/*(size_t)*/i] == QChar('.'))
+            if  (p[i] == QChar('.'))
             {
                 return false;
             }
@@ -11366,32 +11283,31 @@ bool CMaaString::is_a_email(int * pErrorPos, CMaaString * pResult, int_ Flags) c
             return false;
         }
     }
-    CMaaString txt = *this;
-    int n = txt.ReplaceNN('@', '@');
+    int n = CountChars('@');
     if  (n != 1)
     {
         err = -1;
         return false;
     }
-    n = txt.Find("..");
+    n = Find("..");
     if  (n >= 0)
     {
         err = n + 1;
         return false;
     }
-    n = txt.Find(".@");
+    n = Find(".@");
     if  (n >= 0)
     {
         err = n;
         return false;
     }
-    n = txt.Find("@.");
+    n = Find("@.");
     if  (n >= 0)
     {
         err = n + 1;
         return false;
     }
-    txt = *this;
+    CMaaString txt = *this;
     if  ((Flags & 1) && txt[0] == '<' && txt[Length() - 1] == '>')
     {
         txt = txt.Mid(1, Length() - 2);

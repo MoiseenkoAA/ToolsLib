@@ -4912,13 +4912,25 @@ public:
         m_BufferSize = m_Buffer.Size();
         Swap((CMaaConcatString_<xThrow, bCountMode>&)That);
     }
+    CMaaConcatString_(CMaaConcatString_<xThrow, bCountMode>&& That) noexcept
+    :   //m_Buffer(0),
+        m_StringLength(0)
+    {
+        m_bIsValid = false;
+        m_ptr = m_Buffer;
+        m_BufferSize = m_Buffer.Size();
+        Swap((CMaaConcatString_<xThrow, bCountMode>&)That);
+    }
     CMaaConcatString_<xThrow>& operator=(const CMaaConcatString_<xThrow, bCountMode>& That) noexcept // =delete
     {
         Swap((CMaaConcatString_<xThrow, bCountMode>&)That);
         return *this;
     }
-    CMaaConcatString_(CMaaConcatString_<xThrow, bCountMode>&& That) noexcept = delete;
-    CMaaConcatString_<xThrow, bCountMode>& operator=(CMaaConcatString_<xThrow, bCountMode>&& That) noexcept = delete;
+    CMaaConcatString_<xThrow, bCountMode>& operator=(CMaaConcatString_<xThrow, bCountMode>&& That) noexcept
+    {
+        Swap((CMaaConcatString_<xThrow, bCountMode>&)That);
+        return *this;
+    }
 
     char* ptr() noexcept
     {
