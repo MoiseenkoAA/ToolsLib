@@ -106,7 +106,7 @@
 #define TOOLSLIB_HT_AllocPtr2
 #endif
 
-//int gCMaaToolLib_crt_Initializer() noexcept;
+//void gCMaaToolLib_crt_Initializer() noexcept;
 
 template < class Key, class Data = TOOLSLIB_HT_UNUSED_DATA_TYPE, bool bStandartHash = true, int AllocatorType =
 #ifdef TOOLSLIB_SHARED_ALLOCATOR

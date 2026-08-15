@@ -121,7 +121,11 @@
 #define TL_ATOMIC_HAVE_WAIT
 #endif
 
-int gCMaaToolLib_crt_Initializer() noexcept;
+#if defined(_MSC_VER) || defined(__GNUC__) || defined(__clang__)
+#define gCMaaToolLib_crt_Initializer()
+#else
+void gCMaaToolLib_crt_Initializer() noexcept;
+#endif
 
 #define TOOLSLIB_FAST_MTX CMaaAtomicFastMutexW
 //#define TOOLSLIB_FAST_MTX CMaaFastMutex // TOOLSLIB FAST MUTEX TYPE

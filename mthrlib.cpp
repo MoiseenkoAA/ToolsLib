@@ -4687,8 +4687,63 @@ int main()
 }
 #endif
 
+#ifdef DEBUG_RW_LOCKS
+std::atomic<int> f_n_rw_err = 0;
+std::atomic<int> f_n_rw1_err = 0;
+
+int rw_err()
+{
+    return ++f_n_rw_err;
+}
+
+int rw1_err()
+{
+    return ++f_n_rw_err;
+}
+#endif
+
+struct CMaaToolLib_crt_Initializer
+{
+    CMaaToolsLibClassImpRefKeeper* m_pFileRefKeeper;
+
+    CMaaToolLib_crt_Initializer() noexcept
+    {
+        gCMaaToolLib_crt_Initializer();
+        m_pFileRefKeeper = new CMaaToolsLibClassImpRefKeeper;
+        ////CMaaGetCpuCount();
+        //GetUsTime();
+        //GetMsTime();
+#if 0
+        CMaaXmlDocument doc(CMaaStringDoc, CMaaStringDoc);
+        CMaaXmlElement e = doc.DocumentElement(); // doc.CreateElement("a");
+        //e.AddAttribute("a", CMaaStringZ);
+        e.AddAttribute(CMaaString_a /*CMaaStrCh('a', true)*/, CMaaStringZ);
+        //e.FindNodeWithAttrRO("b", "c", "d");
+#endif
+        //Init_CMaaXmlNodeImpl_statics();
+
+#ifndef TOOLSLIB_SINGLE_THREAD
+#if 0
+        CMaaConnectionInTimeCharacteristics p1(1);
+#endif
+#ifndef _WIN32
+        //HANDLE h3 = CreateEvent(nullptr, false, false, nullptr);
+        //CloseHandle(h3);
+#endif
+#endif
+    }
+    ~CMaaToolLib_crt_Initializer()
+    {
+        delete m_pFileRefKeeper;
+    }
+};
+
+#if defined(_MSC_VER) || defined(__GNUC__) || defined(__clang__)
+#undef gCMaaToolLib_crt_Initializer
+#endif
+
 static bool gCMaaToolLib_crt_Initialized = false;
-int gCMaaToolLib_crt_Initializer() noexcept
+void gCMaaToolLib_crt_Initializer() noexcept
 {
     if (!gCMaaToolLib_crt_Initialized)
     {
@@ -4733,6 +4788,8 @@ int gCMaaToolLib_crt_Initializer() noexcept
             //CMaaGetCpuCount();
 
             GetHRTime(true);
+            GetUsTime();
+            GetMsTime();
 
             GetWsaErrorMessage(0);
 
@@ -4742,56 +4799,25 @@ int gCMaaToolLib_crt_Initializer() noexcept
         }
         ((CMaaAtomicFastMutex0W&)lk).unlock();
     }
-    return 0;
 }
 
+// 1. Прототип функции инициализации
+//void gCMaaToolLib_crt_Initializer();
 
-struct CMaaToolLib_crt_Initializer
-{
-    int m_i = gCMaaToolLib_crt_Initializer();
+// 2. Магия для MSVC (Visual Studio)
+#if defined(_MSC_VER)
+// Создаем или открываем секцию .CRT$XCU (XCU — секция для конструкторов C++)
+#pragma section(".CRT$XCU", read)
+// Помещаем указатель на функцию в эту секцию
+__declspec(allocate(".CRT$XCU")) void (*p_my_custom_init)() = gCMaaToolLib_crt_Initializer;
 
-    CMaaToolsLibClassImpRefKeeper m_FileRefKeeper;
-
-    CMaaToolLib_crt_Initializer() noexcept
-    {
-        //gCMaaToolLib_crt_Initializer();
-        //CMaaGetCpuCount();
-        GetUsTime();
-        GetMsTime();
-#if 0
-        CMaaXmlDocument doc(CMaaStringDoc, CMaaStringDoc);
-        CMaaXmlElement e = doc.DocumentElement(); // doc.CreateElement("a");
-        //e.AddAttribute("a", CMaaStringZ);
-        e.AddAttribute(CMaaString_a /*CMaaStrCh('a', true)*/, CMaaStringZ);
-        //e.FindNodeWithAttrRO("b", "c", "d");
+// 3. Магия для GCC и Clang
+#elif defined(__GNUC__) || defined(__clang__)
+// Используем атрибут constructor. 
+// Значение 101 задает высокий приоритет (функции без приоритета имеют ~65535)
+__attribute__((constructor(101))) void my_custom_init_wrapper() {
+    gCMaaToolLib_crt_Initializer();
+}
 #endif
-        //Init_CMaaXmlNodeImpl_statics();
-
-#ifndef TOOLSLIB_SINGLE_THREAD
-#if 0
-        CMaaConnectionInTimeCharacteristics p1(1);
-#endif
-#ifndef _WIN32
-        //HANDLE h3 = CreateEvent(nullptr, false, false, nullptr);
-        //CloseHandle(h3);
-#endif
-#endif
-    }
-};
 
 static CMaaToolLib_crt_Initializer s_CMaaToolLib_crt_Initializer;
-
-#ifdef DEBUG_RW_LOCKS
-std::atomic<int> f_n_rw_err = 0;
-std::atomic<int> f_n_rw1_err = 0;
-
-int rw_err()
-{
-    return ++f_n_rw_err;
-}
-
-int rw1_err()
-{
-    return ++f_n_rw_err;
-}
-#endif

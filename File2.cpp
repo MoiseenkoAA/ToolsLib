@@ -4181,7 +4181,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
             _ioe[i]->Create();
             //            _ioe[i]->SetHandleIsInherited(0, true, false);
             //            _ioe[i]->SetHandleIsInherited(1, true, false);
-            log.fprintf("%d. (-3 fd) %d %d\n", i, _ioe[i]->GetHandle(0, false), _ioe[i]->GetHandle(1, false));
+            // f_glog.fprintf("%d. (-3 fd) %d %d\n", i, _ioe[i]->GetHandle(0, false), _ioe[i]->GetHandle(1, false));
             fd[i] = _ioe[i]->GetHandle(i == 0 ? 0 : 1, true);
             m_bFdPipe[i] = true;
         }
@@ -4196,7 +4196,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
                 CMaaString tmp;
                 tmp.Format("fork_and_StartProcess() - %s", (const char *)err.GetMsg());
                 err.SetMsg(tmp);
-                f_glog.fprintf("%s\n", (const char *)tmp);
+                // f_glog.fprintf("%s\n", (const char *)tmp);
                 //throw;
             }
         }
@@ -4204,7 +4204,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
         {
             fd[i] = fd[i] >= -10 ? -1 : fd[i];
         }
-        log.fprintf("fd[%d] = %d\n", i, fd[i]);
+        // log.fprintf("fd[%d] = %d\n", i, fd[i]);
     }
 
     m_Flags = Flags;
@@ -4215,7 +4215,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
     m_ExitCode = -1;
 
     f_glog.SetCloseOnExec(false);
-    f_glog.fprintf("test 2\n");
+    // f_glog.fprintf("test 2\n");
 
     {
         for (int i = 0; i < 3; i++)
@@ -4238,7 +4238,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
     {
         ToolsLib_OpenLog(true);
     }
-    f_glog.fprintf("pid=%d 1\n", (int)pid);
+    // f_glog.fprintf("pid=%d 1\n", (int)pid);
 #endif
     m_ChildProcessId = pid;
 
@@ -4330,7 +4330,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
             m_Status = Status_simple;
             m_StatusEx = Status;
             //!!2019 f_glog.fprintf("\n\n\nwait() returns %d, WEXITSTATUS(%d) = %d\n\n", x, Status, WEXITSTATUS(Status_simple));
-            f_glog.fprintf("\n\n\nwait() returns %d, WEXITSTATUS(%d) = %d\n\n", x, Status, WEXITSTATUS(Status));
+            // f_glog.fprintf("\n\n\nwait() returns %d, WEXITSTATUS(%d) = %d\n\n", x, Status, WEXITSTATUS(Status));
             /*if   (x != -1)
             {
                 m_ExitCode = WEXITSTATUS(Status_simple);
@@ -4339,7 +4339,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
             if  (x == pid && WIFEXITED(Status))
             {
                 err = m_ExitCode = WEXITSTATUS(Status);
-                f_glog.fprintf("m_ExitCode = %d\n", m_ExitCode);
+                // f_glog.fprintf("m_ExitCode = %d\n", m_ExitCode);
             }
             else //if  (x != pid || !WIFEXITED(Status))
             {
@@ -4347,12 +4347,12 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
                 {
                     //"child died with signal %u", WTERMSIG(Status);
                     int s = WTERMSIG(Status);
-                    f_glog.fprintf("process %d is died with %d signal\n", (int)pid, (int)s);
+                    // f_glog.fprintf("process %d is died with %d signal\n", (int)pid, (int)s);
                     m_ExitCode = s != 9 ? 124 : 128+9; // like: timeout 0.3 ./abcd.sh ; a=$?; echo $a
                     // s + 256;
                     if  (WCOREDUMP(Status))
                     {
-                        f_glog.fprintf("Core dumped\n");
+                        // f_glog.fprintf("Core dumped\n");
                     }
                     //if (m_StdOutRecv.IsEmpty() && m_StdErrRecv.IsEmpty())
                     {
@@ -4363,7 +4363,7 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
                 {
                     //"child exited with non-zero exit status %u", WEXITSTATUS(Status));
                     m_ExitCode = WEXITSTATUS(Status);
-                    f_glog.fprintf("m_ExitCode = %d\n", m_ExitCode);
+                    // f_glog.fprintf("m_ExitCode = %d\n", m_ExitCode);
                     //if (m_ExitCode && m_StdOutRecv.IsEmpty() && m_StdErrRecv.IsEmpty())
                     {
                         err = m_ExitCode;
@@ -4372,12 +4372,12 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
                 else if (WIFSTOPPED(Status))
                 {
                     int s = WSTOPSIG(Status);
-                    f_glog.fprintf("process %d is stopped by %d signal\n", (int)pid, (int)s);
+                    // f_glog.fprintf("process %d is stopped by %d signal\n", (int)pid, (int)s);
                     err = m_ExitCode = -1;
                 }
                 else if (WIFCONTINUED(Status))
                 {
-                    f_glog.fprintf("process %d is continued\n", (int)pid);
+                    // f_glog.fprintf("process %d is continued\n", (int)pid);
                     err = m_ExitCode = -1;
                 }
                 else
@@ -4394,36 +4394,36 @@ bool C_os_StartProcess::fork_and_StartProcess(int Flags, const char * ExecFileNa
                 {
                     //m_ExitCode = WEXITSTATUS(Status_simple);
                     m_ExitCode = WEXITSTATUS(Status);
-                    f_glog.fprintf("m_ExitCode = %d\n", m_ExitCode);
+                    // f_glog.fprintf("m_ExitCode = %d\n", m_ExitCode);
                 }
                 else if (WIFSIGNALED(Status))
                 {
                     int s = WTERMSIG(Status);
-                    f_glog.fprintf("process %d is killed by %d signal\n", (int)pid, (int)s);
+                    // f_glog.fprintf("process %d is killed by %d signal\n", (int)pid, (int)s);
                     m_ExitCode = s != 9 ? 124 : 128+9; // like: timeout 0.3 ./abcd.sh ; a=$?; echo $a
                     // s + 256;
                     if  (WCOREDUMP(Status))
                     {
-                        f_glog.fprintf("Core dumped\n");
+                        // f_glog.fprintf("Core dumped\n");
                     }
                 }
                 else if (WIFSTOPPED(Status))
                 {
                     int s = WSTOPSIG(Status);
-                    f_glog.fprintf("process %d is stopped by %d signal\n", (int)pid, (int)s);
+                    // f_glog.fprintf("process %d is stopped by %d signal\n", (int)pid, (int)s);
                 }
                 else if (WIFCONTINUED(Status))
                 {
-                    f_glog.fprintf("process %d is continued\n", (int)pid);
+                    // f_glog.fprintf("process %d is continued\n", (int)pid);
                 }
                 else
                 {
-                    f_glog.fprintf("x = %d, status = 0x%08X\n", (int)x, (int)Status);
+                    // f_glog.fprintf("x = %d, status = 0x%08X\n", (int)x, (int)Status);
                 }
             }
             else
             {
-                f_glog.fprintf("x = %d (<= 0?)\n", (int)x);
+                // f_glog.fprintf("x = %d (<= 0?)\n", (int)x);
             }
 #endif // 0
             for (int i = 0; i < 3; i++)
@@ -7680,6 +7680,9 @@ _dword CMaaFile::Write(const CMaaString &Txt)
 
 
 //-----------------------------------------------------------------------------
+static constexpr CMaaAtomicFastMutex0W g_printf_StdOut_Mtx;
+//CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker((CMaaAtomicFastMutex0W&)g_printf_StdOut_Mtx); // automatic scope locker
+//-----------------------------------------------------------------------------
 #ifdef _WIN32
 HANDLE h__utf8_printf_StdOutHandle = nullptr;
 //---------------------------------------------------------------------------
@@ -8245,12 +8248,9 @@ int __utf8_fprintf(CMaaFile file, CMaaString format, ...)
     return (int)file.Write(txt);
 }
 //---------------------------------------------------------------------------
-int __utf8_printf_out(CMaaString txt) noexcept
+static int __utf8_printf_out_raw(const CMaaString &txt) noexcept
 {
 #ifdef _WIN32
-#ifndef __utf8_printf_UTF8_OUTPUT
-    txt = UnicodeToAnsi(Utf8ToUnicode(txt)).CharToOem();
-#endif
     if (h__utf8_printf_StdOutHandle == nullptr)
     {
         CMaaFile fstdout(CMaaFileStdout, CMaaFile::eW, eNoExcept);
@@ -8281,15 +8281,15 @@ int __utf8_printf_out(CMaaString txt) noexcept
     return 0;
 }
 //---------------------------------------------------------------------------
-int __utf8_printf_flush() noexcept
+static int __utf8_printf_flush_raw() noexcept
 {
 #ifdef _WIN32
-    if  (h__utf8_printf_StdOutHandle)
+    if (h__utf8_printf_StdOutHandle)
     {
         return FlushFileBuffers(h__utf8_printf_StdOutHandle) ? 1 : 0;
     }
 #else
-    if  (h__utf8_printf_StdOutHandle != -1)
+    if (h__utf8_printf_StdOutHandle != -1)
     {
         return fsync(h__utf8_printf_StdOutHandle) == 0 ? 1 : 0;
     }
@@ -8297,56 +8297,54 @@ int __utf8_printf_flush() noexcept
     return 0;
 }
 //---------------------------------------------------------------------------
+int __utf8_printf_out(const CMaaString &txt) noexcept
+{
+#ifdef _WIN32
+#ifndef __utf8_printf_UTF8_OUTPUT
+    CMaaString txt2 = UnicodeToAnsi(Utf8ToUnicode(txt)).CharToOem();
+#else
+    const CMaaString& txt2 = txt;
+#endif
+#else
+    const CMaaString& txt2 = txt;
+#endif
+    CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker((CMaaAtomicFastMutex0W&)g_printf_StdOut_Mtx); // automatic scope locker
+    return __utf8_printf_out_raw(txt2);
+}
+//---------------------------------------------------------------------------
+int __utf8_printf_flush() noexcept
+{
+    CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker((CMaaAtomicFastMutex0W&)g_printf_StdOut_Mtx); // automatic scope locker
+    return __utf8_printf_flush_raw();
+}
+//---------------------------------------------------------------------------
 int __log(CMaaString format, ...)
 {
-#define __log_flush //__utf8_printf_flush()
+#define __log_flush_raw // __utf8_printf_flush_raw()
     va_list list;
     va_start(list, format);
     CMaaString txt;
     txt.FormatV(format, list);
     va_end(list);
+    CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker((CMaaAtomicFastMutex0W&)g_printf_StdOut_Mtx); // automatic scope locker
     static CMaaTime _t;
     const _qword t = _t.GetTime();
     txt.Format("%4D.%06D %S", t / 1000000, t % 1000000, &txt);
 #ifdef _WIN32
+#ifndef __utf8_printf_UTF8_OUTPUT
     txt = UnicodeToAnsi(Utf8ToUnicode(txt)).CharToOem();
-    if  (h__utf8_printf_StdOutHandle == nullptr)
-    {
-        CMaaFile fstdout(CMaaFileStdout, CMaaFile::eW, false);
-        h__utf8_printf_StdOutHandle = fstdout.GetHandle(true);
-    }
-    if  (h__utf8_printf_StdOutHandle)
-    {
-        DWORD NumberOfBytesWritten = 0;
-        WriteFile(h__utf8_printf_StdOutHandle, (const char *)txt, (warning_dword)txt.Length(), &NumberOfBytesWritten, nullptr);
-        __log_flush;
-        return (int)NumberOfBytesWritten;
-    }
-#else
-    if  (h__utf8_printf_StdOutHandle == -1)
-    {
-        CMaaFile fstdout(CMaaFileStdout, CMaaFile::eW, false);
-        h__utf8_printf_StdOutHandle = fstdout.GetHandle(true);
-    }
-    if  (h__utf8_printf_StdOutHandle != -1)
-    {
-        _dword NumberOfBytesWritten = write(h__utf8_printf_StdOutHandle, (const char *)txt, txt.Length());
-        if  (NumberOfBytesWritten == (_dword)-1)
-        {
-            NumberOfBytesWritten = 0;
-        }
-        __log_flush;
-        return (int)NumberOfBytesWritten;
-    }
 #endif
-    return 0;
+#endif
+    const int n = __utf8_printf_out_raw(txt);
+    __log_flush_raw;
+    return n;
+#undef __log_flush_raw
 }
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
 int __lib_utf8_printf(CMaaString txt)
 {
-    //return __utf8_printf("%S", &txt);
     return __utf8_printf_out(txt);
 }
 //---------------------------------------------------------------------------

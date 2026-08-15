@@ -1546,7 +1546,7 @@ int __utf8_printfV(const char8_t* format, va_list list) noexcept;
 int __utf8_printfV(CMaaString format, va_list list) noexcept;
 int __utf8_printfV2(CMaaString Format, CMaaString Text, va_list list) noexcept;
 
-int __utf8_printf_out(CMaaString txt) noexcept;
+int __utf8_printf_out(const CMaaString &txt) noexcept;
 int __utf8_printf_flush() noexcept;
 int __utf8_printf_isatty() noexcept;
 
