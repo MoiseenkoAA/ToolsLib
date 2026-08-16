@@ -445,6 +445,7 @@ DEF_ALLOCATOR_CMaaHeap(int, CMaaHaffman_Data)
 #endif
 
 #if 0
+TOOLSLIB_CRT_INIT
 int main(int argn, char * args[])
 {
     if (argn == 4)

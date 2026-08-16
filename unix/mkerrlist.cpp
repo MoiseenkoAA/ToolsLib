@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <string.h>
 
+//TOOLSLIB_CRT_INIT
 int main(int argn, char * args[])
 {
      char Buffer[1024];
