@@ -90,6 +90,7 @@
 #endif
 #define TOOLSLIB_USE_CMAASTRING64 0 // 0 - no, 1 - repl 32 by 64, 2 - both 32 & 64
 #define TOOLSLIB_A_A_ASSIGN_OPT
+#define mutable_const const
 
 //#define TL_memory_order_acq_rel memory_order_acq_rel // the same speed, I7-7700K
 #define TL_memory_order_acquire memory_order_acquire // |--> Speedup 

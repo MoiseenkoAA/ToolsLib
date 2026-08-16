@@ -121,10 +121,9 @@
 #define TL_ATOMIC_HAVE_WAIT
 #endif
 
-#if defined(_MSC_VER) || defined(__GNUC__) || defined(__clang__)
-#define gCMaaToolLib_crt_Initializer()
-#else
 void gCMaaToolLib_crt_Initializer() noexcept;
+#if defined(_MSC_VER) // || defined(__GNUC__) || defined(__clang__)
+#define gCMaaToolLib_crt_Initializer()
 #endif
 
 #define TOOLSLIB_FAST_MTX CMaaAtomicFastMutexW
@@ -484,24 +483,24 @@ class CMaaAtomicFastMutex
 public:
     constexpr CMaaAtomicFastMutex(int Spins = DEFAULT_FAST_MUTEX_SPINS) noexcept : m_Lock{ 0 } {}
     constexpr ~CMaaAtomicFastMutex() {}
-    _dword Lock() noexcept { ++m_Lock; return 0; }
-    _dword Lock_us(_qword us) noexcept { ++m_Lock; return 0; }
-    _dword Lock(_dword ms) noexcept { ++m_Lock; return 0; }
-    bool TryLock() noexcept { ++m_Lock; return true; }
-    int UnLock() noexcept { return --m_Lock; }
+    _dword Lock() mutable_const noexcept { ++m_Lock; return 0; }
+    _dword Lock_us(_qword us) mutable_const noexcept { ++m_Lock; return 0; }
+    _dword Lock(_dword ms) mutable_const noexcept { ++m_Lock; return 0; }
+    bool TryLock() mutable_const noexcept { ++m_Lock; return true; }
+    int UnLock() mutable_const noexcept { return --m_Lock; }
     void AddRef() const noexcept {}
     int UnRef() const noexcept { return 1; }
     bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept { return false; }
-    _dword Lock(const char* txt) noexcept { return Lock(); }
-    _dword LockF(const char* file, int line) noexcept { return Lock(); }
-    int UnLockF(const char* file, int line) noexcept { return UnLock(); }
-    void StillLocked(const char* SrcFile, int SrcLine) noexcept {}
+    _dword Lock(const char* txt) mutable_const noexcept { return Lock(); }
+    _dword LockF(const char* file, int line) mutable_const noexcept { return Lock(); }
+    int UnLockF(const char* file, int line) mutable_const noexcept { return UnLock(); }
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
     void FlushLog(bool bForced) const noexcept {}
     int IsLocked() const noexcept { return m_Lock; }
 
-    void lock() noexcept { Lock(); }
-    void unlock() noexcept { UnLock(); }
-    bool try_lock() noexcept { return TryLock(); }
+    void lock() mutable_const noexcept { Lock(); }
+    void unlock() mutable_const noexcept { UnLock(); }
+    bool try_lock() mutable_const noexcept { return TryLock(); }
 };
 
 class CMaaAtomicFastMutexW
@@ -510,24 +509,24 @@ class CMaaAtomicFastMutexW
 public:
     constexpr CMaaAtomicFastMutexW(int Spins = DEFAULT_FAST_MUTEX_SPINS) noexcept : m_Lock{ 0 } {}
     constexpr ~CMaaAtomicFastMutexW() {}
-    _dword Lock() noexcept { ++m_Lock; return 0; }
-    _dword Lock_us(_qword us) noexcept { ++m_Lock; return 0; }
-    _dword Lock(_dword ms) noexcept { ++m_Lock; return 0; }
-    bool TryLock() noexcept { ++m_Lock; return true; }
-    int UnLock() noexcept { return --m_Lock; }
+    _dword Lock() mutable_const noexcept { ++m_Lock; return 0; }
+    _dword Lock_us(_qword us) mutable_const noexcept { ++m_Lock; return 0; }
+    _dword Lock(_dword ms) mutable_const noexcept { ++m_Lock; return 0; }
+    bool TryLock() mutable_const noexcept { ++m_Lock; return true; }
+    int UnLock() mutable_const noexcept { return --m_Lock; }
     void AddRef() const noexcept {}
     int UnRef() const noexcept { return 1; }
     bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept { return false; }
-    _dword Lock(const char* txt) noexcept { return Lock(); }
-    _dword LockF(const char* file, int line) noexcept { return Lock(); }
-    int UnLockF(const char* file, int line) noexcept { return UnLock(); }
-    void StillLocked(const char* SrcFile, int SrcLine) noexcept {}
+    _dword Lock(const char* txt) mutable_const noexcept { return Lock(); }
+    _dword LockF(const char* file, int line) mutable_const noexcept { return Lock(); }
+    int UnLockF(const char* file, int line) mutable_const noexcept { return UnLock(); }
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
     void FlushLog(bool bForced) const noexcept {}
     int IsLocked() const noexcept { return m_Lock; }
 
-    void lock() noexcept { Lock(); }
-    void unlock() noexcept { UnLock(); }
-    bool try_lock() noexcept { return TryLock(); }
+    void lock() mutable_const noexcept { Lock(); }
+    void unlock() mutable_const noexcept { UnLock(); }
+    bool try_lock() mutable_const noexcept { return TryLock(); }
 };
 
 #define CMaaStdRecursiveMutex CMaaAtomicFastMutex
@@ -590,24 +589,24 @@ class CMaaAtomicFastMutex1 // simple, fast mutex // can be non recursive
 public:
     constexpr CMaaAtomicFastMutex1(/*int Spins = 10000*/) noexcept {m_Lock = 0;}
     constexpr ~CMaaAtomicFastMutex1() {}
-    _dword Lock() noexcept {++m_Lock; return 0;}
-    bool TryLock() noexcept {++m_Lock; return true;}
-    int UnLock() noexcept {return --m_Lock;}
+    _dword Lock() mutable_const noexcept {++m_Lock; return 0;}
+    bool TryLock() mutable_const noexcept {++m_Lock; return true;}
+    int UnLock() mutable_const noexcept {return --m_Lock;}
     void AddRef() const noexcept {}
     int UnRef() const noexcept {return 1;}
 #ifdef _WIN32_000
-    DWORD Lock(DWORD to) noexcept {return Lock();}
+    DWORD Lock(DWORD to) mutable_const noexcept {return Lock();}
 #endif
     bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept {return false;}
-    _dword Lock(const char* txt) noexcept {return Lock();}
-    _dword LockF(const char* file, int line) noexcept {return Lock();}
-    int UnLockF(const char* file, int line) noexcept {return UnLock();}
-    void StillLocked(const char* SrcFile, int SrcLine) noexcept {}
+    _dword Lock(const char* txt) mutable_const noexcept {return Lock();}
+    _dword LockF(const char* file, int line) mutable_const noexcept {return Lock();}
+    int UnLockF(const char* file, int line) mutable_const noexcept {return UnLock();}
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
     void FlushLog(bool bForced) const noexcept {}
 
-    void lock() noexcept { Lock(); }
-    void unlock() noexcept { UnLock(); }
-    bool try_lock() noexcept { return TryLock(); }
+    void lock() mutable_const noexcept { Lock(); }
+    void unlock() mutable_const noexcept { UnLock(); }
+    bool try_lock() mutable_const noexcept { return TryLock(); }
 };
 
 class CMaaAtomicFastMutex0 // simplest, fast mutex // non recursive
@@ -616,24 +615,24 @@ class CMaaAtomicFastMutex0 // simplest, fast mutex // non recursive
 public:
     constexpr CMaaAtomicFastMutex0() noexcept {} // m_Lock = 0;
     constexpr ~CMaaAtomicFastMutex0() {}
-    _dword Lock() noexcept { /*++m_Lock;*/ return 0; }
-    bool TryLock() noexcept { /*++m_Lock;*/ return true; }
-    int UnLock() noexcept { return 0; /*--m_Lock;*/ }
+    _dword Lock() mutable_const noexcept { /*++m_Lock;*/ return 0; }
+    bool TryLock() mutable_const noexcept { /*++m_Lock;*/ return true; }
+    int UnLock() mutable_const noexcept { return 0; /*--m_Lock;*/ }
     void AddRef() const noexcept {}
     int UnRef() const noexcept { return 1; }
 #ifdef _WIN32_000
-    DWORD Lock(DWORD to) noexcept { return Lock(); }
+    DWORD Lock(DWORD to) mutable_const noexcept { return Lock(); }
 #endif
     bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept { return false; }
-    _dword Lock(const char* txt) noexcept { return Lock(); }
-    _dword LockF(const char* file, int line) noexcept { return Lock(); }
-    int UnLockF(const char* file, int line) noexcept { return UnLock(); }
-    void StillLocked(const char* SrcFile, int SrcLine) noexcept {}
+    _dword Lock(const char* txt) mutable_const noexcept { return Lock(); }
+    _dword LockF(const char* file, int line) mutable_const noexcept { return Lock(); }
+    int UnLockF(const char* file, int line) mutable_const noexcept { return UnLock(); }
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
     void FlushLog(bool bForced) const noexcept {}
 
-    void lock() noexcept { Lock(); }
-    void unlock() noexcept { UnLock(); }
-    bool try_lock() noexcept { return TryLock(); }
+    void lock() mutable_const noexcept { Lock(); }
+    void unlock() mutable_const noexcept { UnLock(); }
+    bool try_lock() mutable_const noexcept { return TryLock(); }
 };
 #define CMaaAtomicFastMutex0W CMaaAtomicFastMutex0
 #else
@@ -741,13 +740,13 @@ public:
     {
     }
     constexpr ~CMaaAtomicFastMutex1() {}
-    _dword Lock() noexcept;
-    bool TryLock() noexcept;
-    int UnLock() noexcept;
+    _dword Lock() mutable_const noexcept;
+    bool TryLock() mutable_const noexcept;
+    int UnLock() mutable_const noexcept;
     constexpr void AddRef() const noexcept {}
     constexpr int UnRef() const noexcept { return 1; }
 #ifdef _WIN32_000
-    DWORD Lock(DWORD to) noexcept
+    DWORD Lock(DWORD to) mutable_const noexcept
     {
         if  (!to)
         {
@@ -757,15 +756,15 @@ public:
     }
 #endif
     bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept;
-    _dword Lock(const char* txt) noexcept;
-    _dword LockF(const char* file, int line) noexcept;
-    int UnLockF(const char* file, int line) noexcept;
-    void StillLocked(const char* SrcFile, int SrcLine) noexcept {}
+    _dword Lock(const char* txt) mutable_const noexcept;
+    _dword LockF(const char* file, int line) mutable_const noexcept;
+    int UnLockF(const char* file, int line) mutable_const noexcept;
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
     void FlushLog(bool bForced) const noexcept;
 
-    void lock() noexcept { Lock(); }
-    void unlock() noexcept { UnLock(); }
-    bool try_lock() noexcept { return TryLock(); }
+    void lock() mutable_const noexcept { Lock(); }
+    void unlock() mutable_const noexcept { UnLock(); }
+    bool try_lock() mutable_const noexcept { return TryLock(); }
 };
 
 class CMaaAtomicFastMutex0 // the simplest, fast mutex // non recursive
@@ -780,7 +779,7 @@ public:
     {
     }
     constexpr ~CMaaAtomicFastMutex0() {}
-    void lock() noexcept
+    void lock() mutable_const noexcept
     {
         while (m_Lock.test_and_set(std::memory_order_acquire))
 #ifdef TL_ATOMIC_HAVE_WAIT
@@ -795,18 +794,18 @@ public:
 #endif
             ;
     }
-    void unlock() noexcept
+    void unlock() mutable_const noexcept
     {
         m_Lock.clear(std::memory_order_release);
 #ifdef TL_ATOMIC_HAVE_WAIT
         //m_Lock.notify_one();
 #endif
     }
-    bool try_lock() noexcept
+    bool try_lock() mutable_const noexcept
     {
         return !m_Lock.test_and_set(std::memory_order_acquire);
     }
-    _dword Lock() noexcept
+    _dword Lock() mutable_const noexcept
     {
         lock();
 #ifdef _WIN32
@@ -815,11 +814,11 @@ public:
         return 0;
 #endif
     }
-    bool TryLock() noexcept
+    bool TryLock() mutable_const noexcept
     {
         return try_lock();
     }
-    int UnLock() noexcept
+    int UnLock() mutable_const noexcept
     {
         unlock();
         return 0;
@@ -827,7 +826,7 @@ public:
     constexpr void AddRef() const noexcept {}
     constexpr int UnRef() const noexcept { return 1; }
 #ifdef _WIN32_000
-    DWORD Lock(DWORD to) noexcept
+    DWORD Lock(DWORD to) mutable_const noexcept
     {
         if (!to)
         {
@@ -840,19 +839,19 @@ public:
     {
         return false;
     }
-    _dword Lock(const char* txt) noexcept
+    _dword Lock(const char* txt) mutable_const noexcept
     {
         return Lock();
     }
-    _dword LockF(const char* file, int line) noexcept
+    _dword LockF(const char* file, int line) mutable_const noexcept
     {
         return Lock();
     }
-    int UnLockF(const char* file, int line) noexcept
+    int UnLockF(const char* file, int line) mutable_const noexcept
     {
         return UnLock();
     }
-    void StillLocked(const char* SrcFile, int SrcLine) noexcept {}
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
     void FlushLog(bool bForced) const noexcept {}
 };
 
@@ -861,11 +860,11 @@ class CMaaAtomicFastMutex0W // the simplest, fast mutex // non recursive // wait
     mutable std::atomic_flag m_Lock;
 public:
     constexpr CMaaAtomicFastMutex0W() noexcept
-        : m_Lock ATOMIC_FLAG_INIT
+    :   m_Lock ATOMIC_FLAG_INIT
     {
     }
     constexpr ~CMaaAtomicFastMutex0W() {}
-    void lock() noexcept
+    void lock() mutable_const noexcept
     {
         while (m_Lock.test_and_set(std::memory_order_acquire))
 #ifdef TL_ATOMIC_HAVE_WAIT
@@ -877,18 +876,18 @@ public:
 #endif
             ;
     }
-    void unlock() noexcept
+    void unlock() mutable_const noexcept
     {
         m_Lock.clear(std::memory_order_release);
 #ifdef TL_ATOMIC_HAVE_WAIT
         m_Lock.notify_one();
 #endif
     }
-    bool try_lock() noexcept
+    bool try_lock() mutable_const noexcept
     {
         return !m_Lock.test_and_set(std::memory_order_acquire);
     }
-    _dword Lock() noexcept
+    _dword Lock() mutable_const noexcept
     {
         lock();
 #ifdef _WIN32
@@ -897,11 +896,11 @@ public:
         return 0;
 #endif
     }
-    bool TryLock() noexcept
+    bool TryLock() mutable_const noexcept
     {
         return try_lock();
     }
-    int UnLock() noexcept
+    int UnLock() mutable_const noexcept
     {
         unlock();
         return 0;
@@ -909,7 +908,7 @@ public:
     constexpr void AddRef() const noexcept {}
     constexpr int UnRef() const noexcept { return 1; }
 #ifdef _WIN32_000
-    DWORD Lock(DWORD to) noexcept
+    DWORD Lock(DWORD to) mutable_const noexcept
     {
         if (!to)
         {
@@ -922,19 +921,19 @@ public:
     {
         return false;
     }
-    _dword Lock(const char* txt) noexcept
+    _dword Lock(const char* txt) mutable_const noexcept
     {
         return Lock();
     }
-    _dword LockF(const char* file, int line) noexcept
+    _dword LockF(const char* file, int line) mutable_const noexcept
     {
         return Lock();
     }
-    int UnLockF(const char* file, int line) noexcept
+    int UnLockF(const char* file, int line) mutable_const noexcept
     {
         return UnLock();
     }
-    void StillLocked(const char* SrcFile, int SrcLine) noexcept {}
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
     void FlushLog(bool bForced) const noexcept {}
 };
 #define CMaaAtomicFastMutex0 CMaaAtomicFastMutex0W // can make cpu usage lower and can be something slower
@@ -962,19 +961,19 @@ public:
     constexpr
 #endif
         ~CMaaAtomicFastMutex2W() {}
-    void lock() noexcept
+    void lock() mutable_const noexcept
     {
         Lock();
     }
-    void unlock() noexcept
+    void unlock() mutable_const noexcept
     {
         UnLock();
     }
-    bool try_lock() noexcept
+    bool try_lock() mutable_const noexcept
     {
         return TryLock();
     }
-    _dword Lock() noexcept
+    _dword Lock() mutable_const noexcept
     {
         const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
         if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
@@ -993,7 +992,7 @@ public:
         return 0;
 #endif
     }
-    bool TryLock() noexcept
+    bool TryLock() mutable_const noexcept
     {
         const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
         if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
@@ -1009,7 +1008,7 @@ public:
         }
         return false;
     }
-    int UnLock() noexcept
+    int UnLock() mutable_const noexcept
     {
         const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
         if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
@@ -1027,13 +1026,13 @@ public:
         }
         return -1; // error
     }
-    _dword Lock_us(_qword us) noexcept;
-    _dword Lock(_dword ms) noexcept;
+    _dword Lock_us(_qword us) mutable_const noexcept;
+    _dword Lock(_dword ms) mutable_const noexcept;
     int IsLocked() const noexcept { return 1 + m_Lock; }
     constexpr void AddRef() const noexcept {}
     constexpr int UnRef() const noexcept { return 1; }
 #ifdef _WIN32_000
-    DWORD Lock(DWORD to) noexcept
+    DWORD Lock(DWORD to) mutable_const noexcept
     {
         if (!to)
         {
@@ -1046,19 +1045,19 @@ public:
     {
         return false;
     }
-    _dword Lock(const char* txt) noexcept
+    _dword Lock(const char* txt) mutable_const noexcept
     {
         return Lock();
     }
-    _dword LockF(const char* file, int line) noexcept
+    _dword LockF(const char* file, int line) mutable_const noexcept
     {
         return Lock();
     }
-    int UnLockF(const char* file, int line) noexcept
+    int UnLockF(const char* file, int line) mutable_const noexcept
     {
         return UnLock();
     }
-    void StillLocked(const char* SrcFile, int SrcLine) noexcept {}
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
     void FlushLog(bool bForced) const noexcept {}
 };
 #endif

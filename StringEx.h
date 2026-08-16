@@ -4078,13 +4078,13 @@ public:
 private:
     struct sInstance
     {
-        CMaaAtomicFastMutex0W& m_mtx;
+        const CMaaAtomicFastMutex0W& m_mtx;
         CMaaSList<CMaaTmpSprintfBuffer> m_BuffersList;
         CMaaSList<CMaaTmpSprintfBuffer> m_FormatBuffersList;
         CMaaSList<CMaaTmpSprintf2StringsArray> m_StringsArrayList;
 
         sInstance(const CMaaAtomicFastMutex0W& m) noexcept
-        :   m_mtx((CMaaAtomicFastMutex0W&)m),
+        :   m_mtx(m),
             m_BuffersList(true),
             m_FormatBuffersList(true),
             m_StringsArrayList(true)

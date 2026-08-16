@@ -7681,7 +7681,7 @@ _dword CMaaFile::Write(const CMaaString &Txt)
 
 //-----------------------------------------------------------------------------
 static constexpr CMaaAtomicFastMutex0W g_printf_StdOut_Mtx;
-//CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker((CMaaAtomicFastMutex0W&)g_printf_StdOut_Mtx); // automatic scope locker
+//CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker(g_printf_StdOut_Mtx); // automatic scope locker
 //-----------------------------------------------------------------------------
 #ifdef _WIN32
 HANDLE h__utf8_printf_StdOutHandle = nullptr;
@@ -8308,13 +8308,13 @@ int __utf8_printf_out(const CMaaString &txt) noexcept
 #else
     const CMaaString& txt2 = txt;
 #endif
-    CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker((CMaaAtomicFastMutex0W&)g_printf_StdOut_Mtx); // automatic scope locker
+    CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker(g_printf_StdOut_Mtx); // automatic scope locker
     return __utf8_printf_out_raw(txt2);
 }
 //---------------------------------------------------------------------------
 int __utf8_printf_flush() noexcept
 {
-    CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker((CMaaAtomicFastMutex0W&)g_printf_StdOut_Mtx); // automatic scope locker
+    CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker(g_printf_StdOut_Mtx); // automatic scope locker
     return __utf8_printf_flush_raw();
 }
 //---------------------------------------------------------------------------
@@ -8326,7 +8326,7 @@ int __log(CMaaString format, ...)
     CMaaString txt;
     txt.FormatV(format, list);
     va_end(list);
-    CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker((CMaaAtomicFastMutex0W&)g_printf_StdOut_Mtx); // automatic scope locker
+    CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker(g_printf_StdOut_Mtx); // automatic scope locker
     static CMaaTime _t;
     const _qword t = _t.GetTime();
     txt.Format("%4D.%06D %S", t / 1000000, t % 1000000, &txt);

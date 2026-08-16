@@ -532,7 +532,7 @@ void CMaaAtomicFastMutex::FlushLog(bool bForced) const noexcept
 }
 
 #ifndef TOOLSLIB_SINGLE_THREAD
-_dword CMaaAtomicFastMutex2W::Lock_us(_qword us) noexcept
+_dword CMaaAtomicFastMutex2W::Lock_us(_qword us) mutable_const noexcept
 {
     if (us == -1)
     {
@@ -598,7 +598,7 @@ _dword CMaaAtomicFastMutex2W::Lock_us(_qword us) noexcept
     return WAIT_OBJECT_0;
 }
 
-_dword CMaaAtomicFastMutex2W::Lock(_dword ms) noexcept
+_dword CMaaAtomicFastMutex2W::Lock(_dword ms) mutable_const noexcept
 {
     if (ms == INFINITE)
     {
@@ -1268,7 +1268,7 @@ CMaaAtomicFastMutex1::~CMaaAtomicFastMutex1()
     //}
 }
 #endif
-_dword CMaaAtomicFastMutex1::Lock() noexcept
+_dword CMaaAtomicFastMutex1::Lock() mutable_const noexcept
 {
     const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
     if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
@@ -1322,7 +1322,7 @@ _dword CMaaAtomicFastMutex1::Lock() noexcept
     }
     return WAIT_OBJECT_0;
 }
-bool CMaaAtomicFastMutex1::TryLock() noexcept
+bool CMaaAtomicFastMutex1::TryLock() mutable_const noexcept
 {
     const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
     CMaaThreadIdType abThreadId = m_ThreadId.load(std::TL_memory_order_acquire);
@@ -1359,7 +1359,7 @@ bool CMaaAtomicFastMutex1::TryLock() noexcept
     }
     return false;
 }
-int CMaaAtomicFastMutex1::UnLock() noexcept
+int CMaaAtomicFastMutex1::UnLock() mutable_const noexcept
 {
     if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), CMaaGetCurrentThreadId()))
     {
@@ -1381,7 +1381,7 @@ int CMaaAtomicFastMutex1::UnRef() const noexcept
 }
 */
 #ifdef _WIN32_000
-DWORD Lock(DWORD to) noexcept
+DWORD Lock(DWORD to) mutable_const noexcept
 {
     if  (!to)
     {
@@ -1394,15 +1394,15 @@ bool CMaaAtomicFastMutex1::GetLockHolder(int x, char* txt, int buffer_len) const
 {
     return false;
 }
-_dword CMaaAtomicFastMutex1::Lock(const char* txt) noexcept
+_dword CMaaAtomicFastMutex1::Lock(const char* txt) mutable_const noexcept
 {
     return Lock();
 }
-_dword CMaaAtomicFastMutex1::LockF(const char* file, int line) noexcept
+_dword CMaaAtomicFastMutex1::LockF(const char* file, int line) mutable_const noexcept
 {
     return Lock();
 }
-int CMaaAtomicFastMutex1::UnLockF(const char* file, int line) noexcept
+int CMaaAtomicFastMutex1::UnLockF(const char* file, int line) mutable_const noexcept
 {
     return UnLock();
 }
@@ -4711,8 +4711,8 @@ struct CMaaToolLib_crt_Initializer
         gCMaaToolLib_crt_Initializer();
         m_pFileRefKeeper = new CMaaToolsLibClassImpRefKeeper;
         ////CMaaGetCpuCount();
-        //GetUsTime();
-        //GetMsTime();
+        GetUsTime();
+        GetMsTime();
 #if 0
         CMaaXmlDocument doc(CMaaStringDoc, CMaaStringDoc);
         CMaaXmlElement e = doc.DocumentElement(); // doc.CreateElement("a");
@@ -4738,7 +4738,7 @@ struct CMaaToolLib_crt_Initializer
     }
 };
 
-#if defined(_MSC_VER) || defined(__GNUC__) || defined(__clang__)
+#if defined(_MSC_VER) //|| defined(__GNUC__) || defined(__clang__)
 #undef gCMaaToolLib_crt_Initializer
 #endif
 
@@ -4748,7 +4748,7 @@ void gCMaaToolLib_crt_Initializer() noexcept
     if (!gCMaaToolLib_crt_Initialized)
     {
         static constexpr CMaaAtomicFastMutex0W lk;
-        ((CMaaAtomicFastMutex0W&)lk).lock();
+        lk.lock();
         if (!gCMaaToolLib_crt_Initialized)
         {
             //gCMaaToolLib_crt_Initialized = true;
@@ -4788,8 +4788,8 @@ void gCMaaToolLib_crt_Initializer() noexcept
             //CMaaGetCpuCount();
 
             GetHRTime(true);
-            GetUsTime();
-            GetMsTime();
+            //GetUsTime();
+            //GetMsTime();
 
             GetWsaErrorMessage(0);
 
@@ -4797,9 +4797,11 @@ void gCMaaToolLib_crt_Initializer() noexcept
 
             gCMaaToolLib_crt_Initialized = true;
         }
-        ((CMaaAtomicFastMutex0W&)lk).unlock();
+        lk.unlock();
     }
 }
+
+static CMaaToolLib_crt_Initializer s_CMaaToolLib_crt_Initializer;
 
 // 1. Прототип функции инициализации
 //void gCMaaToolLib_crt_Initializer();
@@ -4812,12 +4814,21 @@ void gCMaaToolLib_crt_Initializer() noexcept
 __declspec(allocate(".CRT$XCU")) void (*p_my_custom_init)() = gCMaaToolLib_crt_Initializer;
 
 // 3. Магия для GCC и Clang
+/*
 #elif defined(__GNUC__) || defined(__clang__)
 // Используем атрибут constructor. 
 // Значение 101 задает высокий приоритет (функции без приоритета имеют ~65535)
-__attribute__((constructor(101))) void my_custom_init_wrapper() {
-    gCMaaToolLib_crt_Initializer();
-}
+// not worked (omitted) in static library
+__attribute__((constructor(101))) void my_custom_init_wrapper() { gCMaaToolLib_crt_Initializer(); }
+*/
 #endif
 
-static CMaaToolLib_crt_Initializer s_CMaaToolLib_crt_Initializer;
+/*
+// You can place this NOT in library (in every projects):
+#if defined(__GNUC__) || defined(__clang__)
+// Используем атрибут constructor. 
+// Значение 101 задает высокий приоритет (функции без приоритета имеют ~65535)
+//#undef gCMaaToolLib_crt_Initializer
+__attribute__((constructor(101))) void my_custom_init_wrapper2() { gCMaaToolLib_crt_Initializer(); }
+#endif
+*/
