@@ -7562,7 +7562,7 @@ CMaaString CMaaFile::ReadAllSysFile(const char * fn) noexcept
                     }
                     break;
                 }
-                int len = (int)NumberOfBytesRead;
+                const int len = (int)NumberOfBytesRead;
                 if (!len)
                 {
                     break;

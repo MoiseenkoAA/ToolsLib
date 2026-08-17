@@ -2112,6 +2112,7 @@ void CCGIHelper::SetSubst(bool bIn, bool bOut, const CMaaString &Qs, CMaaString 
         setenv("SCRIPT_NAME", Fn, 1);
         unsetenv("HTTP_RANGE");
 #else
+        CMaaString a = g_imp->getenv("REMOTE_ADDR");
         g_imp->m_hSubstCgiParamOverride.AddOver("REQUEST_METHOD", Method);
         g_imp->m_hSubstCgiParamOverride.AddOver("QUERY_STRING", Qs);
         if  (Fn[0] == '/')
@@ -2121,6 +2122,7 @@ void CCGIHelper::SetSubst(bool bIn, bool bOut, const CMaaString &Qs, CMaaString 
         e.Format(Qs.IsNotEmpty() ? "/%S?%S" : "/%S", &Fn, &Qs);
         g_imp->m_hSubstCgiParamOverride.AddOver("REQUEST_URI", e);
         g_imp->m_hSubstCgiParamOverride.AddOver("SCRIPT_NAME", Fn);
+        g_imp->m_hSubstCgiParamOverride.AddOver("REMOTE_ADDR", a);
         g_imp->m_hSubstCgiParamOverride.AddOver("HTTP_RANGE", CMaaStringZ);
 #endif
     }

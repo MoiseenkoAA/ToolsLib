@@ -124,10 +124,10 @@
 int gCMaaToolLib_crt_Initializer() noexcept;
 void gCMaaToolLib_crt_Initializer2() noexcept;
 #if defined(_MSC_VER)
-#define gCMaaToolLib_crt_Initializer()
+#define gCMaaToolLib_crt_Initializer() (-1)
 #define TOOLSLIB_CRT_INIT
 #elif defined(__GNUC__) || defined(__clang__)
-#define gCMaaToolLib_crt_Initializer()
+#define gCMaaToolLib_crt_Initializer() (-1)
 #define TOOLSLIB_CRT_INIT __attribute__((constructor(101))) void gCMaaToolLib_crt_Initializer_wrapper() { gCMaaToolLib_crt_Initializer2(); }
 #else
 #define TOOLSLIB_CRT_INIT
