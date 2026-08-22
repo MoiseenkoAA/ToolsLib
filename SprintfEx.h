@@ -460,7 +460,7 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
                 }
             }
             // my format
-            precision = BufStrLen >= 0 ? BufStrLen : (warning_int)int_strlen(pChar);
+            precision = BufStrLen >= 0 ? (warning_int)BufStrLen : (warning_int)int_strlen(pChar);
 
             if (precision > arg_precision && arg_precision >= 0)
             {
@@ -689,7 +689,7 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
 #endif
 #else
 #ifndef TOOLSLIB_SPRINTF_CHECK_STRINGS
-                    int_ b = !s->m_pImp ? 1 : 0;
+                    int_ b = !s->IsValid() ? 1 : 0;
 #else
                     int_ b = !s->m_pImp ? 1 :
                         __is_bad_write_ptr((void*)&s->m_pImp, sizeof(void*)) ? 2 :
@@ -980,7 +980,7 @@ void SprintfEx(const char* strFormat, int FormatLen, va_list list, int_ SrcLine,
         case 'n':
         {
             int_* p = va_arg(list, int_*);
-            *p = (int_)GetMemoryString().RefMid((int)Length0).__CharCount();
+            *p = (int_)GetMemoryString().RefMid((StrInt)Length0).__CharCount();
             Buffer[BufStrLen = 0] = 0;
         }
         break;
@@ -1444,7 +1444,7 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
                 pChar = (char*)"(bad_strptr)";
             }
             // my format
-            precision = BufStrLen >= 0 ? BufStrLen : (warning_int)int_strlen(pChar);
+            precision = BufStrLen >= 0 ? (warning_int)BufStrLen : (warning_int)int_strlen(pChar);
 
             if (precision > arg_precision && arg_precision >= 0)
             {

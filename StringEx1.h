@@ -64,6 +64,9 @@
      #endif
 #endif
 
+template<bool bZTerm = true> constexpr void MacToText(char* txt, const _byte* mac) noexcept;
+char* CMaaIpToTextEx(char* txt, _IP ip, int Mode = 0) noexcept;
+char* CMaaIpToTextEx(char* txt, const _byte* ip, int Mode = 0) noexcept;
 
 #define CMAASTRING_CACHE_HASH   // has effects: need to call ClearHash() on buffer direct mod
 //#define CMAASTRING_CACHE_HASH64 // has effects: need to call ClearHash() on buffer direct mod

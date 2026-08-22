@@ -4168,45 +4168,93 @@ CMaaString& CMaaString::AddLeftOf(const char* str, int nCount) noexcept(noexcept
 }
 //---------------------------------------------------------------------------
 // like  *this += str.RefMid(First, nCount);
-CMaaString& CMaaString::AddMidOf(const CMaaString& str, int First, int nCount) noexcept(noexcept_new)
+CMaaString& CMaaString::AddMidOf(const CMaaString& str, int nFirst, int nCount) noexcept(noexcept_new)
 {
     // like  *this += str.RefMid(First, nCount);
     const int l = str.Length();
-    if (First < 0 && nCount > -First)
+#if 0
+    if (nFirst < 0 && nCount > -nFirst)
     {
-        nCount += First;
+        nCount += nFirst;
         Add(str, nCount <= l ? nCount : l, str.GetUtf1632Flags());
     }
-    else if (First >= 0 && First < l)
+    else if (nFirst >= 0 && nFirst < l)
     {
-        Add(First + (const char*)str, nCount >= 0 && First <= l - nCount ? nCount : l - First, str.GetUtf1632Flags());
+        Add(nFirst + (const char*)str, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst, str.GetUtf1632Flags());
     }
+#else
+    if (nFirst < 0)
+    {
+        if (nCount > -nFirst)
+        {
+            nCount += nFirst;
+            Add(str, nCount <= l ? nCount : l, str.GetUtf1632Flags());
+        }
+    }
+    else if (nFirst < l)
+    {
+        return Add(nFirst + str.m_pImp->m_pszStr, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst, str.GetUtf1632Flags());
+    }
+#endif
     return *this;
 }
-CMaaString& CMaaString::AddMidOf(const CMaaConstStr& str, int First, int nCount) noexcept(noexcept_new)
+CMaaString& CMaaString::AddMidOf(const CMaaConstStr& str, int nFirst, int nCount) noexcept(noexcept_new)
 {
-    if (First < 0 && nCount > -First)
+#if 0
+    if (nFirst < 0 && nCount > -nFirst)
     {
-        nCount += First;
+        nCount += nFirst;
         Add(str.p, nCount <= str.len ? nCount : str.len);
     }
-    else if (First >= 0 && First < str.len)
+    else if (nFirst >= 0 && nFirst < str.len)
     {
-        Add(First + str.p, nCount >= 0 && First <= str.len - nCount ? nCount : str.len - First);
+        Add(nFirst + str.p, nCount >= 0 && nFirst <= str.len - nCount ? nCount : str.len - nFirst);
     }
+#else
+    if (nFirst < 0)
+    {
+        if (nCount > -nFirst)
+        {
+            nCount += nFirst;
+            Add(str.p, nCount <= str.len ? nCount : str.len);
+        }
+    }
+    else if (nFirst < str.len)
+    {
+        return Add(nFirst + str.p, nCount >= 0 && nFirst <= str.len - nCount ? nCount : str.len - nFirst);
+    }
+#endif
     return *this;
 }
-CMaaString& CMaaString::AddMidOf(const char* str, int First, int nCount) noexcept(noexcept_new)
+CMaaString& CMaaString::AddMidOf(const char* str, int nFirst, int nCount) noexcept(noexcept_new)
 {
     const int l = int_strlen(str);
-    if (First < 0 && nCount > -First)
+    if (l > 0)
     {
-        nCount += First;
-        Add(str, nCount <= l ? nCount : l);
-    }
-    else if (First >= 0 && First < l)
-    {
-        Add(First + str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
+#if 0
+        if (nFirst < 0 && nCount > -nFirst)
+        {
+            nCount += nFirst;
+            Add(str, nCount <= l ? nCount : l);
+        }
+        else if (nFirst >= 0 && nFirst < l)
+        {
+            Add(nFirst + str, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
+        }
+#else
+        if (nFirst < 0)
+        {
+            if (nCount > -nFirst)
+            {
+                nCount += nFirst;
+                Add(str, nCount <= l ? nCount : l);
+            }
+        }
+        else if (nFirst < l)
+        {
+            return Add(nFirst + str, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
+        }
+#endif
     }
     return *this;
 }
@@ -5662,19 +5710,7 @@ CMaaString CMaaString::Right(int nCount) const noexcept(noexcept_new)
 
 CMaaString CMaaString::Mid(int nFirst, int nCount /*= -1*/) const noexcept(noexcept_new)
 {
-/*
-#if defined(_DEBUG)
-     if   (nFirst < 0)
-     {
-          FILE * f = fopen("c:\\mid.txt", "a+b");
-          if   (f)
-          {
-               fprintf(f, "Called CMaaString::Mid(%d, %d)\r\n", (int_)nFirst, (int_)nCount);
-               fclose(f);
-          }
-     }
-#endif
-*/
+#if 0
     const int Len = Length ();
     if  (nFirst < 0)
     {
@@ -5707,6 +5743,22 @@ CMaaString CMaaString::Mid(int nFirst, int nCount /*= -1*/) const noexcept(noexc
         return Right(Len - nFirst);
     }
     return CMaaString(nFirst + (const char *)*this, nCount, GetUtf1632Flags());
+#else
+    const int l = Length();
+    if (nFirst < 0)
+    {
+        if (nCount > -nFirst)
+        {
+            nCount += nFirst;
+            return nCount >= l ? *this : CMaaString(m_pImp->m_pszStr, nCount, GetUtf1632Flags());
+        }
+    }
+    else if (nFirst < l)
+    {
+        return (nFirst == 0 && (nCount < 0 || nCount >= l)) ? *this : CMaaString(nFirst + m_pImp->m_pszStr, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst, GetUtf1632Flags());
+    }
+    return CMaaStringZ;
+#endif
 }
 
 CMaaString CMaaString::RefLeft(int nCount) const noexcept
@@ -5723,6 +5775,7 @@ CMaaString CMaaString::RefRight(int nCount) const noexcept
 
 CMaaString CMaaString::RefMid(int nFirst, int nCount) const noexcept
 {
+#if 0
     const int Len = Length ();
     if  (nFirst < 0)
     {
@@ -5755,6 +5808,22 @@ CMaaString CMaaString::RefMid(int nFirst, int nCount) const noexcept
         return CMaaString(*this, nFirst, Len - nFirst);
     }
     return CMaaString(*this, nFirst, nCount);
+#else
+    const int l = Length();
+    if (nFirst < 0)
+    {
+        if (nCount > -nFirst)
+        {
+            nCount += nFirst;
+            return nCount >= l ? *this : CMaaString(*this, 0, nCount);
+        }
+    }
+    else if (nFirst < l)
+    {
+        return (nFirst == 0 && (nCount < 0 || nCount >= l)) ? *this : CMaaString(*this, nFirst, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
+    }
+    return CMaaStringZ;
+#endif
 }
 
 CMaaConstStr3 CMaaString::ConstLeft(int nCount) const noexcept
@@ -5769,6 +5838,7 @@ CMaaConstStr3 CMaaString::ConstRight(int nCount) const noexcept
 }
 CMaaConstStr3 CMaaString::ConstMid(int nFirst, int nCount) const noexcept
 {
+#if 0
     const int Len = Length();
     if (nFirst < 0)
     {
@@ -5799,6 +5869,22 @@ CMaaConstStr3 CMaaString::ConstMid(int nFirst, int nCount) const noexcept
         return CMaaConstStr3(m_pImp->m_pszStr + nFirst, Len - nFirst);
     }
     return CMaaConstStr3(m_pImp->m_pszStr + nFirst, nCount);
+#else
+    const int l = Length();
+    if (nFirst < 0)
+    {
+        if (nCount > -nFirst)
+        {
+            nCount += nFirst;
+            return CMaaConstStr3((const char*)*this, nCount <= l ? nCount : l);
+        }
+    }
+    else if (nFirst < l)
+    {
+        return CMaaConstStr3(nFirst + m_pImp->m_pszStr, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
+    }
+    return CMaaConstStr3();
+#endif
 }
 
 CMaaString CMaaString::LeftMid(int nLeft, int nFirst, int nCount) const noexcept(noexcept_new)

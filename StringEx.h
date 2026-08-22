@@ -219,9 +219,6 @@ bool __is_bad_wc2string_ptr(const _WC_* ptr, int maxlen, bool bAccert, const cha
 #define _is_bad_wc2string_ptr(ptr, maxlen) __is_bad_wc2string_ptr(ptr, maxlen, TOOLSLIB_SPRINTF_CHECK_POINTERS == 2, SrcFile, SrcLine)
 #endif
 
-template<bool bZTerm = true> constexpr void MacToText(char* txt, const _byte* mac) noexcept;
-char* CMaaIpToTextEx(char* txt, _IP ip, int Mode = 0) noexcept;
-char* CMaaIpToTextEx(char* txt, const _byte* ip, int Mode = 0) noexcept;
 //---------------------------------------------------------------------------
 // pre-Strintf[2]Ex end
 //---------------------------------------------------------------------------
@@ -2245,20 +2242,35 @@ public:
         }
         return *this;
     }
-    template <int x> CMaaString & AddMidOf(const CMaaConcatString_<x, false>& str, int First, int nCount = -1) noexcept(noexcept_new)
+    template <int x> CMaaString & AddMidOf(const CMaaConcatString_<x, false>& str, int nFirst, int nCount = -1) noexcept(noexcept_new)
     {
         const int l = (int)str.Length();
         if (str.IsValid() && l > 0)
         {
-            if (First < 0 && nCount > -First)
+#if 0
+            if (nFirst < 0 && nCount > -nFirst)
             {
                 nCount += First;
                 Add(str.const_ptr(), nCount <= l ? nCount : l);
             }
-            else if (First >= 0 && First < l)
+            else if (nFirst >= 0 && nFirst < l)
             {
-                Add(First + str.const_ptr(), nCount >= 0 && First <= l - nCount ? nCount : l - First);
+                Add(nFirst + str.const_ptr(), nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
             }
+#else
+            if (nFirst < 0)
+            {
+                if (nCount > -nFirst)
+                {
+                    nCount += nFirst;
+                    Add(str.const_ptr(), nCount <= l ? nCount : l);
+                }
+            }
+            else if (nFirst < l)
+            {
+                return Add(nFirst + str.const_ptr(), nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
+            }
+#endif
         }
         return *this;
     }
@@ -5208,18 +5220,21 @@ public:
             Add(str.const_ptr(), nCount <= l ? nCount : l);
         }
     }
-    void AddMidOf(const CMaaString32_ &str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
+    void AddMidOf(const CMaaString32_ &str, int nFirst, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
     {
-        // like  *this += str.RefMid(First, nCount);
+        // like  *this += str.RefMid(nFirst, nCount);
         const int l = str.Length();
-        if (First < 0 && nCount > -First)
+        if (nFirst < 0)
         {
-            nCount += First;
-            Add((const char*)str, nCount <= l ? nCount : l);
+            if (nCount > -nFirst)
+            {
+                nCount += nFirst;
+                Add((const char*)str, nCount <= l ? nCount : l);
+            }
         }
-        else if (First >= 0 && First < l)
+        else if (nFirst < l)
         {
-            Add(First + (const char*)str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
+            Add(nFirst + (const char*)str, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
         }
     }
 #if TOOLSLIB_USE_CMAASTRING64 == 2
@@ -5232,60 +5247,123 @@ public:
             Add((const char*)str, nCount <= l ? nCount : l);
         }
     }
-    void AddMidOf(const CMaaString &str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
+    void AddMidOf(const CMaaString &str, int nFirst, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
     {
-        // like  *this += str.RefMid(First, nCount);
+        // like  *this += str.RefMid(nFirst, nCount);
         const int l = str.Length();
-        if (First < 0 && nCount > -First)
+#if 0
+        if (nFirst < 0 && nCount > -nFirst)
         {
-            nCount += First;
+            nCount += nFirst;
             Add((const char*)str, nCount <= l ? nCount : l);
         }
-        else if (First >= 0 && First < l)
+        else if (nFirst >= 0 && nFirst < l)
         {
-            Add(First + (const char*)str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
+            Add(nFirst + (const char*)str, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
         }
+#else
+        if (nFirst < 0)
+        {
+            if (nCount > -nFirst)
+            {
+                nCount += nFirst;
+                Add((const char *)str, nCount <= l ? nCount : l);
+            }
+        }
+        else if (nFirst < l)
+        {
+            return Add(nFirst + (const char *)str, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
+        }
+#endif
     }
 #endif
-    void AddMidOf(const CMaaConstStr& str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
+    void AddMidOf(const CMaaConstStr& str, int nFirst, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
     {
-        if (First < 0 && nCount > -First)
+#if 0
+        if (nFirst < 0 && nCount > -nFirst)
         {
-            nCount += First;
+            nCount += nFirst;
             Add(str.p, nCount <= str.len ? nCount : str.len);
         }
-        else if (First >= 0 && First < str.len)
+        else if (nFirst >= 0 && nFirst < str.len)
         {
-            Add(First + str.p, nCount >= 0 && First <= str.len - nCount ? nCount : str.len - First);
+            Add(nFirst + str.p, nCount >= 0 && nFirst <= str.len - nCount ? nCount : str.len - nFirst);
         }
+#else
+        if (nFirst < 0)
+        {
+            if (nCount > -nFirst)
+            {
+                nCount += nFirst;
+                Add(str.p, nCount <= str.len ? nCount : str.len);
+            }
+        }
+        else if (nFirst < str.len)
+        {
+            Add(nFirst + str.p, nCount >= 0 && nFirst <= str.len - nCount ? nCount : str.len - nFirst);
+        }
+#endif
     }
-    void AddMidOf(const char* str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
+    void AddMidOf(const char* str, int nFirst, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
     {
         const int l = int_strlen(str);
-        if (First < 0 && nCount > -First)
+        if (l > 0)
         {
-            nCount += First;
-            Add(str, nCount <= l ? nCount : l);
-        }
-        else if (First >= 0 && First < l)
-        {
-            Add(First + str, nCount >= 0 && First <= l - nCount ? nCount : l - First);
+#if 0
+            if (nFirst < 0 && nCount > -nFirst)
+            {
+                nCount += nFirst;
+                Add(str, nCount <= l ? nCount : l);
+            }
+            else if (nFirst >= 0 && nFirst < l)
+            {
+                Add(nFirst + str, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
+            }
+#else
+            if (nFirst < 0)
+            {
+                if (nCount > -nFirst)
+                {
+                    nCount += nFirst;
+                    Add(str, nCount <= l ? nCount : l);
+                }
+            }
+            else if (nFirst < l)
+            {
+                Add(nFirst + str, nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
+            }
+#endif
         }
     }
-    template <int x> void AddMidOf(const CMaaConcatString_<x, false> &str, int First, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
+    template <int x> void AddMidOf(const CMaaConcatString_<x, false> &str, int nFirst, int nCount = -1) noexcept(xThrow <= 0 || bCountMode)
     {
         const int l = (int)str.Length();
         if (str.IsValid() && l > 0)
         {
-            if (First < 0 && nCount > -First)
+#if 0
+            if (nFirst < 0 && nCount > -nFirst)
             {
-                nCount += First;
+                nCount += nFirst;
                 Add(str.const_ptr(), nCount <= l ? nCount : l);
             }
-            else if (First >= 0 && First < l)
+            else if (nFirst >= 0 && nFirst < l)
             {
-                Add(First + str.const_ptr(), nCount >= 0 && First <= l - nCount ? nCount : l - First);
+                Add(nFirst + str.const_ptr(), nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
             }
+#else
+            if (nFirst < 0)
+            {
+                if (nCount > -nFirst)
+                {
+                    nCount += nFirst;
+                    Add(str.const_ptr(), nCount <= l ? nCount : l);
+                }
+            }
+            else if (nFirst < l)
+            {
+                Add(nFirst + str.const_ptr(), nCount >= 0 && nFirst <= l - nCount ? nCount : l - nFirst);
+            }
+#endif
         }
     }
     void Add(const char* str, int len) noexcept(xThrow <= 0 || bCountMode)
