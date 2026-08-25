@@ -454,9 +454,21 @@ public:
         AddAtFront(That);
     }
     //----------------------------------------------------------------------
+    void PopToFrontSafe(T* That) noexcept
+    {
+        ReleaseSafe(That);
+        AddAtFront(That);
+    }
+    //----------------------------------------------------------------------
     void PopToBack(T* That) noexcept
     {
         Release(That);
+        AddAtBack(That);
+    }
+    //----------------------------------------------------------------------
+    void PopToBackSafe(T* That) noexcept
+    {
+        ReleaseSafe(That);
         AddAtBack(That);
     }
     //----------------------------------------------------------------------
@@ -568,7 +580,7 @@ public:
         {
             INT3 // I never pass here free item
         }
-        That->CMaaDLink__ Next = That->CMaaDLink__ Prev = nullptr; // but it is not nessesary to perform initializations
+        That->CMaaDLink__ Next = That->CMaaDLink__ Prev = nullptr;
     }
     //----------------------------------------------------------------------
     static void ReleaseSafe(T* That) noexcept
@@ -576,20 +588,12 @@ public:
         if (That->CMaaDLink__ Prev)
         {
             That->CMaaDLink__ Prev->Next = That->CMaaDLink__ Next;
-        }
-        else
-        {
-            // safe
-        }
+        } // else { /*safe*/ }
         if (That->CMaaDLink__ Next)
         {
             That->CMaaDLink__ Next->Prev = That->CMaaDLink__ Prev;
-        }
-        else
-        {
-            // safe
-        }
-        That->CMaaDLink__ Next = That->CMaaDLink__ Prev = nullptr; // but it is not nessesary to perform initializations
+        } // else { /*safe*/ }
+        That->CMaaDLink__ Next = That->CMaaDLink__ Prev = nullptr;
     }
     //----------------------------------------------------------------------
 #if 0

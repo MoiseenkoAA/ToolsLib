@@ -5568,14 +5568,12 @@ public:
         else
         {
             FormatLen = FormatLen >= 0 ? FormatLen : (int)strlen(Format);
-            const size_t Length0 = Length();
             try
             {
                 SprintfEx(Format, FormatLen, list, SrcLine, SrcFile);
             }
             catch (...)
             {
-                SetNewLengthValue((int)Length0); // Empty();
             }
         }
     }
@@ -5602,14 +5600,12 @@ public:
         {
             FormatLen = FormatLen >= 0 ? FormatLen : (int)strlen(Format);
             TextLen = TextLen >= 0 ? TextLen : (int)strlen(Text);
-            const size_t Length0 = Length();
             try
             {
                 Sprintf2Ex(Format, FormatLen, Text, TextLen, list, SrcLine, SrcFile);
             }
             catch (...)
             {
-                SetNewLengthValue((int)Length0); // Empty();
             }
         }
     }

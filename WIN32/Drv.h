@@ -281,6 +281,7 @@ public:
 #undef m_Name
 #endif
 };
+typedef CMaaWin32Locker<CMaa_gLock_usr_Mutex> gUsrLockerType;
 
 class CMaaWin32Semaphore
 {
