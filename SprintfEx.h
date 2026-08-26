@@ -2043,7 +2043,7 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
 
         {
             //SetNewLengthValue(Length0); // Empty();
-            Required((int)Length0 + NewStringApproxLen); // +100);
+            Required(NewStringApproxLen); // +100);
             int j = 0;
             const char* p = strText;
             for (int i = 0; i < TextLen; )
