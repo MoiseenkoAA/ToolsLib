@@ -351,6 +351,22 @@ template < class T > class CMaaDList
     CMaaDLink Head;
 public:
     bool m_AutoDeleteItems, m_Padding[3];
+    static void Verify1() noexcept
+    {
+        static int aa = 0;
+        ++aa;
+    }
+    void Verify() const noexcept
+    {
+        if (!Head.Prev || !Head.Next)
+        {
+            Verify1();
+            static int aa = 0;
+            ++aa;
+        }
+    }
+#define VERYFY_DLIST //Verify() //
+#define VERYFY_DLIST1 //Verify1() //
     //----------------------------------------------------------------------
     CMaaDList(bool AutoDeleteItems = false) noexcept
     :   Head(eNotInit)//,
@@ -359,6 +375,7 @@ public:
         Init();
         m_AutoDeleteItems = AutoDeleteItems;
         //m_Padding[2] = m_Padding[1] = m_Padding[0] = false;
+        VERYFY_DLIST;
     }
     //----------------------------------------------------------------------
     // Cut from that, move to empty this
@@ -378,6 +395,7 @@ public:
             pFirst->Prev = pLast->Next = &Head;
         }
         m_AutoDeleteItems = AutoDeleteItems;
+        VERYFY_DLIST;
     }
     //----------------------------------------------------------------------
     /*virtual*/ ~CMaaDList() noexcept
@@ -386,11 +404,13 @@ public:
         {
             RemoveAll();
         }
+        VERYFY_DLIST;
     }
     //----------------------------------------------------------------------
     void Init() noexcept
     {
         Head.Prev = Head.Next = &Head;
+        VERYFY_DLIST;
     }
     bool IsEmpty() const noexcept
     {
@@ -430,6 +450,7 @@ public:
         {
             delete p;
         }
+        VERYFY_DLIST;
     }
     //----------------------------------------------------------------------
     void AddAtBack(T* That) noexcept
@@ -438,6 +459,7 @@ public:
         That->CMaaDLink__ Next = &Head;
         Head.Prev = That;
         That->CMaaDLink__ Prev->CMaaDLink__ Next = That;
+        VERYFY_DLIST;
     }
     //----------------------------------------------------------------------
     void AddAtFront(T* That) noexcept
@@ -446,6 +468,7 @@ public:
         That->CMaaDLink__ Prev = &Head;
         Head.Next = That;
         That->CMaaDLink__ Next->Prev = That;
+        VERYFY_DLIST;
     }
     //----------------------------------------------------------------------
     void PopToFront(T* That) noexcept
@@ -485,6 +508,7 @@ public:
             Head.Next = That->CMaaDLink__ Next;
             That->CMaaDLink__ Prev = That->CMaaDLink__ Next = nullptr;
         }
+        VERYFY_DLIST;
         return (T*)That;
     }
     //----------------------------------------------------------------------
@@ -501,6 +525,7 @@ public:
             Head.Prev = That->CMaaDLink__ Prev;
             That->CMaaDLink__ Next = That->CMaaDLink__ Prev = nullptr;
         }
+        VERYFY_DLIST;
         return (T*)That;
     }
     //----------------------------------------------------------------------
@@ -559,6 +584,7 @@ public:
                 Ret++;
             }
         }
+        VERYFY_DLIST;
         return Ret;
     }
     //----------------------------------------------------------------------
@@ -571,6 +597,7 @@ public:
         else
         {
             INT3 // I never pass here free item
+            VERYFY_DLIST1;
         }
         if (That->CMaaDLink__ Next)
         {
@@ -579,6 +606,7 @@ public:
         else
         {
             INT3 // I never pass here free item
+            VERYFY_DLIST1;
         }
         That->CMaaDLink__ Next = That->CMaaDLink__ Prev = nullptr;
     }
@@ -634,6 +662,7 @@ public:
             Head.Prev = L;
             That.Init();
         }
+        VERYFY_DLIST;
     }
     void MoveThatToTheFront(CMaaDList < T >& That) noexcept
     {
@@ -648,6 +677,7 @@ public:
             Head.Next = F;
             That.Init();
         }
+        VERYFY_DLIST;
     }
     void MoveAfter(T* pItem, T* pFirst, T* pLast) noexcept
     {
@@ -665,6 +695,7 @@ public:
             pItem->Next->Prev = pLast;
             pItem->Next = pFirst;
         }
+        VERYFY_DLIST;
     }
     void MoveBefore(T* pItem, T* pFirst, T* pLast) noexcept
     {
@@ -682,6 +713,7 @@ public:
             pItem->Prev->Next = pFirst;
             pItem->Prev = pLast;
         }
+        VERYFY_DLIST;
     }
     bool MoveUp(T* That) noexcept
     {
@@ -692,6 +724,7 @@ public:
         }
         Release(That);
         That->InsertBefore(Neighbor);
+        VERYFY_DLIST;
         return true;
     }
     bool MoveDown(T* That) noexcept
@@ -703,6 +736,7 @@ public:
         }
         Release(That);
         That->InsertAfter(Neighbor);
+        VERYFY_DLIST;
         return true;
     }
     void Swap(CMaaDList < T >& That, bool bAdSwap = false) noexcept
@@ -715,6 +749,7 @@ public:
         {
             CMaaSwap(m_AutoDeleteItems, That.m_AutoDeleteItems);
         }
+        VERYFY_DLIST;
     }
 #undef CMaaDLink__
 };
