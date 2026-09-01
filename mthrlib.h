@@ -167,7 +167,7 @@ class CMaaWin32Lock;
 #define TOOLSLIB_FAST_gLock_usr3_Mutex
 
 #if defined(CONSTEXPR_GLOCK_LIB_ATOMIC) || defined(nonCONSTEXPR_GLOCK_LIB_ATOMIC)
-#define CMaa_gLock_lib_Mutex CMaaAtomicFastMutex2W
+#define CMaa_gLock_lib_Mutex CMaaAtomicFastMutex2
 #else
 #ifdef TOOLSLIB_FAST_gLock_lib_Mutex
 #define CMaa_gLock_lib_Mutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
@@ -177,7 +177,7 @@ class CMaaWin32Lock;
 #endif
 
 #if defined(CONSTEXPR_GLOCK_USR_ATOMIC) || defined(nonCONSTEXPR_GLOCK_USR_ATOMIC)
-#define CMaa_gLock_usr_Mutex CMaaAtomicFastMutex2W
+#define CMaa_gLock_usr_Mutex CMaaAtomicFastMutex2
 #else
 #ifdef TOOLSLIB_FAST_gLock_usr_Mutex
 #define CMaa_gLock_usr_Mutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
@@ -187,7 +187,7 @@ class CMaaWin32Lock;
 #endif
 
 #ifdef CONSTEXPR_GLOCK_USR_ATOMIC
-#define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex2W
+#define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex2
 #else
 #ifdef TOOLSLIB_FAST_gLock_usr3_Mutex
 #define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex // CMaaAtomicFastMutex is safe here
@@ -538,6 +538,7 @@ public:
 
 #define CMaaStdRecursiveMutex CMaaAtomicFastMutex
 #define CMaaAtomicFastMutex2W CMaaAtomicFastMutex
+#define CMaaAtomicFastMutex2WE CMaaAtomicFastMutex
 
 class CMaaFastMutex
 {
@@ -949,8 +950,12 @@ class CMaaAtomicFastMutex2W // 2026 // the simplest, recursive fast mutex // wai
 {
     static constexpr CMaaThreadIdType InvalidThrId{ CMaaInvalidThreadId() };
 
-    mutable std::atomic<int> m_Lock;
+    mutable int m_Lock;
+#ifdef TOOLSLIB_MAX_SPEED
+    mutable CMaaThreadIdType m_ThreadId;
+#else
     mutable std::atomic<CMaaThreadIdType> m_ThreadId;
+#endif
     mutable CMaaAtomicFastMutex0W m_Mtx0W;
 #ifdef TOOLSLIB_MORE_WAITERS
     CMaaWaiter m_Waiter;
@@ -960,8 +965,8 @@ public:
     constexpr 
 #endif
         CMaaAtomicFastMutex2W() noexcept
-    :   m_Lock{ -1 },
-        m_ThreadId{ InvalidThrId }
+        :   m_Lock{ -1 },
+            m_ThreadId{ InvalidThrId }
     {
     }
 #ifndef TOOLSLIB_MORE_WAITERS
@@ -983,16 +988,29 @@ public:
     _dword Lock() mutable_const noexcept
     {
         const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+#ifdef TOOLSLIB_MAX_SPEED
+        if (CMaaThreadIdsEqual(m_ThreadId, ThreadId))
+        {
+            ++m_Lock;
+        }
+        else
+        {
+            m_Mtx0W.lock();
+            m_ThreadId = ThreadId;
+            m_Lock = 0;
+        }
+#else
         if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
         {
-            m_Lock.fetch_add(1, std::TL_memory_order_acq_rel);
+            ++m_Lock;
         }
         else
         {
             m_Mtx0W.lock();
             m_ThreadId.store(ThreadId, std::TL_memory_order_release);
-            m_Lock.store(0, std::TL_memory_order_release);
+            m_Lock = 0;
         }
+#endif
 #ifdef _WIN32
         return WAIT_OBJECT_0;
 #else
@@ -1002,25 +1020,56 @@ public:
     bool TryLock() mutable_const noexcept
     {
         const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+#ifdef TOOLSLIB_MAX_SPEED
+        if (CMaaThreadIdsEqual(m_ThreadId, ThreadId))
+        {
+            ++m_Lock;
+            return true;
+        }
+        if (m_Mtx0W.try_lock())
+        {
+            m_ThreadId = ThreadId;
+            m_Lock = 0;
+            return true;
+        }
+#else
         if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
         {
-            m_Lock.fetch_add(1, std::TL_memory_order_acq_rel);
+            ++m_Lock;
             return true;
         }
         if (m_Mtx0W.try_lock())
         {
             m_ThreadId.store(ThreadId, std::TL_memory_order_release);
-            m_Lock.store(0, std::TL_memory_order_release);
+            m_Lock = 0;
             return true;
         }
+#endif
         return false;
     }
     int UnLock() mutable_const noexcept
     {
+#ifdef TOOLSLIB_MAX_SPEED
+        //const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+        //if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+        //{
+            const int n = m_Lock--;
+            if (!n)
+            {
+                m_ThreadId = InvalidThrId;
+                m_Mtx0W.unlock();
+#ifdef TOOLSLIB_MORE_WAITERS
+                m_Waiter.notify_one();
+#endif
+            }
+            return n;
+        //}
+        //return -1; // error
+#else
         const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
         if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
         {
-            const int n = m_Lock.fetch_sub(1, std::TL_memory_order_acq_rel);
+            const int n = m_Lock--;
             if (!n)
             {
                 m_ThreadId.store(InvalidThrId, std::TL_memory_order_release);
@@ -1032,20 +1081,17 @@ public:
             return n;
         }
         return -1; // error
+#endif
     }
     _dword Lock_us(_qword us) mutable_const noexcept;
     _dword Lock(_dword ms) mutable_const noexcept;
-    int IsLocked() const noexcept { return 1 + m_Lock; }
+    //int IsLocked() const noexcept { return m_ThreadId == InvalidThrId ? 0 : 1; } // { return 1 + m_Lock; }
     constexpr void AddRef() const noexcept {}
     constexpr int UnRef() const noexcept { return 1; }
 #ifdef _WIN32_000
     DWORD Lock(DWORD to) mutable_const noexcept
     {
-        if (!to)
-        {
-            return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
-        }
-        return Lock();
+        return to ? Lock() : TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
     }
 #endif
     bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept
@@ -1067,7 +1113,177 @@ public:
     void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
     void FlushLog(bool bForced) const noexcept {}
 };
+
+class CMaaAtomicFastMutex2WE // 2026 // the simplest, recursive fast mutex with errors check // wait() + notify_one() version
+{
+    static constexpr CMaaThreadIdType InvalidThrId{ CMaaInvalidThreadId() };
+
+    mutable int m_Lock;
+#ifdef TOOLSLIB_MAX_SPEED000
+    mutable CMaaThreadIdType m_ThreadId;
+#else
+    mutable std::atomic<CMaaThreadIdType> m_ThreadId;
 #endif
+    mutable CMaaAtomicFastMutex0W m_Mtx0W;
+#ifdef TOOLSLIB_MORE_WAITERS
+    CMaaWaiter m_Waiter;
+#endif
+public:
+#ifndef TOOLSLIB_MORE_WAITERS
+    constexpr
+#endif
+        CMaaAtomicFastMutex2WE() noexcept
+        :   m_Lock{ -1 },
+            m_ThreadId{ InvalidThrId }
+    {
+    }
+#ifndef TOOLSLIB_MORE_WAITERS
+    constexpr
+#endif
+        ~CMaaAtomicFastMutex2WE() {}
+    void lock() mutable_const noexcept
+    {
+        Lock();
+    }
+    void unlock() mutable_const noexcept
+    {
+        UnLock();
+    }
+    bool try_lock() mutable_const noexcept
+    {
+        return TryLock();
+    }
+    _dword Lock() mutable_const noexcept
+    {
+        const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+#ifdef TOOLSLIB_MAX_SPEED000
+        if (CMaaThreadIdsEqual(m_ThreadId, ThreadId))
+        {
+            ++m_Lock;
+        }
+        else
+        {
+            m_Mtx0W.lock();
+            m_ThreadId = ThreadId;
+            m_Lock = 0;
+        }
+#else
+        if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+        {
+            ++m_Lock;
+        }
+        else
+        {
+            m_Mtx0W.lock();
+            m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+            m_Lock = 0;
+        }
+#endif
+#ifdef _WIN32
+        return WAIT_OBJECT_0;
+#else
+        return 0;
+#endif
+    }
+    bool TryLock() mutable_const noexcept
+    {
+        const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+#ifdef TOOLSLIB_MAX_SPEED000
+        if (CMaaThreadIdsEqual(m_ThreadId, ThreadId))
+        {
+            ++m_Lock;
+            return true;
+        }
+        if (m_Mtx0W.try_lock())
+        {
+            m_ThreadId = ThreadId;
+            m_Lock = 0;
+            return true;
+        }
+#else
+        if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+        {
+            ++m_Lock;
+            return true;
+        }
+        if (m_Mtx0W.try_lock())
+        {
+            m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+            m_Lock = 0;
+            return true;
+        }
+#endif
+        return false;
+    }
+    int UnLock() mutable_const noexcept
+    {
+#ifdef TOOLSLIB_MAX_SPEED000
+        //const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+        //if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+        //{
+        const int n = m_Lock--;
+        if (!n)
+        {
+            m_ThreadId = InvalidThrId;
+            m_Mtx0W.unlock();
+#ifdef TOOLSLIB_MORE_WAITERS
+            m_Waiter.notify_one();
+#endif
+        }
+        return n;
+        //}
+        //return -1; // error
+#else
+        const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+        if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+        {
+            const int n = m_Lock--;
+            if (!n)
+            {
+                m_ThreadId.store(InvalidThrId, std::TL_memory_order_release);
+                m_Mtx0W.unlock();
+#ifdef TOOLSLIB_MORE_WAITERS
+                m_Waiter.notify_one();
+#endif
+            }
+            return n;
+        }
+        return -1; // error
+#endif
+    }
+    _dword Lock_us(_qword us) mutable_const noexcept;
+    _dword Lock(_dword ms) mutable_const noexcept;
+    int IsLocked() const noexcept { return m_ThreadId.load(std::TL_memory_order_acquire) == InvalidThrId ? 0 : 1; } // { return 1 + m_Lock; }
+    constexpr void AddRef() const noexcept {}
+    constexpr int UnRef() const noexcept { return 1; }
+#ifdef _WIN32_000
+    DWORD Lock(DWORD to) mutable_const noexcept
+    {
+        return to ? Lock() : TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+    }
+#endif
+    bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept
+    {
+        return false;
+    }
+    _dword Lock(const char* txt) mutable_const noexcept
+    {
+        return Lock();
+    }
+    _dword LockF(const char* file, int line) mutable_const noexcept
+    {
+        return Lock();
+    }
+    int UnLockF(const char* file, int line) mutable_const noexcept
+    {
+        return UnLock();
+    }
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
+    void FlushLog(bool bForced) const noexcept {}
+};
+#endif // ST/MT
+
+#define CMaaAtomicFastMutex2 CMaaAtomicFastMutex2WE // recursive err check mutex
 
 template<class T = CMaaAtomicFastMutex> class CMaaAtomicFastMutexLocker
 {

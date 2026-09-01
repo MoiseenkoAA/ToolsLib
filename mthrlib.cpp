@@ -534,23 +534,30 @@ void CMaaAtomicFastMutex::FlushLog(bool bForced) const noexcept
 #ifndef TOOLSLIB_SINGLE_THREAD
 _dword CMaaAtomicFastMutex2W::Lock_us(_qword us) mutable_const noexcept
 {
-    if (us == -1)
-    {
-        return Lock();
-    }
     if (!us)
     {
         return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+    }
+    if (us == -1)
+    {
+        return Lock();
     }
     const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
 #ifndef TOOLSLIB_MORE_WAITERS
     const CMaaTime& tt = gHRTime;
     const _uqword nxt = tt.GetNextTime(us);
 #endif
+#ifdef TOOLSLIB_MAX_SPEED
+    if (CMaaThreadIdsEqual(m_ThreadId, ThreadId))
+    {
+        ++m_Lock;
+    }
+#else
     if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
     {
-        m_Lock.fetch_add(1, std::TL_memory_order_acq_rel);
+        ++m_Lock;
     }
+#endif
     else
     {
 #ifdef TOOLSLIB_MORE_WAITERS
@@ -574,6 +581,7 @@ _dword CMaaAtomicFastMutex2W::Lock_us(_qword us) mutable_const noexcept
             else
             {
                 s = 100;
+#ifndef TOOLSLIB_MAX_SPEED
                 CMaaThreadIdType abThreadId = m_ThreadId.load(std::TL_memory_order_acquire);
                 if (abThreadId != InvalidThrId)
                 {
@@ -581,7 +589,7 @@ _dword CMaaAtomicFastMutex2W::Lock_us(_qword us) mutable_const noexcept
                     {
                         if (m_ThreadId.compare_exchange_strong(abThreadId, ThreadId, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
                         {
-                            m_Lock.store(0, std::TL_memory_order_release);
+                            m_Lock = 0;
                             return WAIT_ABANDONED;
                         }
                     }
@@ -590,9 +598,14 @@ _dword CMaaAtomicFastMutex2W::Lock_us(_qword us) mutable_const noexcept
                         std::this_thread::yield(); // win32,win64: SwitchToThread();
                     }
                 }
+#endif
             }
         }
+#ifdef TOOLSLIB_MAX_SPEED
+        m_ThreadId = ThreadId;
+#else
         m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+#endif
 #endif
     }
     return WAIT_OBJECT_0;
@@ -600,15 +613,91 @@ _dword CMaaAtomicFastMutex2W::Lock_us(_qword us) mutable_const noexcept
 
 _dword CMaaAtomicFastMutex2W::Lock(_dword ms) mutable_const noexcept
 {
-    if (ms == INFINITE)
-    {
-        return Lock();
-    }
-    if (!ms)
+    return ms == INFINITE ? Lock() : Lock_us(1000 * (_uqword)ms);
+}
+
+_dword CMaaAtomicFastMutex2WE::Lock_us(_qword us) mutable_const noexcept
+{
+    if (!us)
     {
         return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
     }
-    return Lock_us(1000 * (_uqword)ms);
+    if (us == -1)
+    {
+        return Lock();
+    }
+    const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+#ifndef TOOLSLIB_MORE_WAITERS
+    const CMaaTime& tt = gHRTime;
+    const _uqword nxt = tt.GetNextTime(us);
+#endif
+#ifdef TOOLSLIB_MAX_SPEED000
+    if (CMaaThreadIdsEqual(m_ThreadId, ThreadId))
+    {
+        ++m_Lock;
+    }
+#else
+    if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+    {
+        ++m_Lock;
+    }
+#endif
+    else
+    {
+#ifdef TOOLSLIB_MORE_WAITERS
+        return m_Waiter.wait_for(us, [this] { return TryLock(); }) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+#else
+        int s = 100;
+        while (1)
+        {
+            if (TryLock())
+            {
+                return WAIT_OBJECT_0;
+            }
+            if (tt.GetCounter() >= nxt)
+            {
+                return WAIT_TIMEOUT;
+            }
+            if (--s)
+            {
+                std::this_thread::yield(); // win32,win64: SwitchToThread();
+            }
+            else
+            {
+                s = 100;
+#ifndef TOOLSLIB_MAX_SPEED000
+                CMaaThreadIdType abThreadId = m_ThreadId.load(std::TL_memory_order_acquire);
+                if (abThreadId != InvalidThrId)
+                {
+                    if (!CMaaThreadExists(abThreadId))
+                    {
+                        if (m_ThreadId.compare_exchange_strong(abThreadId, ThreadId, std::TL_memory_order_acq_rel, std::memory_order_relaxed))
+                        {
+                            m_Lock = 0;
+                            return WAIT_ABANDONED;
+                        }
+                    }
+                    else
+                    {
+                        std::this_thread::yield(); // win32,win64: SwitchToThread();
+                    }
+                }
+#endif
+            }
+        }
+#ifdef TOOLSLIB_MAX_SPEED000
+        m_ThreadId = ThreadId;
+#else
+        m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+#endif
+#endif
+    }
+    return WAIT_OBJECT_0;
+}
+
+_dword CMaaAtomicFastMutex2WE::Lock(_dword ms) mutable_const noexcept
+{
+    return ms == INFINITE ? Lock() : Lock_us(1000 * (_uqword)ms);
 }
 #endif
 
