@@ -8360,22 +8360,10 @@ CMaaString CMaaString::GetWord(const CMaa256Bits &Bits, bool bRemoveWord, bool b
     int b = 0;
     if (bRemoveSpacesAtTheBeginning)
     {
-        for (; b < len; b++)
-        {
-            if (!Bits.Test(p[b]))
-            {
-                break;
-            }
-        }
+        for (; b < len && Bits.Test(p[b]); b++);
     }
     int l;
-    for (l = b; l < len; l++)
-    {
-        if (Bits.Test(p[l]))
-        {
-            break;
-        }
-    }
+    for (l = b; l < len && !Bits.Test(p[l]); l++);
     //Ret = RefMid(b, l - b);
 #ifdef UNSAFE_GetWord0_OPTS
     if (bRemoveWord /*&& !bOptMid*/ && !IsROString())
@@ -8414,13 +8402,7 @@ CMaaString CMaaString::GetWord(const CMaa256Bits &Bits, bool bRemoveWord, bool b
 #endif
     if  (bRemoveWord)
     {
-        for (b = l; b < len; b++)
-        {
-            if (!Bits.Test(p[b]))
-            {
-                break;
-            }
-        }
+        for (b = l; b < len && Bits.Test(p[b]); b++);
         //*this = RefMid(b);
         *this = bOptMid ? std::move(RefMid(b)) : std::move(Mid(b));
     }
@@ -8435,22 +8417,10 @@ CMaaString CMaaString::GetWord(char c, bool bRemoveWord, bool bRemoveSpacesAtThe
     int b = 0;
     if (bRemoveSpacesAtTheBeginning)
     {
-        for (; b < len; b++)
-        {
-            if (p[b] != c)
-            {
-                break;
-            }
-        }
+        for (; b < len && p[b] == c; b++);
     }
     int l;
-    for (l = b; l < len; l++)
-    {
-        if (p[l] == c)
-        {
-            break;
-        }
-    }
+    for (l = b; l < len && p[l] != c; l++);
     //Ret = RefMid(b, l - b);
 #ifdef UNSAFE_GetWord0_OPTS
     if (bRemoveWord /*&& !bOptMid*/ && !IsROString())
@@ -8489,13 +8459,7 @@ CMaaString CMaaString::GetWord(char c, bool bRemoveWord, bool bRemoveSpacesAtThe
 #endif
     if  (bRemoveWord)
     {
-        for (b = l; b < len; b++)
-        {
-            if (p[b] != c)
-            {
-                break;
-            }
-        }
+        for (b = l; b < len && p[b] == c; b++);
         //*this = RefMid(b);
         *this = bOptMid ? std::move(RefMid(b)) : std::move(Mid(b));
     }
@@ -8515,37 +8479,19 @@ CMaaString CMaaString::GetWord0(const CMaa256Bits &Bits) noexcept(noexcept_new)
     unsigned char* p = (unsigned char*)GetBuffer();
     const int len = Length();
     int b = 0;
-    for (; b < len; b++)
-    {
-        if (!Bits.Test(p[b]))
-        {
-            break;
-        }
-    }
+    for (; b < len && Bits.Test(p[b]); b++);
     int l;
-    for (l = b; l < len; l++)
-    {
-        if (Bits.Test(p[l]))
-        {
-            break;
-        }
-    }
+    for (l = b; l < len && !Bits.Test(p[l]); l++);
     if (l < len)
     {
         p[l] = '\0';
         Ret = RefMid(b, l - b);
-        for (b = l + 1; b < len; b++)
-        {
-            if (!Bits.Test(p[b]))
-            {
-                break;
-            }
-        }
+        for (b = l + 1; b < len && Bits.Test(p[b]); b++);
         *this = std::move(RefMid(b));
     }
     else
     {
-        Ret = std::move(Str0Copy());
+        Ret = std::move(RefMid(b).Str0Copy());
         Empty();
     }
     return Ret;
@@ -8563,37 +8509,19 @@ CMaaString CMaaString::GetWord0(char c) noexcept(noexcept_new)
     unsigned char* p = (unsigned char*)GetBuffer();
     const int len = Length();
     int b = 0;
-    for (; b < len; b++)
-    {
-        if (p[b] != c)
-        {
-            break;
-        }
-    }
+    for (; b < len && p[b] == c; b++);
     int l;
-    for (l = b; l < len; l++)
-    {
-        if (p[l] == c)
-        {
-            break;
-        }
-    }
+    for (l = b; l < len && p[l] != c; l++);
     if (l < len)
     {
         p[l] = '\0';
         Ret = RefMid(b, l - b);
-        for (b = l + 1; b < len; b++)
-        {
-            if (p[b] != c)
-            {
-                break;
-            }
-        }
+        for (b = l + 1; b < len && p[b] == c; b++);
         *this = std::move(RefMid(b));
     }
     else
     {
-        Ret = std::move(Str0Copy());
+        Ret = std::move(RefMid(b).Str0Copy());
         Empty();
     }
     return Ret;
