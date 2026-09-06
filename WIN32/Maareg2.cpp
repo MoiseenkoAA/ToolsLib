@@ -99,7 +99,7 @@ void CMaaReg::Init (CMaaString RegKeyName, AccessMode Access )
             return;
         }
     }
-    int err2 = RegOpenKeyExW(m_hRootKey, (LPCWSTR)(const char *)n, 0, rsAccess, &m_hKey);
+    const int err2 = RegOpenKeyExW(m_hRootKey, (LPCWSTR)(const char *)n, 0, rsAccess, &m_hKey);
     if  (  err2 != ERROR_SUCCESS )
     {
         //CMaaString Msg;
@@ -124,7 +124,7 @@ void CMaaReg::Init (CMaaString RegKeyName, AccessMode Access )
 //---------------------------------------------------------------------------
 CMaaReg::~CMaaReg ()
 {
-    int error = RegCloseKey ( m_hKey );
+    const int error = RegCloseKey ( m_hKey );
     if  ( error != ERROR_SUCCESS )
     {
         //CMaaString Msg;
@@ -166,7 +166,7 @@ BOOL CMaaReg::GetValue(CMaaString Name, char * p, size_t sz) const
     *p = 0;
     return FALSE;
 }
-BOOL CMaaReg::GetValue(CMaaString Name, DWORD *pValue) const
+BOOL CMaaReg::GetValue(CMaaString Name, DWORD *pValue) const noexcept
 {
     DWORD dw = pValue ? *pValue : 0;
     DWORD cbLen = sizeof(dw);
@@ -190,8 +190,8 @@ BOOL CMaaReg::SetValue(CMaaString Name, CMaaString Buffer)
 {
     Name = Utf8ToUnicode(Name, 1);
     Buffer = Utf8ToUnicode(Buffer, 1);
-    DWORD cbLen = (DWORD)Buffer.Length();
-    int error = RegSetValueExW ( m_hKey, (LPCWSTR)(const char *)Name, 0, REG_SZ, (LPBYTE)(const char *)Buffer, cbLen);
+    const DWORD cbLen = (DWORD)Buffer.Length();
+    const int error = RegSetValueExW ( m_hKey, (LPCWSTR)(const char *)Name, 0, REG_SZ, (LPBYTE)(const char *)Buffer, cbLen);
     if  ( error == ERROR_SUCCESS )
     {
         return TRUE;
@@ -207,8 +207,8 @@ BOOL CMaaReg::SetValue(CMaaString Name, CMaaString Buffer)
 //---------------------------------------------------------------------------
 BOOL CMaaReg::SetValue(const _WC_ * Name, const _WC_ * Buffer)
 {
-    DWORD cbLen = (DWORD)(sizeof(_WC_) * (maa_wcslen(Buffer) + 1));
-    int error = RegSetValueExW(m_hKey, Name, 0, REG_SZ, (LPBYTE)Buffer, cbLen);
+    const DWORD cbLen = (DWORD)(sizeof(_WC_) * (maa_wcslen(Buffer) + 1));
+    const int error = RegSetValueExW(m_hKey, Name, 0, REG_SZ, (LPBYTE)Buffer, cbLen);
     if  (error == ERROR_SUCCESS)
     {
         return TRUE;
@@ -225,7 +225,7 @@ BOOL CMaaReg::SetValue(const _WC_ * Name, const _WC_ * Buffer)
 BOOL CMaaReg::SetValue(CMaaString Name, DWORD Value)
 {
     Name = Utf8ToUnicode(Name, 1);
-    int error = RegSetValueExW(m_hKey, (LPCWSTR)(const char *)Name, 0, REG_DWORD, ( CONST BYTE *) &Value, sizeof ( Value ) );
+    const int error = RegSetValueExW(m_hKey, (LPCWSTR)(const char *)Name, 0, REG_DWORD, ( CONST BYTE *) &Value, sizeof ( Value ) );
 
     if  ( error == ERROR_SUCCESS )
     {
@@ -243,8 +243,8 @@ BOOL CMaaReg::SetValue(CMaaString Name, DWORD Value)
 BOOL CMaaReg::SetValue(CMaaString Name, const void * Buffer, int Len)
 {
     Name = Utf8ToUnicode(Name, 1);
-    DWORD  cbLen = Len;
-    int error = RegSetValueExW(m_hKey, (LPCWSTR)(const char *)Name, 0, REG_BINARY, (LPBYTE)Buffer, cbLen);
+    const DWORD cbLen = Len;
+    const int error = RegSetValueExW(m_hKey, (LPCWSTR)(const char *)Name, 0, REG_BINARY, (LPBYTE)Buffer, cbLen);
     if  (error == ERROR_SUCCESS)
     {
         return TRUE;
@@ -258,7 +258,7 @@ BOOL CMaaReg::SetValue(CMaaString Name, const void * Buffer, int Len)
     return FALSE;
 }
 //---------------------------------------------------------------------------
-BOOL CMaaReg::DelValue(CMaaString Name)
+BOOL CMaaReg::DelValue(CMaaString Name) noexcept
 {
     Name = Utf8ToUnicode(Name, 1);
     if  (RegDeleteValueW(m_hKey, (LPCWSTR)(const char *)Name) == ERROR_SUCCESS)
@@ -270,9 +270,9 @@ BOOL CMaaReg::DelValue(CMaaString Name)
 //---------------------------------------------------------------------------
 int CMaaReg::GetSubKeysCount() const
 {
-    DWORD SubKeys;
+    DWORD SubKeys = 0;
 
-    int error = RegQueryInfoKey ( m_hKey, nullptr, nullptr, nullptr, & SubKeys,  nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr );
+    const int error = RegQueryInfoKey ( m_hKey, nullptr, nullptr, nullptr, & SubKeys,  nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr );
     if  ( error != ERROR_SUCCESS )
     {
         CMaaString ErrMsg;
@@ -287,9 +287,9 @@ int CMaaReg::GetSubKeysCount() const
 //---------------------------------------------------------------------------
 int CMaaReg::GetValuesCount () const
 {
-    DWORD Values;
+    DWORD Values = 0;
 
-    int error = RegQueryInfoKey ( m_hKey, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, & Values, nullptr, nullptr, nullptr, nullptr );
+    const int error = RegQueryInfoKey ( m_hKey, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, & Values, nullptr, nullptr, nullptr, nullptr );
     if  ( error != ERROR_SUCCESS )
     {
         CMaaString ErrMsg;
@@ -306,7 +306,7 @@ void CMaaReg::GetSubKeyName(int Index, CMaaString &SubKeyName, int ApproxMaxLen)
 {
     CMaaPtr_<char, 1> Buffer(ApproxMaxLen * 4 + 2);
     ApproxMaxLen = (int)Buffer.Size();
-    int error = RegEnumKeyW(m_hKey, Index, (LPWSTR)(char *)Buffer, ApproxMaxLen);
+    const int error = RegEnumKeyW(m_hKey, Index, (LPWSTR)(char *)Buffer, ApproxMaxLen);
     if  ( error != ERROR_SUCCESS )
     {
         CMaaString ErrMsg;
@@ -343,7 +343,7 @@ void CMaaReg::DeleteAll_FullPath(CMaaString FullSubKeyName)
         DeleteAll_FullPath(FullSubKeyName + "\\" + s);
     }
     FullSubKeyName = Utf8ToUnicode(FullSubKeyName, 1);
-    int error = RegDeleteKeyW(m_hRootKey, (LPCWSTR)(const char *)FullSubKeyName);
+    const int error = RegDeleteKeyW(m_hRootKey, (LPCWSTR)(const char *)FullSubKeyName);
     if  ( error != ERROR_SUCCESS )
     {
         CMaaString ErrMsg;

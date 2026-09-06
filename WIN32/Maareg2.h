@@ -41,12 +41,12 @@ public:
 
     BOOL GetValue(CMaaString Name, CMaaString &val, int ApproxMaxLen = 10 * 1024) const;
     BOOL GetValue(CMaaString Name, char * p, size_t sz) const;
-    BOOL GetValue(CMaaString Name, DWORD *pValue) const;
+    BOOL GetValue(CMaaString Name, DWORD *pValue) const noexcept;
     BOOL SetValue(CMaaString Name, CMaaString Buffer);
     BOOL SetValue(const _WC_ * Name, const _WC_ * Buffer);
     BOOL SetValue(CMaaString Name, DWORD Value);
     BOOL SetValue(CMaaString, const void * Buffer, int Len); // Set binary value
-    BOOL DelValue(CMaaString Name);
+    BOOL DelValue(CMaaString Name) noexcept;
 
     int GetSubKeysCount() const;
     int GetValuesCount() const;
