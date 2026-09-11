@@ -642,12 +642,12 @@ class sSprintfBuffers
 {
     struct sInstance
     {
-        CMaaAtomicFastMutex0W& m_mtx;
+        const CMaaLiteMutex& m_mtx;
         CMaaSList<CMaaTmpSprintfBuffer> m_BuffersList;
         CMaaSList<CMaaTmpSprintfBuffer> m_FormatBuffersList;
 
-        sInstance(const CMaaAtomicFastMutex0W& m) noexcept
-        :   m_mtx((CMaaAtomicFastMutex0W&)m),
+        sInstance(const CMaaLiteMutex& m) noexcept
+        :   m_mtx(m),
             m_BuffersList(true),
             m_FormatBuffersList(true)
         {

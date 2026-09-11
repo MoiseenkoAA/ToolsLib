@@ -7680,7 +7680,7 @@ _dword CMaaFile::Write(const CMaaString &Txt)
 
 
 //-----------------------------------------------------------------------------
-static constexpr CMaaAtomicFastMutex0W g_printf_StdOut_Mtx;
+static constexpr CMaaLiteMutex g_printf_StdOut_Mtx;
 //CMaaAtomicFastMutexLocker agRRSheetEmulatorMtxLocker(g_printf_StdOut_Mtx); // automatic scope locker
 //-----------------------------------------------------------------------------
 #ifdef _WIN32

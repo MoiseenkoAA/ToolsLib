@@ -4800,7 +4800,7 @@ int gCMaaToolLib_crt_Initializer() noexcept
 {
     if (!gCMaaToolLib_crt_Initialized)
     {
-        static constexpr CMaaAtomicFastMutex0W lk;
+        static constexpr CMaaLiteMutex lk;
         lk.lock();
         if (!gCMaaToolLib_crt_Initialized)
         {

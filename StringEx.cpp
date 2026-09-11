@@ -4909,7 +4909,7 @@ sSprintfBuffers::~sSprintfBuffers()
 }
 sSprintfBuffers::sInstance & sSprintfBuffers::GetInstance() noexcept
 {
-    static constexpr CMaaAtomicFastMutex0W mtx;
+    static constexpr CMaaLiteMutex mtx;
     mtx.lock();
     static sInstance s(mtx);
     return s;
@@ -5052,7 +5052,7 @@ sSprintf2Buffers::~sSprintf2Buffers()
 }
 sSprintf2Buffers::sInstance& sSprintf2Buffers::GetInstance() noexcept
 {
-    static constexpr CMaaAtomicFastMutex0W mtx;
+    static constexpr CMaaLiteMutex mtx;
     mtx.lock();
     static sInstance s(mtx);
     return s;
