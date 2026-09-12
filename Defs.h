@@ -306,6 +306,12 @@ inline static constexpr _sdword Max_sdword = (_sdword)(Max_dword >> 1);
 inline static constexpr _qword Max_qword = (_qword)(Max_uqword >> 1);
 inline static constexpr int Max_int = (int)(Max_uint >> 1);
 
+#ifndef _WIN32
+#define INFINITE 0xffffffff
+#define WAIT_OBJECT_0 0
+#define WAIT_TIMEOUT 0x102
+#endif
+
 enum eNotInit_
 {
     eNotInit

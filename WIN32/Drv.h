@@ -275,7 +275,8 @@ public:
     }
     int IsLocked() const noexcept
     {
-        return m_x ? m_Lock.IsLocked() : 0;
+        //return m_x ? m_Lock.IsLocked() : 0;
+        return m_x;
     }
 #ifndef _DEBUG_MTX
 #undef m_Name

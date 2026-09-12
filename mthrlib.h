@@ -149,53 +149,6 @@ void gCMaaToolLib_crt_Initializer2() noexcept;
 #endif
 #endif
 
-#ifdef _WIN32
-class CMaaWin32Lock;
-#define CMaaMutex2 CMaaWin32Lock
-//#define CMaaMutex2 TOOLSLIB_FAST_MTX // CMaaWin32Lock
-#else
-#endif
-
-#ifdef TOOLSLIB_FAST_MUTEXES
-#define CMaaMutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
-#else
-#define CMaaMutex CMaaMutex2
-#endif
-
-//#define TOOLSLIB_FAST_gLock_lib_Mutex // TOOLSLIB_FAST_MTX - bad performance
-//#define TOOLSLIB_FAST_gLock_usr_Mutex // TOOLSLIB_FAST_MTX - bad performance
-#define TOOLSLIB_FAST_gLock_usr3_Mutex
-
-#if defined(CONSTEXPR_GLOCK_LIB_ATOMIC) || defined(nonCONSTEXPR_GLOCK_LIB_ATOMIC)
-#define CMaa_gLock_lib_Mutex CMaaAtomicFastMutex2
-#else
-#ifdef TOOLSLIB_FAST_gLock_lib_Mutex
-#define CMaa_gLock_lib_Mutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
-#else
-#define CMaa_gLock_lib_Mutex CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
-#endif
-#endif
-
-#if defined(CONSTEXPR_GLOCK_USR_ATOMIC) || defined(nonCONSTEXPR_GLOCK_USR_ATOMIC)
-#define CMaa_gLock_usr_Mutex CMaaAtomicFastMutex2
-#else
-#ifdef TOOLSLIB_FAST_gLock_usr_Mutex
-#define CMaa_gLock_usr_Mutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
-#else
-#define CMaa_gLock_usr_Mutex CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
-#endif
-#endif
-
-#ifdef CONSTEXPR_GLOCK_USR_ATOMIC
-#define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex2
-#else
-#ifdef TOOLSLIB_FAST_gLock_usr3_Mutex
-#define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex // CMaaAtomicFastMutex is safe here
-#else
-#define CMaa_gLock_usr3_Mutex CMaaMutex
-#endif
-#endif
-
 class CMaaWaiter // aim: monotonic wait, wait for
 {
 //public:
@@ -536,7 +489,7 @@ public:
     bool try_lock() mutable_const noexcept { return TryLock(); }
 };
 
-#define CMaaStdRecursiveMutex CMaaAtomicFastMutex
+//#define CMaaStdRecursiveMutex CMaaAtomicFastMutex
 #define CMaaAtomicFastMutex2W CMaaAtomicFastMutex
 #define CMaaAtomicFastMutex2WE CMaaAtomicFastMutex
 
@@ -642,9 +595,161 @@ public:
     void unlock() mutable_const noexcept { UnLock(); }
     bool try_lock() mutable_const noexcept { return TryLock(); }
 };
+template<class L = std::mutex> class CMaaStdMutex
+{
+protected:
+    //mutable L m_Lock;
+public:
+    constexpr CMaaStdMutex() noexcept
+        //: m_Lock {}
+    {
+    }
+    constexpr ~CMaaStdMutex() {}
+    void lock() mutable_const noexcept
+    {
+        //m_Lock.lock();
+    }
+    void unlock() mutable_const noexcept
+    {
+        //m_Lock.unlock();
+    }
+    bool try_lock() mutable_const noexcept
+    {
+        return true; // m_Lock.try_lock();
+    }
+    _dword Lock() mutable_const noexcept
+    {
+        lock();
+#ifdef _WIN32
+        return WAIT_OBJECT_0;
+#else
+        return 0;
+#endif
+    }
+    bool TryLock() mutable_const noexcept
+    {
+        return try_lock();
+    }
+    int UnLock() mutable_const noexcept
+    {
+        unlock();
+        return 0;
+    }
+    constexpr void AddRef() const noexcept {}
+    constexpr int UnRef() const noexcept { return 1; }
+#ifdef _WIN32_000
+    DWORD Lock(DWORD to) mutable_const noexcept
+    {
+        if (!to)
+        {
+            return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+        }
+        return Lock();
+    }
+#endif
+    bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept
+    {
+        return false;
+    }
+    _dword Lock(const char* txt) mutable_const noexcept
+    {
+        return Lock();
+    }
+    _dword LockF(const char* file, int line) mutable_const noexcept
+    {
+        return Lock();
+    }
+    int UnLockF(const char* file, int line) mutable_const noexcept
+    {
+        return UnLock();
+    }
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
+    void FlushLog(bool bForced) const noexcept {}
+};
+template<class L = std::recursive_timed_mutex> class CMaaStdTimedMutex // std::timed_mutex
+{
+protected:
+    //mutable L m_Lock;
+public:
+public:
+    constexpr CMaaStdTimedMutex() noexcept
+    {
+    }
+    constexpr ~CMaaStdTimedMutex()
+    {
+    }
+    void lock() mutable_const noexcept
+    {
+        //m_Lock.lock();
+    }
+    void unlock() mutable_const noexcept
+    {
+        //m_Lock.unlock();
+    }
+    bool try_lock() mutable_const noexcept
+    {
+        return true; // m_Lock.try_lock();
+    }
+    _dword Lock() mutable_const noexcept
+    {
+        lock();
+#ifdef _WIN32
+        return WAIT_OBJECT_0;
+#else
+        return 0;
+#endif
+    }
+    bool TryLock() mutable_const noexcept
+    {
+        return try_lock();
+    }
+    int UnLock() mutable_const noexcept
+    {
+        unlock();
+        return 0;
+    }
+    constexpr void AddRef() const noexcept {}
+    constexpr int UnRef() const noexcept { return 1; }
+#ifdef _WIN32_000
+    DWORD Lock(DWORD to) mutable_const noexcept
+    {
+        if (!to)
+        {
+            return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+        }
+        return Lock();
+    }
+#endif
+    bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept
+    {
+        return false;
+    }
+    _dword Lock(const char* txt) mutable_const noexcept
+    {
+        return Lock();
+    }
+    _dword LockF(const char* file, int line) mutable_const noexcept
+    {
+        return Lock();
+    }
+    int UnLockF(const char* file, int line) mutable_const noexcept
+    {
+        return UnLock();
+    }
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
+    void FlushLog(bool bForced) const noexcept {}
+
+    DWORD Lock(DWORD to) mutable_const noexcept
+    {
+        //return to == INFINITE ? Lock() : (to ? m_Lock.try_lock_for(std::chrono::milliseconds(to)) : TryLock()) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+        //return to == INFINITE ? Lock() : (to ? m_Lock.try_lock_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(to)) : TryLock()) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+        return WAIT_OBJECT_0;
+    }
+};
 #define CMaaAtomicFastMutex0W CMaaAtomicFastMutex0
 #else
 
+/*
 class CMaaStdRecursiveMutex
 {
     std::recursive_mutex m;
@@ -671,6 +776,7 @@ public:
     void unlock() noexcept { UnLock(); }
     bool try_lock() noexcept { return TryLock(); }
 };
+*/
 
 class CMaaFastMutex // uses spinlocks, do not use it
 {
@@ -943,6 +1049,155 @@ public:
     }
     void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
     void FlushLog(bool bForced) const noexcept {}
+};
+template<class L = std::mutex> class CMaaStdMutex
+{
+protected:
+    mutable L m_Lock;
+public:
+    constexpr CMaaStdMutex() noexcept
+    //: m_Lock {}
+    {
+    }
+    constexpr ~CMaaStdMutex() {}
+    void lock() mutable_const noexcept
+    {
+        m_Lock.lock();
+    }
+    void unlock() mutable_const noexcept
+    {
+        m_Lock.unlock();
+    }
+    bool try_lock() mutable_const noexcept
+    {
+        return m_Lock.try_lock();
+    }
+    _dword Lock() mutable_const noexcept
+    {
+        lock();
+#ifdef _WIN32
+        return WAIT_OBJECT_0;
+#else
+        return 0;
+#endif
+    }
+    bool TryLock() mutable_const noexcept
+    {
+        return try_lock();
+    }
+    int UnLock() mutable_const noexcept
+    {
+        unlock();
+        return 0;
+    }
+    constexpr void AddRef() const noexcept {}
+    constexpr int UnRef() const noexcept { return 1; }
+#ifdef _WIN32_000
+    DWORD Lock(DWORD to) mutable_const noexcept
+    {
+        if (!to)
+        {
+            return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+        }
+        return Lock();
+    }
+#endif
+    bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept
+    {
+        return false;
+    }
+    _dword Lock(const char* txt) mutable_const noexcept
+    {
+        return Lock();
+    }
+    _dword LockF(const char* file, int line) mutable_const noexcept
+    {
+        return Lock();
+    }
+    int UnLockF(const char* file, int line) mutable_const noexcept
+    {
+        return UnLock();
+    }
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
+    void FlushLog(bool bForced) const noexcept {}
+};
+template<class L = std::recursive_timed_mutex> class CMaaStdTimedMutex // std::timed_mutex
+{
+protected:
+    mutable L m_Lock;
+public:
+    constexpr CMaaStdTimedMutex() noexcept
+    {
+    }
+    constexpr ~CMaaStdTimedMutex()
+    {
+    }
+    void lock() mutable_const noexcept
+    {
+        m_Lock.lock();
+    }
+    void unlock() mutable_const noexcept
+    {
+        m_Lock.unlock();
+    }
+    bool try_lock() mutable_const noexcept
+    {
+        return m_Lock.try_lock();
+    }
+    _dword Lock() mutable_const noexcept
+    {
+        lock();
+#ifdef _WIN32
+        return WAIT_OBJECT_0;
+#else
+        return 0;
+#endif
+    }
+    bool TryLock() mutable_const noexcept
+    {
+        return try_lock();
+    }
+    int UnLock() mutable_const noexcept
+    {
+        unlock();
+        return 0;
+    }
+    constexpr void AddRef() const noexcept {}
+    constexpr int UnRef() const noexcept { return 1; }
+#ifdef _WIN32_000
+    DWORD Lock(DWORD to) mutable_const noexcept
+    {
+        if (!to)
+        {
+            return TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+        }
+        return Lock();
+    }
+#endif
+    bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept
+    {
+        return false;
+    }
+    _dword Lock(const char* txt) mutable_const noexcept
+    {
+        return Lock();
+    }
+    _dword LockF(const char* file, int line) mutable_const noexcept
+    {
+        return Lock();
+    }
+    int UnLockF(const char* file, int line) mutable_const noexcept
+    {
+        return UnLock();
+    }
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
+    void FlushLog(bool bForced) const noexcept {}
+
+    DWORD Lock(DWORD to) mutable_const noexcept
+    {
+        //return to == INFINITE ? Lock() : (to ? m_Lock.try_lock_for(std::chrono::milliseconds(to)) : TryLock()) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+        return to == INFINITE ? Lock() : (to ? m_Lock.try_lock_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(to)) : TryLock()) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+    }
 };
 #define CMaaAtomicFastMutex0 CMaaAtomicFastMutex0W // can make cpu usage lower and can be something slower
 
@@ -1283,6 +1538,7 @@ public:
 };
 #endif // ST/MT
 
+typedef CMaaStdMutex<std::mutex> CMaaStdLiteMutex; // the simplest, fast mutex // non recursive // wait() + notify_one() version
 #define CMaaAtomicFastMutex2 CMaaAtomicFastMutex2WE // recursive err check mutex
 
 template<class T = CMaaAtomicFastMutex> class CMaaAtomicFastMutexLocker
@@ -1420,6 +1676,7 @@ public:
 };
 
 #ifdef _WIN32
+//#define CMaaLiteMutex CMaaStdLiteMutex
 #define CMaaLiteMutex CMaaAtomicFastMutex0
 //#define CMaaLiteMutex CMaaMutex2
 #else
@@ -1491,14 +1748,7 @@ public:
 };
 #endif
 
-//#define CMaaMutex CMaaWin32Lock
-#define CMaaMutex1 CMaaMutex
 
-//#pragma message("defining CTooDLink and CMaaDList")
-#define CTooDLink CMaaDLink
-#define CTooDList CMaaDList
-
-class CMaaMutex;
 
 //extern CMaaMutex * gpAtomicLock;
 
@@ -1529,6 +1779,10 @@ class CMaaMutex;
 #define CTooDList CMaaDList
 
 void SetThreadName(_dword ThreadId, const char * Name) noexcept;
+
+#ifndef _WIN32
+#define CMaaMutex1 CMaaMutex
+#endif
 
 class CMaaMutex1
 {
@@ -1641,6 +1895,64 @@ public:
 
 #endif
 
+//-----------------------------------------------
+//#define CMaaMutex CMaaWin32Lock
+
+//#pragma message("defining CTooDLink and CMaaDList")
+#define CTooDLink CMaaDLink
+#define CTooDList CMaaDList
+
+//class CMaaMutex;
+#ifdef _WIN32
+class CMaaWin32Lock;
+typedef CMaaWin32Lock CMaaMutex2;
+//typedef CMaaStdTimedMutex<std::recursive_timed_mutex> CMaaMutex2; // slow
+//#define CMaaMutex2 TOOLSLIB_FAST_MTX // CMaaWin32Lock
+#else
+#endif
+
+#ifdef _WIN32
+#ifdef TOOLSLIB_FAST_MUTEXES
+typedef TOOLSLIB_FAST_MTX CMaaMutex; // CMaaAtomicFastMutex
+#else
+typedef CMaaMutex2 CMaaMutex;
+//typedef CMaaStdTimedMutex<std::recursive_timed_mutex> CMaaMutex; // slow
+#endif
+#endif
+
+//#define TOOLSLIB_FAST_gLock_lib_Mutex // TOOLSLIB_FAST_MTX - bad performance
+//#define TOOLSLIB_FAST_gLock_usr_Mutex // TOOLSLIB_FAST_MTX - bad performance
+#define TOOLSLIB_FAST_gLock_usr3_Mutex
+
+#if defined(CONSTEXPR_GLOCK_LIB_ATOMIC) || defined(nonCONSTEXPR_GLOCK_LIB_ATOMIC)
+#define CMaa_gLock_lib_Mutex CMaaAtomicFastMutex2
+#else
+#ifdef TOOLSLIB_FAST_gLock_lib_Mutex
+#define CMaa_gLock_lib_Mutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
+#else
+#define CMaa_gLock_lib_Mutex CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
+#endif
+#endif
+
+#if defined(CONSTEXPR_GLOCK_USR_ATOMIC) || defined(nonCONSTEXPR_GLOCK_USR_ATOMIC)
+#define CMaa_gLock_usr_Mutex CMaaAtomicFastMutex2
+#else
+#ifdef TOOLSLIB_FAST_gLock_usr_Mutex
+#define CMaa_gLock_usr_Mutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
+#else
+#define CMaa_gLock_usr_Mutex CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
+#endif
+#endif
+
+#ifdef CONSTEXPR_GLOCK_USR_ATOMIC
+#define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex2
+#else
+#ifdef TOOLSLIB_FAST_gLock_usr3_Mutex
+#define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex // CMaaAtomicFastMutex is safe here
+#else
+#define CMaa_gLock_usr3_Mutex CMaaMutex
+#endif
+#endif
 //-----------------------------------------------
 
 #ifdef TOOLSLIB_KEEP_GLOBAL_MUTEXES_IN_MEMORY
