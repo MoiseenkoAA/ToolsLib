@@ -149,6 +149,8 @@ void gCMaaToolLib_crt_Initializer2() noexcept;
 #endif
 #endif
 
+void ms_sleep(unsigned x) noexcept; // sleep for x milliseconds // Windows, POSIX
+
 class CMaaWaiter // aim: monotonic wait, wait for
 {
 //public:

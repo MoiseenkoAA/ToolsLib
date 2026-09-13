@@ -85,6 +85,36 @@ GLocks::GLocks()
     m_gAllocatorBasicLock = __GLock__AllocatorBasicLock(true);
 }
 
+void ms_sleep(unsigned x) noexcept // sleep for x milliseconds // Windows, POSIX
+{
+#ifdef _WIN32
+    Sleep(x);
+#else
+    //usleep(x * 1000);
+    struct timespec req, rem;
+
+    // Устанавливаем начальное запрашиваемое время
+    req.tv_sec = x / 1000U;
+    req.tv_nsec = (x % 1000U) * 1000000U;
+
+    // Цикл выполняется, пока nanosleep возвращает -1 из-за прерывания сигналом
+    while (nanosleep(&req, &rem) == -1)
+    {
+        if (errno == EINTR)
+        {
+            // Переносим оставшееся время в req для следующей итерации
+            req = rem;
+        }
+        else
+        {
+            // Если возникла другая ошибка (например, EINVAL из-за неверных данных)
+            //perror("nanosleep failed");
+            break;
+        }
+    }
+#endif
+}
+
 #ifdef _WIN32
 #ifndef TOOLSLIB_KEEP_GLOBAL_MUTEXES_IN_MEMORY
 #pragma message( "Compiling woth no TOOLSLIB_KEEP_GLOBAL_MUTEXES_IN_MEMORY" )
