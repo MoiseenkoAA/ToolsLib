@@ -1889,7 +1889,7 @@ public:
     }
     //DWORD Lock(const char * txt);
     DWORD Lock(DWORD dwTimeToWait = (DWORD)-1) noexcept;
-    //DWORD TryLock() noexcept;
+    //bool TryLock() noexcept;
     void UnLock(int Count = 1) noexcept;
 };
 #endif

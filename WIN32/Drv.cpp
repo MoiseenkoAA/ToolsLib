@@ -372,9 +372,11 @@ DWORD CMaaWin32Lock::Lock(DWORD dwTimeToWait) noexcept
     */
     return x;
 }
-DWORD CMaaWin32Lock::TryLock() noexcept
+bool CMaaWin32Lock::TryLock() noexcept
 {
-    return Lock((DWORD)0);
+    return Lock((DWORD)0) == WAIT_OBJECT_0;
+    //const DWORD dw = Lock((DWORD)0);
+    //return dw == WAIT_OBJECT_0; || dw == WAIT_ABANDONED;
 }
 int CMaaWin32Lock::UnLock() noexcept
 {
@@ -830,9 +832,11 @@ DWORD CMaaWin32Semaphore::Lock(DWORD dwTimeToWait) noexcept
     }
     return x;
 }
-DWORD CMaaWin32Semaphore::TryLock() noexcept
+bool CMaaWin32Semaphore::TryLock() noexcept
 {
-    return Lock((DWORD)0);
+    return Lock((DWORD)0) == WAIT_OBJECT_0;
+    //const DWORD dw = Lock((DWORD)0);
+    //return dw == WAIT_OBJECT_0 || dw == WAIT_ABANDONED;
 }
 void CMaaWin32Semaphore::UnLock(int Count) noexcept
 {

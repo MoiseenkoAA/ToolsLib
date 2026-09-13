@@ -43,7 +43,7 @@ public:
     DWORD Lock(const char * txt) noexcept;
     DWORD Lock(DWORD dwTimeToWait = INFINITE) noexcept; // !!!! 2013 !!!!
     DWORD LockF(const char* SrcFile, int SrcLine) noexcept;
-    DWORD TryLock() noexcept;
+    bool TryLock() noexcept;
     int UnLockF(const char * file, int line) noexcept;
     int UnLock() noexcept;
 
@@ -58,7 +58,7 @@ public:
 
     void lock() noexcept { Lock(); }
     void unlock() noexcept { UnLock(); }
-    bool try_lock() noexcept { return TryLock() == WAIT_OBJECT_0; }
+    bool try_lock() noexcept { return TryLock(); }
 };
 
 void error_dbg_printf(const char* text);
@@ -299,7 +299,7 @@ public:
     }
     //DWORD Lock(const char * txt);
     DWORD Lock(DWORD dwTimeToWait = INFINITE) noexcept;
-    DWORD TryLock() noexcept;
+    bool TryLock() noexcept;
     void UnLock(int Count = 1) noexcept;
 };
 
