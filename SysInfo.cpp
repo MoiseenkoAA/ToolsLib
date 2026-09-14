@@ -180,7 +180,13 @@ int CMaaGetCpuCount() noexcept
 
 int CMaaGetHardwareConcurrency() noexcept
 {
-    return std::thread::hardware_concurrency();
+    const int n = std::thread::hardware_concurrency();
+    return n ? n : 1;
+}
+int CMaaGetHardwareConcurrency(int l, int h) noexcept
+{
+    const int n = CMaaGetHardwareConcurrency();
+    return n < l ? l : n > h ? h : n;
 }
 
 #ifdef _WIN32

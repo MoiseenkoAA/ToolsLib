@@ -1939,9 +1939,9 @@ int CMaaXmlNodeImpl::RemoveNodesWithString(const CMaaString& Name, CMaaString St
 
 CMaaXmlNodeImpl* CMaaXmlNodeImpl::FindNodeWithAttrRO(const CMaaString& Name, const CMaaString& AttrName, const CMaaString& AttrVal, const CMaaXmlNodeImpl* SkipNode, int Flags) noexcept(noexcept_new)
 {
-    static constexpr CMaaAtomicFastMutex0 sMutex;
+    static constexpr CMaaLiteMutex sMutex;
 
-    CMaaManualAtomicFastMutexLocker Locker((CMaaAtomicFastMutex0&)sMutex);
+    CMaaManualAtomicFastMutexLocker Locker(sMutex);
     Locker.Lock();
     if (!m_phFindNodeWithAttr)
     {

@@ -1308,7 +1308,7 @@ public:
     std::atomic<int> m_Bytes;
 private:
     //CMaaMutex m_WakeUpMutex;
-    CMaaAtomicFastMutex0 m_WakeUpMutex;
+    CMaaLiteMutex m_WakeUpMutex;
 public:
     CMaaWakeUpPair(CMaaFdSockets *pFdSockets);
     ~CMaaWakeUpPair();
@@ -1343,7 +1343,7 @@ protected:
     CMaaDList<CMaaSockThread> m_ChildThreads;
     std::atomic<int> m_Refs;
     bool m_bExiting;
-    CMaaAtomicFastMutex0 m_Mutex;
+    CMaaLiteMutex m_Mutex;
 #ifdef __unix__
     //friend class CMaaWakeUpPair;
 public:
@@ -1481,7 +1481,7 @@ protected:
 public:
     //CMaaAutoInitObject<int, 0> m_temp_SelectFlag;
 
-    CMaaAtomicFastMutex0 m_TimerMutex;
+    CMaaLiteMutex m_TimerMutex;
     CMaaSockThread * m_pThread;
 
 #ifdef __SOCK_NEW_TIMERS

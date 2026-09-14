@@ -76,6 +76,7 @@ int MaaGetActiveProcessorCoresCount();
 // first call init
 int CMaaGetCpuCount() noexcept;
 int CMaaGetHardwareConcurrency() noexcept;
+int CMaaGetHardwareConcurrency(int l, int h) noexcept;
 
 class CMaaCpuUsage
 {

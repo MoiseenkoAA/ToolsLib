@@ -883,7 +883,7 @@ public:
     bool try_lock() mutable_const noexcept { return TryLock(); }
 };
 
-class CMaaAtomicFastMutex0 // the simplest, fast mutex // non recursive
+class CMaaAtomicFastMutex0 // the simplest, fast mutex // non recursive // WARN: SPIN_LOCKS, NO WAIT!!
 {
     mutable std::atomic_flag m_Lock;
 #ifdef AFM0_PROFILE
@@ -1201,7 +1201,7 @@ public:
         return to == INFINITE ? Lock() : (to ? m_Lock.try_lock_until(std::chrono::steady_clock::now() + std::chrono::milliseconds(to)) : TryLock()) ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
     }
 };
-#define CMaaAtomicFastMutex0 CMaaAtomicFastMutex0W // can make cpu usage lower and can be something slower
+//#define CMaaAtomicFastMutex0 CMaaAtomicFastMutex0W // can make cpu usage lower and can be something slower
 
 class CMaaAtomicFastMutex2W // 2026 // the simplest, recursive fast mutex // wait() + notify_one() version
 {
@@ -1679,10 +1679,12 @@ public:
 
 #ifdef _WIN32
 //#define CMaaLiteMutex CMaaStdLiteMutex
-#define CMaaLiteMutex CMaaAtomicFastMutex0
+//#define CMaaLiteMutex CMaaAtomicFastMutex0
+typedef CMaaAtomicFastMutex0W CMaaLiteMutex;
 //#define CMaaLiteMutex CMaaMutex2
 #else
-#define CMaaLiteMutex CMaaAtomicFastMutex0
+//#define CMaaLiteMutex CMaaAtomicFastMutex0
+typedef CMaaAtomicFastMutex0W CMaaLiteMutex;
 //#define CMaaLiteMutex CMaaMutex2
 #endif
 
