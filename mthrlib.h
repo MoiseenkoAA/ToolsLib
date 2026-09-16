@@ -1601,6 +1601,21 @@ public:
     {
         return n;
     }
+    _dword LockF(const char* file, int line) noexcept
+    {
+        Lock();
+        return WAIT_OBJECT_0;
+    }
+    int UnLockF(const char* file, int line) noexcept
+    {
+        if (n)
+        {
+            --n;
+            m.UnLock();
+            return n;
+        }
+        return -1;
+    }
 };
 
 template<class T = CMaaAtomicFastMutex> class CMaaManualMutexLocker1
@@ -1687,6 +1702,7 @@ typedef CMaaAtomicFastMutex0W CMaaLiteMutex;
 typedef CMaaAtomicFastMutex0W CMaaLiteMutex;
 //#define CMaaLiteMutex CMaaMutex2
 #endif
+typedef CMaaStdMutex<std::mutex> CMaaStdLiteMutex;
 
 #ifdef _WIN32
 
@@ -1988,6 +2004,11 @@ inline CMaaLiteMutex* __GLock__AllocatorBasicLock(bool bInit = false) noexcept /
 #define gLock_usr2 (*__GLock__usr2())
 #define gLock_usr3 (*__GLock__usr3())
 #define gAllocatorBasicLock (*__GLock__AllocatorBasicLock())
+
+#ifndef _WIN32
+typedef CMaaManualAtomicFastMutexLocker<CMaa_gLock_usr_Mutex> gUsrLockerType;
+#endif
+
 
 // allocator multiple lock, need to call __GLock__LockFn((T *)nullptr) for each types T at startup or create static objects with looks needed to avoid race conditions and faults in multithread environment
 #ifdef TOOLSLIB_KEEP_GLOBAL_MUTEXES_IN_MEMORY
