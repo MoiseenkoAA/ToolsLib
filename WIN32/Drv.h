@@ -166,7 +166,7 @@ public:
     }
     DWORD Lock(const char* txt) noexcept
     {
-        DWORD x = m_Lock.Lock(txt);
+        const DWORD x = m_Lock.Lock(txt);
         if (x == WAIT_OBJECT_0 || x == WAIT_ABANDONED)
         {
             ++m_x;
@@ -175,7 +175,7 @@ public:
     }
     DWORD LockF(const char* file, int line) noexcept
     {
-        DWORD x = m_Lock.LockF(file, line);
+        const DWORD x = m_Lock.LockF(file, line);
         if (x == WAIT_OBJECT_0 || x == WAIT_ABANDONED)
         {
             ++m_x;
@@ -184,7 +184,7 @@ public:
     }
     DWORD Lock() noexcept
     {
-        DWORD x = m_Lock.Lock();
+        const DWORD x = m_Lock.Lock();
         if (x == WAIT_OBJECT_0 || x == WAIT_ABANDONED)
         {
             ++m_x;
@@ -193,7 +193,7 @@ public:
     }
     DWORD Lock(DWORD dwTimeToWait) noexcept
     {
-        DWORD x = m_Lock.Lock(dwTimeToWait);
+        const DWORD x = m_Lock.Lock(dwTimeToWait);
         if (x == WAIT_OBJECT_0 || x == WAIT_ABANDONED)
         {
             ++m_x;
@@ -282,7 +282,7 @@ public:
 #undef m_Name
 #endif
 };
-typedef CMaaWin32Locker<CMaa_gLock_usr_Mutex> gUsrLockerType;
+//typedef CMaaWin32Locker<CMaa_gLock_usr_Mutex> gUsrLockerType;
 
 class CMaaWin32Semaphore
 {
