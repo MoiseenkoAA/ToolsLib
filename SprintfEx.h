@@ -1702,7 +1702,7 @@ void Sprintf2Ex(const char* strFormat, int FormatLen, const char* strText, int T
     #endif
     #else
     #ifndef TOOLSLIB_SPRINTF_CHECK_STRINGS
-                        int_ b = !s->m_pImp ? 1 : 0;
+                        int_ b = !s->IsValid() ? 1 : 0;
     #else
                         int_ b = !s->m_pImp ? 1 :
                             __is_bad_write_ptr((void*)&s->m_pImp, sizeof(void*)) ? 2 :

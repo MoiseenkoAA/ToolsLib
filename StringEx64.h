@@ -65,6 +65,7 @@
 
 #define TOOLSLIB_CMAASTRING64 2
 #define CMaaString CMaaString64
+#define CMaaStringL CMaaStringL64
 #define CMaaStringG CMaaString64G
 #define CMaaStringsContinedBuffer CMaaStrings64ContinedBuffer
 #define CMaaTLGlobalStrings CMaaTLGlobalStrings64
@@ -129,6 +130,7 @@
 
 #undef TOOLSLIB_CMAASTRING64
 #undef CMaaString
+#undef CMaaStringL
 #undef CMaaStringG
 #undef CMaaStringsContinedBuffer
 #undef CMaaTLGlobalStrings
@@ -192,6 +194,7 @@
 #else
 
 #define CMaaString CMaaString64
+#define CMaaStringL CMaaStringL64
 #define CMaaStringG CMaaString64G
 #define CMaaStringsContinedBuffer CMaaStrings64ContinedBuffer
 #define CMaaTLGlobalStrings CMaaTLGlobalStrings64

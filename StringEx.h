@@ -4064,6 +4064,28 @@ private:
     ADD_ALLOCATOR(CMaaString)
 };
 
+struct CMaaStringL // constexpr CMaaString literal
+{
+    CMaaString::CE::S m_pImp;
+    ceCMaaStringImp m_Data;
+
+    constexpr CMaaStringL(const char* txt, int len, int Flags /*= CMAASTRFL_eROString | 0*/ /* | eMemString0*/ /*eROMemString0*/) noexcept
+    :   m_pImp(&m_Data),
+        m_Data(txt, len, Flags)
+    {
+    }
+    template<int N> constexpr CMaaStringL(const char(&txt)[N]) noexcept
+    :   m_pImp(&m_Data),
+        m_Data(txt)
+    {
+    }
+    constexpr ~CMaaStringL() {}
+    operator const CMaaString& () const noexcept
+    {
+        return (const CMaaString&)m_pImp;
+    }
+};
+
 template <> void CMaaSwap<CMaaString>(CMaaString& a, CMaaString& b) noexcept;
 
 //------------------------------------------------------------------------------
