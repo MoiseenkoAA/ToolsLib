@@ -959,7 +959,7 @@ _dword CMaaWin32Locker::Lock(_dword dwTimeToWait)
 
 #endif
 
-#define CMaaWin32Locker_ CMaaWin32Locker<CMaa_gLock_usr_Mutex>
+//#define CMaaWin32Locker_ CMaaWin32Locker<CMaa_gLock_usr_Mutex>
 
 //=============
 template < class Key, class Data = TOOLSLIB_HT_UNUSED_DATA_TYPE, bool bStandartHash = true, int AllocatorType =
