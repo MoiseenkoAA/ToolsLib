@@ -103,9 +103,9 @@ bool AddSubstError(XTOOError &err, int n, bool bAnyThread) noexcept
 bool RemoveSubstError(int n) noexcept
 {
     SubstMsgErr * p;
-    sSubstMsgErrListLock.Lock();
     const CMaaThreadIdType thr = CMaaGetCurrentThreadId();
     constexpr CMaaThreadIdType thr0 = CMaaInvalidThreadId();
+    sSubstMsgErrListLock.Lock();
     for (p = m_SubstMsgErrList.LookAtFront(); p; p = m_SubstMsgErrList.Next(p))
     {
         if  (p->m_nErr == n && (p->m_ThreadId == thr0 || CMaaThreadIdsEqual(p->m_ThreadId, thr)))
@@ -124,9 +124,9 @@ bool FindSetSubstError(XTOOError &err, int n) noexcept
     bool bRet = false;
     const char * pMsg = nullptr;
     SubstMsgErr * p;
-    sSubstMsgErrListLock.Lock();
     const CMaaThreadIdType thr = CMaaGetCurrentThreadId();
     constexpr CMaaThreadIdType thr0 = CMaaInvalidThreadId();
+    sSubstMsgErrListLock.Lock();
     for (p = m_SubstMsgErrList.LookAtFront(); p; p = m_SubstMsgErrList.Next(p))
     {
         if  (p->m_nErr == n && (p->m_ThreadId == thr0 || CMaaThreadIdsEqual(p->m_ThreadId, thr)))
@@ -639,9 +639,9 @@ bool XTOOErrMsgImp::FindSetSubstError(int n) noexcept
     bool bRet = false;
     const char * pMsg = nullptr;
     SubstMsgErr * p;
-    sSubstMsgErrListLock.Lock();
     const CMaaThreadIdType thr = CMaaGetCurrentThreadId();
     constexpr CMaaThreadIdType thr0 = CMaaInvalidThreadId();
+    sSubstMsgErrListLock.Lock();
     for (p = m_SubstMsgErrList.LookAtFront(); p; p = m_SubstMsgErrList.Next(p))
     {
         if  (p->m_nErr == n && (thr == thr0 || CMaaThreadIdsEqual(p->m_ThreadId, thr)))
