@@ -1275,7 +1275,7 @@ CMaaDrvApi::~CMaaDrvApi ()
     }
 #endif  //!__unix__
 }
-#ifdef CMaaDrvApi_PROFILE
+#ifdef TOOLSLIB_IO_PROFILE
 std::atomic<_dword> CMaaDrvApi::s_nCallsNums(0);
 #endif
 //---------------------------------------------------------------------------
@@ -1293,7 +1293,7 @@ BOOL CMaaDrvApi::VxdIoControl ( DWORD dwService, const void * BuffIn,  int SizeI
     //OVERLAPPED    l_ovlp; // = {0,0,0,0,0};
     if  ( m_hVxD != INVALID_HANDLE_VALUE )
     {
-#ifdef CMaaDrvApi_PROFILE
+#ifdef TOOLSLIB_IO_PROFILE
         ++s_nCallsNums;
 #endif
         Ret = DeviceIoControl(m_hVxD, dwService, (void *)BuffIn, SizeIn, BuffOut, SizeOut, &l_SizeRet, nullptr /*&m_ovlp*/);

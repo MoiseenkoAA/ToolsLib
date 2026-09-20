@@ -782,6 +782,13 @@ public:
     virtual ~CMaaEnum () {}
 };
 //---------------------------------------------------------------------------
+#ifdef TOOLSLIB_IO_PROFILE
+extern std::atomic<_dword> g_nTcp4SendIO, g_nTcp4RecvIO;
+extern std::atomic<_dword> g_nTcp6SendIO, g_nTcp6RecvIO;
+extern std::atomic<_dword> g_nUdp4SendIO, g_nUdp4RecvIO;
+extern std::atomic<_dword> g_nUdp6SendIO, g_nUdp6RecvIO;
+#endif
+//---------------------------------------------------------------------------
 class CMaaFdSocket : public CMaaEnum
 {
 public:

@@ -117,6 +117,13 @@ DEF_ALLOCATOR_CMaaHeap(_qword, CMaaSocketTimer *)
 CMaaFdSockets * gCMaaFdSockets = nullptr;
 CMaaSockStartup * gpSockStartup = nullptr;
 
+#ifdef TOOLSLIB_IO_PROFILE
+std::atomic<_dword> g_nTcp4SendIO{ 0 }, g_nTcp4RecvIO{ 0 };
+std::atomic<_dword> g_nTcp6SendIO{ 0 }, g_nTcp6RecvIO{ 0 };
+std::atomic<_dword> g_nUdp4SendIO{ 0 }, g_nUdp4RecvIO{ 0 };
+std::atomic<_dword> g_nUdp6SendIO{ 0 }, g_nUdp6RecvIO{ 0 };
+#endif
+
 
 //#define __FORCED_CLOSE_NOTIFICATION
 
@@ -2406,6 +2413,16 @@ int CMaaTcpSocket::SendData(const void * Buffer, int Size)
             break;
         }
         int req = rr > 0 ? rr : Size;
+#ifdef TOOLSLIB_IO_PROFILE
+        if (m_domain == AF_INET)
+        {
+            ++g_nTcp4SendIO;
+        }
+        else
+        {
+            ++g_nTcp6SendIO;
+        }
+#endif
         ret = send(m_Socket, (char *) Buffer, req, 0);
 #ifdef _WIN32
         const DWORD dw = WSAGetLastError();
@@ -2612,6 +2629,16 @@ int CMaaTcpSocket::RecvData(void * Buffer, int Size)
 #ifdef __unix__
         if  (m_Socket == fileno(stdin))
         {
+#ifdef TOOLSLIB_IO_PROFILE
+            if (m_domain == AF_INET)
+            {
+                ++g_nTcp4RecvIO;
+            }
+            else
+            {
+                ++g_nTcp6RecvIO;
+            }
+#endif
             ret = read(m_Socket, (char *)Buffer, req);
             if  (ret < 0 && errno == EAGAIN)
             {
@@ -2620,7 +2647,19 @@ int CMaaTcpSocket::RecvData(void * Buffer, int Size)
         }
         else
 #endif
-        ret = recv(m_Socket, (char *)Buffer, req, 0);
+        {
+#ifdef TOOLSLIB_IO_PROFILE
+            if (m_domain == AF_INET)
+            {
+                ++g_nTcp4RecvIO;
+            }
+            else
+            {
+                ++g_nTcp6RecvIO;
+            }
+#endif
+            ret = recv(m_Socket, (char*)Buffer, req, 0);
+        }
 #ifdef _WIN32
         DWORD e = WSAGetLastError();
         if  (ret >= 0 && ret < req)
@@ -3721,6 +3760,9 @@ CMaaUdpSocket::CMaaUdpSocket(CMaaFdSockets * pFdSockets, int domain)
 //---------------------------------------------------------------------------
 void CMaaUdpSocket::Send(const void * pBuffer, int BufferSize, _IP Ip, _Port Port)
 {
+#ifdef TOOLSLIB_IO_PROFILE
+    ++g_nUdp4SendIO;
+#endif
     m_s.m_sin.sin_family         = AF_INET;
     m_s.m_sin.sin_port           = htons(Port);
     m_s.m_sin.sin_addr.s_addr    = htonl(Ip);
@@ -3751,6 +3793,9 @@ void CMaaUdpSocket::Send(const void * pBuffer, int BufferSize, _IP Ip, _Port Por
 #ifdef TOOLSLIB_USE_IPV6
 void CMaaUdpSocket::Send6(const void * pBuffer, int BufferSize, const _byte *Ip6, _Port Port)
 {
+#ifdef TOOLSLIB_IO_PROFILE
+    ++g_nUdp6SendIO;
+#endif
     m_s.m_sin6.sin6_family  = AF_INET6;
     m_s.m_sin6.sin6_port    = htons(Port);
     memcpy(m_s.m_sin6.sin6_addr.s6_addr, Ip6, 16);
@@ -4055,8 +4100,10 @@ void CMaaUdpServer::SetIpMulticastIfaceAndHop6(unsigned int InterfaceIndex, int 
 //---------------------------------------------------------------------------
 int CMaaUdpSocket::Recv(void * pBuffer, int BufferSize)
 {
+#ifdef TOOLSLIB_IO_PROFILE
+    ++g_nUdp4RecvIO;
+#endif
     socklen_t len = sizeof(m_t.m_sin);
-
     memset(&m_t.m_sin, 0, sizeof(m_t.m_sin));
     const int Ret = recvfrom(m_Socket, (char *)pBuffer, BufferSize, 0, (struct sockaddr *)&m_t.m_sin, &len);
 #ifdef TL_EPOLL
@@ -4129,8 +4176,10 @@ _Port CMaaUdpSocket::GetBindedPort() const noexcept
 //---------------------------------------------------------------------------
 int CMaaUdpSocket::Recv6(void * pBuffer, int BufferSize)
 {
+#ifdef TOOLSLIB_IO_PROFILE
+    ++g_nUdp6RecvIO;
+#endif
     socklen_t len = sizeof(m_t.m_sin6);
-
     memset(&m_t.m_sin6, 0, sizeof(m_t.m_sin6));
     const int Ret = recvfrom(m_Socket, (char *)pBuffer, BufferSize, 0, (struct sockaddr *)&m_t.m_sin6, &len);
 #ifdef TL_EPOLL
@@ -5105,6 +5154,16 @@ int CMaaFdSockets::Select()
                             if (pSock->m_TcpSocketFlag) // p
                             {
                                 char c = 0;
+#ifdef TOOLSLIB_IO_PROFILE
+                                if (pSock->GetDomainSock() == AF_INET)
+                                {
+                                    ++g_nTcp4RecvIO;
+                                }
+                                else
+                                {
+                                    ++g_nTcp6RecvIO;
+                                }
+#endif
                                 int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
 
                                 if (l == 0)
@@ -5863,6 +5922,16 @@ int CMaaFdSockets::Select()
                                 if (pSock->m_TcpSocketFlag)
                                 {
                                     char c = 0;
+#ifdef TOOLSLIB_IO_PROFILE
+                                    if (pSock->GetDomainSock() == AF_INET)
+                                    {
+                                        ++g_nTcp4RecvIO;
+                                    }
+                                    else
+                                    {
+                                        ++g_nTcp6RecvIO;
+                                    }
+#endif
                                     int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
 
                                     if (l == 0)
@@ -6211,6 +6280,16 @@ int CMaaFdSockets::Select()
                                         if (pSock->m_TcpSocketFlag)
                                         {
                                             char c = 0;
+#ifdef TOOLSLIB_IO_PROFILE
+                                            if (pSock->GetDomainSock() == AF_INET)
+                                            {
+                                                ++g_nTcp4RecvIO;
+                                            }
+                                            else
+                                            {
+                                                ++g_nTcp6RecvIO;
+                                            }
+#endif
                                             int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
 
                                             if (l == 0)
@@ -6664,6 +6743,16 @@ int CMaaFdSockets::Select ()
                             if  (pSock->m_TcpSocketFlag)
                             {
                                 char c = 0;
+#ifdef TOOLSLIB_IO_PROFILE
+                                if (pSock->GetDomainSock() == AF_INET)
+                                {
+                                    ++g_nTcp4RecvIO;
+                                }
+                                else
+                                {
+                                    ++g_nTcp6RecvIO;
+                                }
+#endif
                                 int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
 
                                 if  (l == 0)
@@ -6978,6 +7067,16 @@ int CMaaFdSockets::Select ()
                                     if  (pSock->m_TcpSocketFlag)
                                     {
                                         char c = 0;
+#ifdef TOOLSLIB_IO_PROFILE
+                                        if (pSock->GetDomainSock() == AF_INET)
+                                        {
+                                            ++g_nTcp4RecvIO;
+                                        }
+                                        else
+                                        {
+                                            ++g_nTcp6RecvIO;
+                                        }
+#endif
                                         int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
 
                                         if  (l == 0)
@@ -9954,6 +10053,9 @@ int CMaaWakeUpPair::Notify_Read()
             //          memset(&m_t.m_sin, 0, sizeof(m_t.m_sin));
             //          int n = recvfrom(m_Socket, Buffer, sizeof(BufferSize), 0, (struct sockaddr *)&m_t.m_sin, &len);
 
+#ifdef TOOLSLIB_IO_PROFILE
+            ++g_nTcp4RecvIO;
+#endif
             int n = recv(m_Socket, Buffer, sizeof(Buffer), 0);
             //__utf8_printf("CMaaWakeUpPair::Notify_Read(): m_Bytes = %d, n = %d\n", m_Bytes, n);
 #endif
@@ -10122,6 +10224,16 @@ void CMaaTcpSocket::CCloseTimer::OnTimer()
         {
             return;
         }
+#ifdef TOOLSLIB_IO_PROFILE
+        if (m_pSocket->GetDomainSock() == AF_INET)
+        {
+            ++g_nTcp4RecvIO;
+        }
+        else
+        {
+            ++g_nTcp6RecvIO;
+        }
+#endif
         char c = 0;
         int l = recv(m_pSocket->GetSocket(), &c, 1, MSG_PEEK);
 #ifdef _WIN32
