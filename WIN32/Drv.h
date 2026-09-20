@@ -349,6 +349,8 @@ BOOL ToolsExport InstallVxD ( const char * pFullVxDFileName, BOOL fInstall = TRU
 #define DRIVER_CtlCode( x )        CTL_CODE( FILE_DEVICE_UNKNOWN, 0x800 + ( x ), METHOD_BUFFERED, FILE_ANY_ACCESS )
 #define DRIVER_GET_VERSION         DRIVER_CtlCode ( 1 )
 
+#define CMaaDrvApi_PROFILE
+
 class ToolsExport CMaaDrvApi
 {
     int           m_IsLoadSuccessfully;
@@ -363,6 +365,9 @@ private:
 public:
     //DWORD           m_SizeRet;
 
+#ifdef CMaaDrvApi_PROFILE
+    static std::atomic<_dword> s_nCallsNums;
+#endif
     CMaaDrvApi(const char* pszFileName) noexcept; //  = "VCOMMMAA"
     CMaaDrvApi(const wchar_t* pszFileName) noexcept; //  = "VCOMMMAA"
 public:

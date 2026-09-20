@@ -1275,7 +1275,9 @@ CMaaDrvApi::~CMaaDrvApi ()
     }
 #endif  //!__unix__
 }
-
+#ifdef CMaaDrvApi_PROFILE
+std::atomic<_dword> CMaaDrvApi::s_nCallsNums(0);
+#endif
 //---------------------------------------------------------------------------
 BOOL CMaaDrvApi::VxdIoControl ( DWORD dwService, const void * BuffIn,  int SizeIn, void * BuffOut, int SizeOut, int * SizeRet ) const noexcept
 {
@@ -1291,6 +1293,9 @@ BOOL CMaaDrvApi::VxdIoControl ( DWORD dwService, const void * BuffIn,  int SizeI
     //OVERLAPPED    l_ovlp; // = {0,0,0,0,0};
     if  ( m_hVxD != INVALID_HANDLE_VALUE )
     {
+#ifdef CMaaDrvApi_PROFILE
+        ++s_nCallsNums;
+#endif
         Ret = DeviceIoControl(m_hVxD, dwService, (void *)BuffIn, SizeIn, BuffOut, SizeOut, &l_SizeRet, nullptr /*&m_ovlp*/);
     }
     //m_SizeRet = l_SizeRet;

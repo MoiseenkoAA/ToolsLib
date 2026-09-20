@@ -102,11 +102,11 @@ bool AddSubstError(XTOOError &err, int n, bool bAnyThread) noexcept
 
 bool RemoveSubstError(int n) noexcept
 {
-    SubstMsgErr * p;
+    sSubstMsgErrListLock.Lock();
     const CMaaThreadIdType thr = CMaaGetCurrentThreadId();
     constexpr CMaaThreadIdType thr0 = CMaaInvalidThreadId();
-    sSubstMsgErrListLock.Lock();
-    for (p = m_SubstMsgErrList.LookAtFront(); p; p = m_SubstMsgErrList.Next(p))
+    SubstMsgErr* p = m_SubstMsgErrList.LookAtFront();
+    for (; p; p = m_SubstMsgErrList.Next(p))
     {
         if  (p->m_nErr == n && (p->m_ThreadId == thr0 || CMaaThreadIdsEqual(p->m_ThreadId, thr)))
         {
@@ -121,17 +121,16 @@ bool RemoveSubstError(int n) noexcept
 
 bool FindSetSubstError(XTOOError &err, int n) noexcept
 {
+    sSubstMsgErrListLock.Lock();
     bool bRet = false;
-    const char * pMsg = nullptr;
-    SubstMsgErr * p;
     const CMaaThreadIdType thr = CMaaGetCurrentThreadId();
     constexpr CMaaThreadIdType thr0 = CMaaInvalidThreadId();
-    sSubstMsgErrListLock.Lock();
-    for (p = m_SubstMsgErrList.LookAtFront(); p; p = m_SubstMsgErrList.Next(p))
+    for (SubstMsgErr* p = m_SubstMsgErrList.LookAtFront(); p; p = m_SubstMsgErrList.Next(p))
     {
         if  (p->m_nErr == n && (p->m_ThreadId == thr0 || CMaaThreadIdsEqual(p->m_ThreadId, thr)))
         {
-            if  ((pMsg = p->m_err.GetMsg()))
+            const char* pMsg = p->m_err.GetMsg();
+            if  (pMsg)
             {
                 bRet = err.SetMsg(pMsg);
             }
@@ -636,17 +635,17 @@ void XTOOErrMsgImp::InsertInMsg(const char * Msg, char Space) noexcept
 }
 bool XTOOErrMsgImp::FindSetSubstError(int n) noexcept
 {
+    sSubstMsgErrListLock.Lock();
     bool bRet = false;
-    const char * pMsg = nullptr;
-    SubstMsgErr * p;
     const CMaaThreadIdType thr = CMaaGetCurrentThreadId();
     constexpr CMaaThreadIdType thr0 = CMaaInvalidThreadId();
-    sSubstMsgErrListLock.Lock();
-    for (p = m_SubstMsgErrList.LookAtFront(); p; p = m_SubstMsgErrList.Next(p))
+    SubstMsgErr* p = m_SubstMsgErrList.LookAtFront();
+    for (; p; p = m_SubstMsgErrList.Next(p))
     {
         if  (p->m_nErr == n && (thr == thr0 || CMaaThreadIdsEqual(p->m_ThreadId, thr)))
         {
-            if  ((pMsg = p->m_err.GetMsg()))
+            const char* pMsg = p->m_err.GetMsg();
+            if  (pMsg)
             {
                 SetMsg(pMsg);
                 bRet = true;
@@ -657,7 +656,7 @@ bool XTOOErrMsgImp::FindSetSubstError(int n) noexcept
     sSubstMsgErrListLock.UnLock();
     if  (!p && n == CMaa_CONN_CLOSED_ERROR)
     {
-        pMsg = "Connection is closed by remote host";
+        const char* pMsg = "Connection is closed by remote host";
         SetMsg(pMsg);
         bRet = true;
     }
