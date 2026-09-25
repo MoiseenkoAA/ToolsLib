@@ -4883,180 +4883,186 @@ int CMaaFdSockets::Select()
                     //continue;
                 }
                 */
-                if  (ev.lNetworkEvents)
-                {
+                //if  (ev.lNetworkEvents)
+                //{
                     //__utf8_printf("%p %D lnetev=%x\n", p, (_qword)p->GetSocket(), (int)ev.lNetworkEvents);
-                }
+                //}
                 int x = p->m_RealState;
-                int Err = 0;
-                if  ((ev.lNetworkEvents & FD_CONNECT) && ev.iErrorCode[FD_CONNECT_BIT])
+                if (ev.lNetworkEvents)
                 {
-                    if  (!Err && ev.iErrorCode[FD_CONNECT_BIT] != WSAEWOULDBLOCK)
+                    int Err = 0;
+                    if ((ev.lNetworkEvents & FD_CONNECT) && ev.iErrorCode[FD_CONNECT_BIT])
                     {
-                        Err = ev.iErrorCode[FD_CONNECT_BIT];
-                    }
-                    ev.lNetworkEvents &= ~FD_CONNECT;
-                }
-                if  ((ev.lNetworkEvents & FD_READ) && ev.iErrorCode[FD_READ_BIT])
-                {
-                    if  (!Err && ev.iErrorCode[FD_READ_BIT] != WSAEWOULDBLOCK)
-                    {
-                        Err = ev.iErrorCode[FD_READ_BIT];
-                    }
-                    ev.lNetworkEvents &= ~FD_READ;
-                }
-                if  ((ev.lNetworkEvents & FD_WRITE) && ev.iErrorCode[FD_WRITE_BIT])
-                {
-                    if  (!Err && ev.iErrorCode[FD_WRITE_BIT] != WSAEWOULDBLOCK)
-                    {
-                        Err = ev.iErrorCode[FD_WRITE_BIT];
-                    }
-                    ev.lNetworkEvents &= ~FD_WRITE;
-                }
-                if  ((ev.lNetworkEvents & FD_CLOSE) && ev.iErrorCode[FD_CLOSE_BIT])
-                {
-                    if  (!Err && ev.iErrorCode[FD_CLOSE_BIT] != WSAEWOULDBLOCK)
-                    {
-                        Err = ev.iErrorCode[FD_CLOSE_BIT];
-                    }
-                    ev.lNetworkEvents &= ~FD_CLOSE;
-                }
-                if  ((ev.lNetworkEvents & FD_ACCEPT) && ev.iErrorCode[FD_ACCEPT_BIT])
-                {
-                    if  (!Err && ev.iErrorCode[FD_ACCEPT_BIT] != WSAEWOULDBLOCK)
-                    {
-                        Err = ev.iErrorCode[FD_ACCEPT_BIT];
-                    }
-                    ev.lNetworkEvents &= ~FD_ACCEPT;
-                }
-                /*
-                if (ev.lNetworkEvents & FD_ACCEPT)
-                {
-                    x |= eRead;
-                    Mode |= eEventRead;
-                }
-                */
-                if  (ev.lNetworkEvents & FD_READ)
-                {
-                    x |= eRead;
-                    Mode |= eEventRead;
-                    //Info.Append("R");
-                }
-                /*
-                if (((int)w) == 1 + 3 * i + 2)
-                {
-                    x |= eRead;
-                    Mode |= eEventRead;
-                    //Info.Append("R");
-                }
-                */
-                /*
-                if (ev.lNetworkEvents & FD_CLOSE)
-                {
-                    //x |= eRead;
-                    Mode |= eEventClose;
-                    //Info.Append("R");
-                }
-                */
-                if  (ev.lNetworkEvents & FD_WRITE)
-                {
-                    x |= eWrite;
-                    Mode |= eEventWrite;
-                    //Info.Append("W");
-                }
-                /*
-                if (((int)w) == 1 + 3 * i + 1)
-                {
-                    x |= eWrite;
-                    Mode |= eEventWrite;
-                    //Info.Append("W");
-                }
-                */
-                p->m_wsa_ev |= ev.lNetworkEvents;
-                /*
-                if (Err)
-                {
-                    p->m_Err = Err;
-                    if (p->m_TcpSocketFlag)
-                    {
-                        CMaaTcpSocket* t = (CMaaTcpSocket*)p;// dynamic_cast<CMaaTcpSocket*>(p);
-                        if (!t->m_CloseTimer.IsStarted())// && p->m_CloseTimer.GetPeriod() > 2000)
+                        if (!Err && ev.iErrorCode[FD_CONNECT_BIT] != WSAEWOULDBLOCK)
                         {
-                            t->m_CloseTimer.OnClose(t, false);
+                            Err = ev.iErrorCode[FD_CONNECT_BIT];
                         }
+                        ev.lNetworkEvents &= ~FD_CONNECT;
                     }
-                    //Info.Append("H");
-                }
-                */
-                if  (Err)
-                {
-                    p->m_Err = Err;
-                    x |= eExept;
-                    Mode |= eEventExept;
-                    //Info.Append("E");
-                }
-#ifdef __SHAPERS000000000
-                if  (0 && p/*Sockets[i]*/->m_TcpSocketFlag)
-                {
-                    CMaaTcpSocket* t = (CMaaTcpSocket*)p; // dynamic_cast<CMaaTcpSocket*>(Sockets[i]);
+                    if ((ev.lNetworkEvents & FD_READ) && ev.iErrorCode[FD_READ_BIT])
+                    {
+                        if (!Err && ev.iErrorCode[FD_READ_BIT] != WSAEWOULDBLOCK)
+                        {
+                            Err = ev.iErrorCode[FD_READ_BIT];
+                        }
+                        ev.lNetworkEvents &= ~FD_READ;
+                    }
+                    if ((ev.lNetworkEvents & FD_WRITE) && ev.iErrorCode[FD_WRITE_BIT])
+                    {
+                        if (!Err && ev.iErrorCode[FD_WRITE_BIT] != WSAEWOULDBLOCK)
+                        {
+                            Err = ev.iErrorCode[FD_WRITE_BIT];
+                        }
+                        ev.lNetworkEvents &= ~FD_WRITE;
+                    }
+                    if ((ev.lNetworkEvents & FD_CLOSE) && ev.iErrorCode[FD_CLOSE_BIT])
+                    {
+                        if (!Err && ev.iErrorCode[FD_CLOSE_BIT] != WSAEWOULDBLOCK)
+                        {
+                            Err = ev.iErrorCode[FD_CLOSE_BIT];
+                        }
+                        ev.lNetworkEvents &= ~FD_CLOSE;
+                    }
+                    if ((ev.lNetworkEvents & FD_ACCEPT) && ev.iErrorCode[FD_ACCEPT_BIT])
+                    {
+                        if (!Err && ev.iErrorCode[FD_ACCEPT_BIT] != WSAEWOULDBLOCK)
+                        {
+                            Err = ev.iErrorCode[FD_ACCEPT_BIT];
+                        }
+                        ev.lNetworkEvents &= ~FD_ACCEPT;
+                    }
                     /*
-                    int wr = -1, rr = -1;
-                    if (!(Mode & eConnect))
-                    {
-                        //CMaaWin32Locker_Locker_gLock;
-                        //Locker_Lock;
-                        gpSockStartup && gpSockStartup->m_UsrShaperMutex.LockM();
-                        if (t->m_SndLLShaper.m_Shaper)
-                        {
-                            wr = t->m_SndLLShaper.GetLenReserved(1000000);
-                        }
-                        if (t->m_RcvLLShaper.m_Shaper)
-                        {
-                            rr = t->m_RcvLLShaper.GetLenReserved(1000000);
-                        }
-                        gpSockStartup && gpSockStartup->m_UsrShaperMutex.UnLockM();
-                        //Locker_UnLock;
-                    }
-                    */
-                    //t->m_SndLLShaper.m_hEv
-                    if  (WaitForSingleObject(hh[1 + 3 * i + 2], 0) == WAIT_OBJECT_0)
+                    if (ev.lNetworkEvents & FD_ACCEPT)
                     {
                         x |= eRead;
                         Mode |= eEventRead;
                     }
-                    if  (WaitForSingleObject(hh[1 + 3 * i + 1], 0) == WAIT_OBJECT_0)
+                    */
+                    if (ev.lNetworkEvents & FD_READ)
+                    {
+                        x |= eRead;
+                        Mode |= eEventRead;
+                        //Info.Append("R");
+                    }
+                    /*
+                    if (((int)w) == 1 + 3 * i + 2)
+                    {
+                        x |= eRead;
+                        Mode |= eEventRead;
+                        //Info.Append("R");
+                    }
+                    */
+                    /*
+                    if (ev.lNetworkEvents & FD_CLOSE)
+                    {
+                        //x |= eRead;
+                        Mode |= eEventClose;
+                        //Info.Append("R");
+                    }
+                    */
+                    if (ev.lNetworkEvents & FD_WRITE)
                     {
                         x |= eWrite;
                         Mode |= eEventWrite;
+                        //Info.Append("W");
                     }
-                }
-#endif
-                DP2(
-                    /*if (gH1 == p->m_Socket)
+                    /*
+                    if (((int)w) == 1 + 3 * i + 1)
                     {
-                        __utf8_printf("p->m_RealState=%x = %x, a.x = %x\n", p->m_RealState, x, x & Mode & eAll);
-                        gH1 = -1;
-                    }*/
-                    ;
-                )
-                p->m_RealState = x;
+                        x |= eWrite;
+                        Mode |= eEventWrite;
+                        //Info.Append("W");
+                    }
+                    */
+                    p->m_wsa_ev |= ev.lNetworkEvents;
+                    /*
+                    if (Err)
+                    {
+                        p->m_Err = Err;
+                        if (p->m_TcpSocketFlag)
+                        {
+                            CMaaTcpSocket* t = (CMaaTcpSocket*)p;// dynamic_cast<CMaaTcpSocket*>(p);
+                            if (!t->m_CloseTimer.IsStarted())// && p->m_CloseTimer.GetPeriod() > 2000)
+                            {
+                                t->m_CloseTimer.OnClose(t, false);
+                            }
+                        }
+                        //Info.Append("H");
+                    }
+                    */
+                    if (Err)
+                    {
+                        p->m_Err = Err;
+                        x |= eExept;
+                        Mode |= eEventExept;
+                        //Info.Append("E");
+                    }
+#ifdef __SHAPERS000000000
+                    if (0 && p/*Sockets[i]*/->m_TcpSocketFlag)
+                    {
+                        CMaaTcpSocket* t = (CMaaTcpSocket*)p; // dynamic_cast<CMaaTcpSocket*>(Sockets[i]);
+                        /*
+                        int wr = -1, rr = -1;
+                        if (!(Mode & eConnect))
+                        {
+                            //CMaaWin32Locker_Locker_gLock;
+                            //Locker_Lock;
+                            gpSockStartup && gpSockStartup->m_UsrShaperMutex.LockM();
+                            if (t->m_SndLLShaper.m_Shaper)
+                            {
+                                wr = t->m_SndLLShaper.GetLenReserved(1000000);
+                            }
+                            if (t->m_RcvLLShaper.m_Shaper)
+                            {
+                                rr = t->m_RcvLLShaper.GetLenReserved(1000000);
+                            }
+                            gpSockStartup && gpSockStartup->m_UsrShaperMutex.UnLockM();
+                            //Locker_UnLock;
+                        }
+                        */
+                        //t->m_SndLLShaper.m_hEv
+                        if (WaitForSingleObject(hh[1 + 3 * i + 2], 0) == WAIT_OBJECT_0)
+                        {
+                            x |= eRead;
+                            Mode |= eEventRead;
+                        }
+                        if (WaitForSingleObject(hh[1 + 3 * i + 1], 0) == WAIT_OBJECT_0)
+                        {
+                            x |= eWrite;
+                            Mode |= eEventWrite;
+                        }
+                    }
+#endif
+                    DP2(
+                        /*if (gH1 == p->m_Socket)
+                        {
+                            __utf8_printf("p->m_RealState=%x = %x, a.x = %x\n", p->m_RealState, x, x & Mode & eAll);
+                            gH1 = -1;
+                        }*/
+                        ;
+                    )
+                    p->m_RealState = x;
+                }
                 x &= Mode & eAll;
+                /*
                 if  (x)// || (ev.lNetworkEvents & (FD_CLOSE | FD_CONNECT | FD_ACCEPT)))
                 {
                     ////m_hActiveState.AddOver(p->m_Socket, x);
                 }
+                */
+
                 const int a = x;
                 if  (p)
                 {
                     //m_SockHash.AddOver(p, Mode);
                     p->m_Mode = Mode; // 30.02.2024
 
-                    x = p->GetFdMode();
-                    x = x & ~(eEventRead | eEventWrite);
+                    //x = p->GetFdMode();
+                    //x = x & ~(eEventRead | eEventWrite);
+                    //x = x & ~(eShNoRead | eShNoWrite);
+                    //x |= (a & eAll) << eEventShift;
 
-                    x = x & ~(eShNoRead | eShNoWrite);
-
-                    x |= (a & eAll) << eEventShift;
+                    x = (Mode & ~(eEventRead | eEventWrite | eShNoRead | eShNoWrite)) | ((a & eAll) << eEventShift);
                     ChangeModeRaw(p, x);
 
                     // shaper21
