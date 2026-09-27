@@ -492,6 +492,7 @@ public:
 };
 
 //#define CMaaStdRecursiveMutex CMaaAtomicFastMutex
+#define CMaaStdRecursiveMutexCE CMaaAtomicFastMutex
 #define CMaaAtomicFastMutex2W CMaaAtomicFastMutex
 #define CMaaAtomicFastMutex2WE CMaaAtomicFastMutex
 
@@ -1371,6 +1372,174 @@ public:
     void FlushLog(bool bForced) const noexcept {}
 };
 
+class CMaaStdRecursiveMutexCE // 2026 // the simplest, recursive std mutex, constexpr
+{
+    static constexpr CMaaThreadIdType InvalidThrId{ CMaaInvalidThreadId() };
+
+    mutable int m_Lock;
+#ifdef TOOLSLIB_MAX_SPEED
+    mutable CMaaThreadIdType m_ThreadId;
+#else
+    mutable std::atomic<CMaaThreadIdType> m_ThreadId;
+#endif
+    mutable std::mutex m_Mtx0W;
+#ifdef TOOLSLIB_MORE_WAITERS
+    CMaaWaiter m_Waiter;
+#endif
+public:
+#ifndef TOOLSLIB_MORE_WAITERS
+    constexpr
+#endif
+        CMaaStdRecursiveMutexCE() noexcept
+        : m_Lock{ -1 },
+        m_ThreadId{ InvalidThrId }
+    {
+    }
+#ifndef TOOLSLIB_MORE_WAITERS
+    constexpr
+#endif
+        ~CMaaStdRecursiveMutexCE() {}
+    void lock() mutable_const noexcept
+    {
+        Lock();
+    }
+    void unlock() mutable_const noexcept
+    {
+        UnLock();
+    }
+    bool try_lock() mutable_const noexcept
+    {
+        return TryLock();
+    }
+    _dword Lock() mutable_const noexcept
+    {
+        const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+#ifdef TOOLSLIB_MAX_SPEED
+        if (CMaaThreadIdsEqual(m_ThreadId, ThreadId))
+        {
+            ++m_Lock;
+        }
+        else
+        {
+            m_Mtx0W.lock();
+            m_ThreadId = ThreadId;
+            m_Lock = 0;
+        }
+#else
+        if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+        {
+            ++m_Lock;
+        }
+        else
+        {
+            m_Mtx0W.lock();
+            m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+            m_Lock = 0;
+        }
+#endif
+#ifdef _WIN32
+        return WAIT_OBJECT_0;
+#else
+        return 0;
+#endif
+    }
+    bool TryLock() mutable_const noexcept
+    {
+        const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+#ifdef TOOLSLIB_MAX_SPEED
+        if (CMaaThreadIdsEqual(m_ThreadId, ThreadId))
+        {
+            ++m_Lock;
+            return true;
+        }
+        if (m_Mtx0W.try_lock())
+        {
+            m_ThreadId = ThreadId;
+            m_Lock = 0;
+            return true;
+        }
+#else
+        if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+        {
+            ++m_Lock;
+            return true;
+        }
+        if (m_Mtx0W.try_lock())
+        {
+            m_ThreadId.store(ThreadId, std::TL_memory_order_release);
+            m_Lock = 0;
+            return true;
+        }
+#endif
+        return false;
+    }
+    int UnLock() mutable_const noexcept
+    {
+#ifdef TOOLSLIB_MAX_SPEED
+        //const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+        //if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+        //{
+        const int n = m_Lock--;
+        if (!n)
+        {
+            m_ThreadId = InvalidThrId;
+            m_Mtx0W.unlock();
+#ifdef TOOLSLIB_MORE_WAITERS
+            m_Waiter.notify_one();
+#endif
+        }
+        return n;
+        //}
+        //return -1; // error
+#else
+        const CMaaThreadIdType ThreadId = CMaaGetCurrentThreadId();
+        if (CMaaThreadIdsEqual(m_ThreadId.load(std::TL_memory_order_acquire), ThreadId))
+        {
+            const int n = m_Lock--;
+            if (!n)
+            {
+                m_ThreadId.store(InvalidThrId, std::TL_memory_order_release);
+                m_Mtx0W.unlock();
+#ifdef TOOLSLIB_MORE_WAITERS
+                m_Waiter.notify_one();
+#endif
+            }
+            return n;
+        }
+        return -1; // error
+#endif
+    }
+    //_dword Lock_us(_qword us) mutable_const noexcept;
+    //_dword Lock(_dword ms) mutable_const noexcept;
+    ////int IsLocked() const noexcept { return m_ThreadId == InvalidThrId ? 0 : 1; } // { return 1 + m_Lock; }
+    constexpr void AddRef() const noexcept {}
+    constexpr int UnRef() const noexcept { return 1; }
+#ifdef _WIN32_000
+    DWORD Lock(DWORD to) mutable_const noexcept
+    {
+        return to ? Lock() : TryLock() ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+    }
+#endif
+    bool GetLockHolder(int x, char* txt, int buffer_len) const noexcept
+    {
+        return false;
+    }
+    _dword Lock(const char* txt) mutable_const noexcept
+    {
+        return Lock();
+    }
+    _dword LockF(const char* file, int line) mutable_const noexcept
+    {
+        return Lock();
+    }
+    int UnLockF(const char* file, int line) mutable_const noexcept
+    {
+        return UnLock();
+    }
+    void StillLocked(const char* SrcFile, int SrcLine) mutable_const noexcept {}
+    void FlushLog(bool bForced) const noexcept {}
+};
+
 class CMaaAtomicFastMutex2WE // 2026 // the simplest, recursive fast mutex with errors check // wait() + notify_one() version
 {
     static constexpr CMaaThreadIdType InvalidThrId{ CMaaInvalidThreadId() };
@@ -1540,8 +1709,10 @@ public:
 };
 #endif // ST/MT
 
-typedef CMaaStdMutex<std::mutex> CMaaStdLiteMutex; // the simplest, fast mutex // non recursive // wait() + notify_one() version
-#define CMaaAtomicFastMutex2 CMaaAtomicFastMutex2WE // recursive err check mutex
+typedef CMaaStdMutex<std::mutex> CMaaStdLiteMutex; // the simplest, fast std mutex // non recursive
+typedef CMaaStdMutex<std::recursive_mutex> CMaaStdRecursiveMutex; // the simplest, fast std mutex // recursive
+//#define CMaaAtomicFastMutex2 CMaaAtomicFastMutex2WE // recursive err check mutex
+typedef CMaaAtomicFastMutex2WE CMaaAtomicFastMutex2;
 
 template<class T = CMaaAtomicFastMutex> class CMaaAtomicFastMutexLocker
 {
@@ -1710,17 +1881,25 @@ public:
     }
 };
 
+//typedef CMaaStdMutex<std::mutex> CMaaStdLiteMutex; // the simplest, fast std mutex // non recursive
+
 #ifdef _WIN32
-//#define CMaaLiteMutex CMaaStdLiteMutex
-//#define CMaaLiteMutex CMaaAtomicFastMutex0
-typedef CMaaAtomicFastMutex0W CMaaLiteMutex;
-//#define CMaaLiteMutex CMaaMutex2
+#ifdef TOOLSLIB_HIGH_CONCURRENCY
+typedef CMaaStdLiteMutex CMaaLiteMutex;
 #else
 //#define CMaaLiteMutex CMaaAtomicFastMutex0
 typedef CMaaAtomicFastMutex0W CMaaLiteMutex;
 //#define CMaaLiteMutex CMaaMutex2
 #endif
-typedef CMaaStdMutex<std::mutex> CMaaStdLiteMutex;
+#else
+#ifdef TOOLSLIB_HIGH_CONCURRENCY
+typedef CMaaStdLiteMutex CMaaLiteMutex;
+#else
+//#define CMaaLiteMutex CMaaAtomicFastMutex0
+typedef CMaaAtomicFastMutex0W CMaaLiteMutex;
+//#define CMaaLiteMutex CMaaMutex2
+#endif
+#endif
 
 #ifdef _WIN32
 
@@ -1958,39 +2137,59 @@ typedef CMaaMutex2 CMaaMutex;
 #endif
 #endif
 
+//-----------------------------------------------
 //#define TOOLSLIB_FAST_gLock_lib_Mutex // TOOLSLIB_FAST_MTX - bad performance
 //#define TOOLSLIB_FAST_gLock_usr_Mutex // TOOLSLIB_FAST_MTX - bad performance
 #define TOOLSLIB_FAST_gLock_usr3_Mutex
-
+//-----------------------------------------------
+typedef
 #if defined(CONSTEXPR_GLOCK_LIB_ATOMIC) || defined(nonCONSTEXPR_GLOCK_LIB_ATOMIC)
-#define CMaa_gLock_lib_Mutex CMaaAtomicFastMutex2
+#ifdef TOOLSLIB_HIGH_CONCURRENCY
+    CMaaStdRecursiveMutexCE
+#else
+    CMaaAtomicFastMutex2
+#endif
 #else
 #ifdef TOOLSLIB_FAST_gLock_lib_Mutex
-#define CMaa_gLock_lib_Mutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
+    TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
 #else
-#define CMaa_gLock_lib_Mutex CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
+    CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
 #endif
 #endif
-
+        CMaa_gLock_lib_Mutex;
+//-----------------------------------------------
+typedef
 #if defined(CONSTEXPR_GLOCK_USR_ATOMIC) || defined(nonCONSTEXPR_GLOCK_USR_ATOMIC)
-#define CMaa_gLock_usr_Mutex CMaaAtomicFastMutex2
+#ifdef TOOLSLIB_HIGH_CONCURRENCY
+    CMaaStdRecursiveMutexCE
+#else
+    CMaaAtomicFastMutex2
+#endif
 #else
 #ifdef TOOLSLIB_FAST_gLock_usr_Mutex
-#define CMaa_gLock_usr_Mutex TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
+    TOOLSLIB_FAST_MTX // CMaaAtomicFastMutex
 #else
-#define CMaa_gLock_usr_Mutex CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
+    CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
 #endif
 #endif
-
+        CMaa_gLock_usr_Mutex;
+//-----------------------------------------------
+typedef
 #ifdef CONSTEXPR_GLOCK_USR_ATOMIC
-#define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex2
+#ifdef TOOLSLIB_HIGH_CONCURRENCY
+    CMaaStdRecursiveMutexCE
+#else
+    CMaaAtomicFastMutex2
+#endif
 #else
 #ifdef TOOLSLIB_FAST_gLock_usr3_Mutex
-#define CMaa_gLock_usr3_Mutex CMaaAtomicFastMutex // CMaaAtomicFastMutex is safe here
+    //CMaaAtomicFastMutex // CMaaAtomicFastMutex is safe here
+    CMaaAtomicFastMutex2
 #else
-#define CMaa_gLock_usr3_Mutex CMaaMutex
+    CMaaMutex // CMaaStdRecursiveMutex // CMaaMutex
 #endif
 #endif
+        CMaa_gLock_usr3_Mutex;
 //-----------------------------------------------
 
 #ifdef TOOLSLIB_KEEP_GLOBAL_MUTEXES_IN_MEMORY
@@ -2430,7 +2629,7 @@ struct GLocks
     //CMaaStdRecursiveMutex* m_gVpnLock = nullptr;
     std::atomic<int> gRW_RErrors, gRW_WErrors, gRW_WRErrors, gRW_RWErrors, gRW_WUErrors, gRW_RUErrors;
 
-    GLocks();
+    GLocks() noexcept;
 };
 
 extern GLocks gGLocks;

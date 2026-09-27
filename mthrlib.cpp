@@ -72,7 +72,7 @@
 
 GLocks gGLocks;
 
-GLocks::GLocks()
+GLocks::GLocks() noexcept
 :   gRW_RErrors(0), gRW_WErrors(0), gRW_WRErrors(0), gRW_RWErrors(0), gRW_WUErrors(0), gRW_RUErrors(0)
 {
     m_Atomic = __GLock__Atomic(true);
