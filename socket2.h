@@ -815,7 +815,9 @@ public:
     _qword GetHrTime(int index, int RelatedTo = e_fds_connected_at_time, bool bAbsoluteTime = false, int factor = 1000000) noexcept;
 
 #ifdef _WIN32
-    int m_LastMode = -1;
+    inline static constexpr int sNegResetMode = -1 << (sizeof(int) * 8 - 1);
+    int m_LastMode = sNegResetMode;
+    inline static constexpr long slNegResetFd = ((long)-1) << (sizeof(long) * 8 - 1);
     long m_pm;
     WSAEVENT m_Ev;
 #endif
@@ -1120,6 +1122,9 @@ protected:
     CMaaConnectionInTimeCharacteristics * m_pConnectionInTimeCharacteristics[2+2][4]; // this statistics can be live with out of shapers
 #endif
 public:
+#ifdef _WIN32
+    DWORD m_dwLastSendErr = 0;
+#endif
     CCloseTimer m_CloseTimer;
 #ifdef __SHAPERS
     // friend CMaaTcpLLShaper;
@@ -1449,7 +1454,7 @@ public:
     void ResetRAState(CMaaSocket* p, int e) noexcept
     {
         //const SOCKET s = p->m_Socket;
-        int x = (p->m_RealState &= ~e);
+        /*int x =*/ (p->m_RealState &= ~e);
         //x &= GetMode(p) & eAll;
     }
     /*

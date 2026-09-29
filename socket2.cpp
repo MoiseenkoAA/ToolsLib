@@ -288,7 +288,7 @@ int CMaaConnectionInTimeCharacteristics::GetCurPos() const noexcept
 int CMaaConnectionInTimeCharacteristics::GetCurMaxPeriod() const noexcept
 {
     const int x = GetCurPos();
-    return x < m_max_points || x == 0 ? x : m_max_points - 1;
+    return x < m_max_points || !x ? x : m_max_points - 1;
 }
 //----------------------------------------------------------------------------------------------------------
 #endif
@@ -385,7 +385,7 @@ bool TextToMac(void* pMac, const char* p) noexcept
     int i = 0;
     for (; i < 5; i++, p += 3)
     {
-        if (p[0] == 0 || p[1] == 0 || p[2] == 0)
+        if (!p[0] || !p[1] || !p[2])
         {
             return false;
         }
@@ -398,7 +398,7 @@ bool TextToMac(void* pMac, const char* p) noexcept
         m6[i] = (_byte)((Nibble1 << 4) | Nibble2);
     }
     {
-        if (p[0] == 0 || p[1] == 0 || p[2] != 0)
+        if (!p[0] || !p[1] || p[2])
         {
             return false;
         }
@@ -925,7 +925,7 @@ int CMaaIpToLong(const char * txt, _IP * RetIp) noexcept
         {
             return -1;
         }
-        if  (txt[0] != 0 && i == 3)
+        if  (txt[0] && i == 3)
         {
             return -1;
         }
@@ -1303,7 +1303,7 @@ int _IP6::GetMaskNum() const noexcept
     }
     for (b2 = (int)sizeof(m) - 1; b2 >= 0; b2--)
     {
-        if  (m[b2] != 0)
+        if  (m[b2])
         {
             break;
         }
@@ -1694,7 +1694,7 @@ CMaaFdSocket::CMaaFdSocket(CMaaFdSockets * pFdSockets) noexcept
         m_hrTime[i] = -1;
     }
 #ifdef _WIN32
-    //m_LastMode = -1;
+    //m_LastMode = sNegResetMode;
     m_Ev = WSACreateEvent();
 #endif
     //m_AcceptFlag = false;
@@ -1755,8 +1755,6 @@ void CMaaFdSocket::ChangeFdModeEx(int Act, bool bForced) noexcept
 //---------------------------------------------------------------------------
 CMaaSocket::CMaaSocket(CMaaFdSockets * pFdSockets, int af, int type, int protocol )
 :   CMaaFdSocket(pFdSockets)
-    //, m_Socket(INVALID_SOCKET)
-    //, m_domain(-1)
 #if defined(TL_EPOLL) || defined(_WIN32)
     //, m_RealState(0)
 #endif
@@ -1769,7 +1767,7 @@ CMaaSocket::CMaaSocket(CMaaFdSockets * pFdSockets, int af, int type, int protoco
     m_ActiveStateListItem.m_pItem = this;
 #endif
     //m_bIsClosing = false;
-    if  ((m_Socket = socket(m_domain = af, type, protocol)) == INVALID_SOCKET)
+    if ((m_Socket = socket(m_domain = af, type, protocol)) == INVALID_SOCKET)
     {
         Error("socket()");
     }
@@ -1829,7 +1827,7 @@ void CMaaSocket::SetSocket(SOCKET s, int domain) noexcept
         m_domain = domain;
     }
 #ifdef _WIN32
-    m_LastMode = -1;
+    m_LastMode = sNegResetMode;
 #endif
 }
 //---------------------------------------------------------------------------
@@ -1844,7 +1842,7 @@ void CMaaSocket::SwapSockets(SOCKET &s, int &d) noexcept // domain
     d = d1;
 
 #ifdef _WIN32
-    m_LastMode = -1;
+    m_LastMode = sNegResetMode;
 #endif
 }
 //---------------------------------------------------------------------------
@@ -2201,7 +2199,7 @@ CMaaTcpSocket::CMaaTcpSocket(CMaaFdSockets * pFdSockets, int domain) // AF_INET
     // Variable to set the SO_KEEPALIVE option with setsockopt ().
     BOOL fKeepAlive = 1;//TRUE;
 
-    if  (SOCKET_ERROR == setsockopt(m_Socket, SOL_SOCKET, SO_KEEPALIVE, (char *)&fKeepAlive, sizeof(BOOL)))
+    if  (setsockopt(m_Socket, SOL_SOCKET, SO_KEEPALIVE, (char *)&fKeepAlive, sizeof(BOOL))) // == SOCKET_ERROR)
     {
         Error ( "setsockopt ()" );
     }
@@ -2231,7 +2229,7 @@ bool CMaaTcpSocket::DisableNagleAlgoritm(bool bDisable, SOCKET s) const noexcept
 #else
     BOOL x = bDisable ? TRUE : FALSE;
 #endif
-    return setsockopt(s != INVALID_SOCKET ? s : m_Socket, IPPROTO_TCP, TCP_NODELAY, (char *)&x, sizeof(x)) == 0;
+    return !setsockopt(s != INVALID_SOCKET ? s : m_Socket, IPPROTO_TCP, TCP_NODELAY, (char *)&x, sizeof(x));
 }
 //---------------------------------------------------------------------------
 #ifdef TOOLSLIB_USE_CMaaTcpSocket_ConnectionInTimeCharacteristics
@@ -2314,13 +2312,13 @@ void CMaaTcpSocket::Timer1sSpeed()
             _qword value = !(i & 1) ? m_BytesSend : m_BytesRecv;
             //_qword value = !(i & 1) ? m_SendSpeed : m_RecvSpeed;
             m_pConnectionInTimeCharacteristics[i][0]->Set_Inc(value);
-            if  (m_pConnectionInTimeCharacteristics[i][0]->GetCurPos() % 60 == 0)
+            if  (!(m_pConnectionInTimeCharacteristics[i][0]->GetCurPos() % 60))
             {
                 m_pConnectionInTimeCharacteristics[i][1]->Set_Inc(value);
-                if  (m_pConnectionInTimeCharacteristics[i][1]->GetCurPos() % 60 == 0)
+                if  (!(m_pConnectionInTimeCharacteristics[i][1]->GetCurPos() % 60))
                 {
                     m_pConnectionInTimeCharacteristics[i][2]->Set_Inc(value);
-                    if  (m_pConnectionInTimeCharacteristics[i][2]->GetCurPos() % 24 == 0)
+                    if  (!(m_pConnectionInTimeCharacteristics[i][2]->GetCurPos() % 24))
                     {
                         m_pConnectionInTimeCharacteristics[i][3]->Set_Inc(value);
                         //Accumulate(value, true);
@@ -2401,10 +2399,10 @@ int CMaaTcpSocket::SendData(const void * Buffer, int Size)
         gpSockStartup&& gpSockStartup->m_UsrShaperMutex.UnLockM();
         //Locker_UnLock;
 #endif
-        if  (rr == 0)
+        if  (!rr)
         {
             DP2(
-                __utf8_printf("rr == 0\n", rr);
+                __utf8_printf("!rr\n", rr);
                 if  (Size)
                 {
                     //--- m_pFdSockets->ResetAState(this, eWrite);
@@ -2412,7 +2410,7 @@ int CMaaTcpSocket::SendData(const void * Buffer, int Size)
             )
             break;
         }
-        int req = rr > 0 ? rr : Size;
+        const int req = rr > 0 ? rr : Size;
 #ifdef TOOLSLIB_IO_PROFILE
         if (m_domain == AF_INET)
         {
@@ -2425,7 +2423,11 @@ int CMaaTcpSocket::SendData(const void * Buffer, int Size)
 #endif
         ret = send(m_Socket, (char *) Buffer, req, 0);
 #ifdef _WIN32
-        const DWORD dw = WSAGetLastError();
+        const DWORD dw = 
+#ifdef _WIN32
+            m_dwLastSendErr = 
+#endif
+                ret < 0 ? WSAGetLastError() : 0;
         /*
         if (ret > 0)
         {
@@ -2455,7 +2457,7 @@ int CMaaTcpSocket::SendData(const void * Buffer, int Size)
         */
 #endif
 #ifdef TL_EPOLL
-        int e = ret < 0 ? errno : 0;
+        const int e = ret < 0 ? errno : 0;
 #ifndef TL_EPOLLET
         m_pFdSockets->ResetRAState(this, eWrite);
 #else
@@ -2466,15 +2468,15 @@ int CMaaTcpSocket::SendData(const void * Buffer, int Size)
 #endif
 #else
 #ifdef __linux__
-        int e = ret < 0 ? errno : 0;
+        const int e = ret < 0 ? errno : 0;
 #endif
 #endif
         DP(printf("send(%d) returns %d\n", m_Socket, ret); fflush(stdout);)
 
-        if  (ret == SOCKET_ERROR)
+        if  (ret < 0) // == SOCKET_ERROR)
         {
 #ifdef _WIN32
-            if  ( dw != WSAEWOULDBLOCK )
+            if  (dw != WSAEWOULDBLOCK)
 #else
             // unix
             if  (e != EAGAIN)
@@ -2564,12 +2566,12 @@ bool gCMaaTcpSocketsCompatibleRead = false; //only with out of shapers
 bool CMaaTcpSocket::IsClosed(int LastReceivedLen) const noexcept
 {
 #ifdef __SHAPERS
-    if  (LastReceivedLen < 0 || (!m_RcvLLShaper.m_Shaper && gCMaaTcpSocketsCompatibleRead && LastReceivedLen == 0))
+    if  (LastReceivedLen < 0 || (!m_RcvLLShaper.m_Shaper && gCMaaTcpSocketsCompatibleRead && !LastReceivedLen))
     {
         return true;
     }
 #else
-    if  (LastReceivedLen < 0 || (gCMaaTcpSocketsCompatibleRead && LastReceivedLen == 0))
+    if  (LastReceivedLen < 0 || (gCMaaTcpSocketsCompatibleRead && !LastReceivedLen))
     // or if   (LastReceivedLen <= 0)
     {
         return true;
@@ -2613,13 +2615,13 @@ int CMaaTcpSocket::RecvData(void * Buffer, int Size)
 #endif
 #if defined(TL_EPOLL) && defined(__SHAPERS)
         /*
-        if   (rr == 0)
+        if   (!rr)
         {
             rr++;
         }
         */
 #else
-        if  (rr == 0)
+        if  (!rr)
         {
             break;
         }
@@ -2661,7 +2663,7 @@ int CMaaTcpSocket::RecvData(void * Buffer, int Size)
             ret = recv(m_Socket, (char*)Buffer, req, 0);
         }
 #ifdef _WIN32
-        DWORD e = WSAGetLastError();
+        const DWORD e = ret < 0 ? WSAGetLastError() : 0;
         if  (ret >= 0 && ret < req)
         {
             m_RealState &= ~eRead;
@@ -2678,14 +2680,14 @@ int CMaaTcpSocket::RecvData(void * Buffer, int Size)
         bRAStateReset = true;
 #endif
 #ifdef TL_EPOLL
-        int e = ret < 0 ? errno : 0;
+        const int e = ret < 0 ? errno : 0;
 #ifndef TL_EPOLLET
         //printf("r.rastate\n");
         m_pFdSockets->ResetRAState(this, eRead);
         bRAStateReset = true;
 #else
 #ifdef TL_EPOLLET_MULTIREAD
-        if  (ret >= 0 && ret < req && !(ret == 0 && Total > 0))
+        if  (ret >= 0 && ret < req && !(!ret && Total > 0))
 #else
         if  (ret >= 0 && ret < req)
 #endif
@@ -2698,7 +2700,7 @@ int CMaaTcpSocket::RecvData(void * Buffer, int Size)
 #endif
         DP(printf("recv(%d) returns %d\n", m_Socket, ret); fflush(stdout);)
         //DP1(printf("[%d] ret=%d e=%d\n", m_Socket, ret, e); fflush(stdout);)
-        if  (ret == SOCKET_ERROR)
+        if  (ret < 0) // == SOCKET_ERROR)
         {
             //DP1(printf("[%d] ret=%d e=%d\n", m_Socket, ret, e); fflush(stdout);)
 #ifdef _WIN32
@@ -2845,7 +2847,7 @@ int CMaaTcpSocket::RecvData(void * Buffer, int Size)
         //Total = Total > 0 ? Total : -1;// - Total;
         ////Total = -1 - Total;
         //#else
-        if  (Total == 0)
+        if  (!Total)
         {
             Total = -1;
         }
@@ -3252,7 +3254,7 @@ int CMaaTcpSocket::Bind(_Port Port, _IP Ip, bool bReuse)
 #endif
         setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, P_PARAM &On, sizeof(On));
     }
-    if  (::bind(m_Socket, (struct sockaddr *)&m_s.m_sin, sizeof(m_s.m_sin)) == SOCKET_ERROR)
+    if  (bind(m_Socket, (struct sockaddr *)&m_s.m_sin, sizeof(m_s.m_sin))) // == SOCKET_ERROR)
     {
         Error("bind ()");
         return 2;
@@ -3299,7 +3301,7 @@ int CMaaTcpSocket::Bind6(_Port Port, const _byte * Ip6, bool bReuse)
 #endif
         setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, P_PARAM &On, sizeof(On));
     }
-    if  (::bind(m_Socket, (struct sockaddr *)&m_s.m_sin6, sizeof(m_s.m_sin6)) == SOCKET_ERROR)
+    if  (bind(m_Socket, (struct sockaddr *)&m_s.m_sin6, sizeof(m_s.m_sin6))) // == SOCKET_ERROR)
     {
         Error("bind ()");
         return 2;
@@ -3486,7 +3488,7 @@ _byte * CMaaSocket::GetLocalHostIp6(_byte * RetIp)
 #ifdef _WIN32
     CMaaString buffer;
     CMaaHe1 * h = CMaa_gethostbyname2(txt, buffer);
-    if  (*txt == 0)
+    if  (!*txt)
     {
         strcpy(txt, "<unknown>");
     }
@@ -3519,7 +3521,7 @@ _byte * CMaaSocket::GetLocalHostIp6(_byte * RetIp)
     memcpy(RetIp, h->h_addr_list[0], 16);
 #else
     struct hostent * h = gethostbyname2(txt, AF_INET6);
-    if  (*txt == 0)
+    if  (!*txt)
     {
         strcpy(txt, "<unknown>");
     }
@@ -3561,7 +3563,7 @@ _IP CMaaSocket::GetLocalHostIp()
     txt[0] = 0;
     gethostname(txt, sizeof(txt));
     struct hostent * h = gethostbyname(txt);
-    if  (*txt == 0)
+    if  (!*txt)
     {
         strcpy(txt, "<unknown>");
     }
@@ -3599,7 +3601,7 @@ const char * CMaaSocket::GetLocalHostName() noexcept
     txt[0] = 0;
     gethostname(txt, sizeof(txt));
     //struct hostent * h = gethostbyname ( txt );
-    if  (*txt == 0)
+    if  (!*txt)
     {
         strcpy(txt, "<unknown>");
     }
@@ -3639,7 +3641,7 @@ void CMaaSocket::SetNonBlockingMode()
 int CMaaTcpSocket::Listen(int QueenDepth)
 {
     IfDebug(100) { DP(printf("CMaaTcpSocket::Listen()\n");) }
-    if  (SOCKET_ERROR == listen(m_Socket, QueenDepth))
+    if  (listen(m_Socket, QueenDepth)) // == SOCKET_ERROR)
     {
         Error("listen ()");
         return 3;
@@ -3654,7 +3656,7 @@ SOCKET CMaaTcpSocket::Accept(_IP * IpFrom, _Port * Port)
     struct sockaddr_in si;
     socklen_t len;
     memset(&si, 0, len = sizeof(si));
-    SOCKET s = accept(GetSocket(), (struct sockaddr *)&si, &len);
+    const SOCKET s = accept(GetSocket(), (struct sockaddr *)&si, &len);
     DP(printf("accepted socket %d\n", s);)
     int Mode;
     //if   (!m_pFdSockets->m_SockHash.Find(this, &Mode))
@@ -3669,7 +3671,7 @@ SOCKET CMaaTcpSocket::Accept(_IP * IpFrom, _Port * Port)
 #endif
     }
 
-    if  (s == SOCKET_ERROR)
+    if (s == INVALID_SOCKET)
     {
         //printf("accept error %d\n", errno);
         Error("accept()");
@@ -3704,7 +3706,7 @@ SOCKET CMaaTcpSocket::Accept6(_byte * Ip6From, _Port * Port)
     struct sockaddr_in6 si;
     socklen_t len;
     memset(&si, 0, len = sizeof(si));
-    SOCKET s = accept(GetSocket(), (struct sockaddr *)&si, &len);
+    const SOCKET s = accept(GetSocket(), (struct sockaddr *)&si, &len);
     DP(printf("accepted socket %d\n", s);)
     int Mode;
     //if   (!m_pFdSockets->m_SockHash.Find(this, &Mode))
@@ -3719,7 +3721,7 @@ SOCKET CMaaTcpSocket::Accept6(_byte * Ip6From, _Port * Port)
 #endif
     }
 
-    if  (s == SOCKET_ERROR)
+    if (s == INVALID_SOCKET)
     {
         //printf("accept error %d\n", errno);
         Error("accept()");
@@ -3769,12 +3771,12 @@ void CMaaUdpSocket::Send(const void * pBuffer, int BufferSize, _IP Ip, _Port Por
     const int Ret = sendto(m_Socket, (char *) pBuffer, BufferSize, 0, (struct sockaddr *)&m_s.m_sin, sizeof(m_s.m_sin));
 
 #ifdef TL_EPOLL
-    int e = Ret < 0 ? errno : 0;
+    const int e = Ret < 0 ? errno : 0;
 #ifndef TL_UDP_EPOLLET
     m_pFdSockets->ResetRAState(this, eWrite);
 #endif
 #endif
-    if  (Ret == SOCKET_ERROR)
+    if  (Ret < 0) // == SOCKET_ERROR)
     {
 #ifdef TL_UDP_EPOLLET
         if  (e == EAGAIN)
@@ -3802,12 +3804,12 @@ void CMaaUdpSocket::Send6(const void * pBuffer, int BufferSize, const _byte *Ip6
     const int Ret = sendto(m_Socket, (char *) pBuffer, BufferSize, 0, (struct sockaddr *)&m_s.m_sin6, sizeof(m_s.m_sin6));
 
 #ifdef TL_EPOLL
-    int e = Ret < 0 ? errno : 0;
+    const int e = Ret < 0 ? errno : 0;
 #ifndef TL_UDP_EPOLLET
     m_pFdSockets->ResetRAState(this, eWrite);
 #endif
 #endif
-    if  (Ret == SOCKET_ERROR)
+    if  (Ret < 0) // == SOCKET_ERROR)
     {
 #ifdef TL_UDP_EPOLLET
         if  (e == EAGAIN)
@@ -3866,7 +3868,7 @@ CMaaUdpBroadcast::CMaaUdpBroadcast(CMaaFdSockets * pFdSockets, _Port Port)
     // Variable to set the broadcast option with setsockopt ().
     BOOL fBroadcast = 1;//TRUE;
 
-    if  (SOCKET_ERROR == setsockopt(m_Socket, SOL_SOCKET, SO_BROADCAST, (char *)&fBroadcast, sizeof(BOOL)))
+    if  (setsockopt(m_Socket, SOL_SOCKET, SO_BROADCAST, (char *)&fBroadcast, sizeof(BOOL))) // == SOCKET_ERROR)
     {
         Error("setsockopt()");
     }
@@ -3904,7 +3906,7 @@ CMaaUdpServer::CMaaUdpServer(CMaaFdSockets * pFdSockets, _Port Port, _IP BindIp,
         setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, P_PARAM &On, sizeof(On));
     }
 
-    if  (SOCKET_ERROR == ::bind(m_Socket, (struct sockaddr *)&m_s.m_sin, sizeof(m_s.m_sin)))
+    if  (bind(m_Socket, (struct sockaddr *)&m_s.m_sin, sizeof(m_s.m_sin))) // == SOCKET_ERROR)
     {
         Error("bind()");
     }
@@ -3931,7 +3933,7 @@ CMaaUdpServer::CMaaUdpServer(CMaaFdSockets * pFdSockets, _Port Port, _IP6 BindIp
         setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, P_PARAM &On, sizeof(On));
     }
 
-    if  (SOCKET_ERROR == ::bind(m_Socket, (struct sockaddr *)&m_s.m_sin6, sizeof(m_s.m_sin6)))
+    if  (bind(m_Socket, (struct sockaddr *)&m_s.m_sin6, sizeof(m_s.m_sin6))) // == SOCKET_ERROR)
     {
         Error("bind()");
     }
@@ -3944,7 +3946,7 @@ void CMaaUdpServer::AddMembership(_IP MulticastAddr /*= CMaaIpAddress(224,0,0,0)
     mreq.imr_multiaddr.s_addr = htonl(MulticastAddr);
     mreq.imr_interface.s_addr = htonl(InterfaceIpOrIndex);
 
-    if (setsockopt(m_Socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char FAR*) & mreq, sizeof(mreq)) == SOCKET_ERROR)
+    if (setsockopt(m_Socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char FAR*) & mreq, sizeof(mreq))) // == SOCKET_ERROR)
     {
         //Error("setsockopt(for IPPROTO_IP, IP_ADD_MEMBERSHIP) failed");
         StaticError("setsockopt(for IPPROTO_IP, IP_ADD_MEMBERSHIP) failed");
@@ -3968,7 +3970,7 @@ void CMaaUdpServer::DropMembership(_IP MulticastAddr /*= CMaaIpAddress(224,0,0,0
     mreq.imr_multiaddr.s_addr = htonl(MulticastAddr);
     mreq.imr_interface.s_addr = htonl(InterfaceIpOrIndex);
 
-    if (setsockopt(m_Socket, IPPROTO_IP, IP_DROP_MEMBERSHIP, (char FAR*) & mreq, sizeof(mreq)) == SOCKET_ERROR)
+    if (setsockopt(m_Socket, IPPROTO_IP, IP_DROP_MEMBERSHIP, (char FAR*) & mreq, sizeof(mreq))) // == SOCKET_ERROR)
     {
         //Error("setsockopt(for IPPROTO_IP, IP_DROP_MEMBERSHIP) failed");
         StaticError("setsockopt(for IPPROTO_IP, IP_DROP_MEMBERSHIP) failed");
@@ -3992,7 +3994,7 @@ void CMaaUdpServer::JoinGroup6(_IP6 MulticastAddr, unsigned int InterfaceIndex)
     memcpy(mreq.ipv6mr_multiaddr.s6_addr, MulticastAddr.ptr(), 16);
     mreq.ipv6mr_interface = InterfaceIndex;
 
-    if (setsockopt(m_Socket, IPPROTO_IPV6, IPV6_JOIN_GROUP, (char FAR*) & mreq, sizeof(mreq)) == SOCKET_ERROR)
+    if (setsockopt(m_Socket, IPPROTO_IPV6, IPV6_JOIN_GROUP, (char FAR*) & mreq, sizeof(mreq))) // == SOCKET_ERROR)
     {
         //Error("setsockopt(for IPPROTO_IP, IP_ADD_MEMBERSHIP) failed");
         StaticError("setsockopt(for IPPROTO_IPV6, IPV6_JOIN_GROUP) failed");
@@ -4018,7 +4020,7 @@ void CMaaUdpServer::LeaveGroup6(_IP6 MulticastAddr, unsigned int InterfaceIndex)
     memcpy(mreq.ipv6mr_multiaddr.s6_addr, MulticastAddr.ptr(), 16);
     mreq.ipv6mr_interface = InterfaceIndex;
 
-    if (setsockopt(m_Socket, IPPROTO_IPV6, IPV6_LEAVE_GROUP, (char FAR*) & mreq, sizeof(mreq)) == SOCKET_ERROR)
+    if (setsockopt(m_Socket, IPPROTO_IPV6, IPV6_LEAVE_GROUP, (char FAR*) & mreq, sizeof(mreq))) // == SOCKET_ERROR)
     {
         //Error("setsockopt(for IPPROTO_IP, IP_ADD_MEMBERSHIP) failed");
         StaticError("setsockopt(for IPPROTO_IPV6, IPV6_LEAVE_GROUP) failed");
@@ -4041,13 +4043,13 @@ void CMaaUdpServer::SetIpMulticastIfaceAndTTL(_IP IfaceIpOrIfIndex, int ttl) // 
 {
 #ifdef _WIN32
     DWORD dwIfaceIpOrIfIndex = htonl(IfaceIpOrIfIndex);
-    if  (setsockopt(m_Socket, IPPROTO_IP, IP_MULTICAST_IF, (char FAR *)&dwIfaceIpOrIfIndex, sizeof (DWORD)) == SOCKET_ERROR)
+    if  (setsockopt(m_Socket, IPPROTO_IP, IP_MULTICAST_IF, (char FAR *)&dwIfaceIpOrIfIndex, sizeof(DWORD))) // == SOCKET_ERROR)
     {
         //Error("setsockopt(for IPPROTO_IP, IP_MULTICAST_TTL) failed");
         StaticError("setsockopt(for IPPROTO_IP, IP_MULTICAST_IF) failed");
     }
     int iTTL = ttl;
-    if  (setsockopt(m_Socket, IPPROTO_IP, IP_MULTICAST_TTL, (char FAR *)&iTTL, sizeof (int)) == SOCKET_ERROR)
+    if  (setsockopt(m_Socket, IPPROTO_IP, IP_MULTICAST_TTL, (char FAR *)&iTTL, sizeof(int))) // == SOCKET_ERROR)
     {
         //Error("setsockopt(for IPPROTO_IP, IP_MULTICAST_TTL) failed");
         StaticError("setsockopt(for IPPROTO_IP, IP_MULTICAST_TTL) failed");
@@ -4072,12 +4074,12 @@ void CMaaUdpServer::SetIpMulticastIfaceAndHop6(unsigned int InterfaceIndex, int 
 {
 #ifdef _WIN32
     unsigned int dwInterfaceIndex = InterfaceIndex;
-    if  (setsockopt(m_Socket, IPPROTO_IPV6, IPV6_MULTICAST_IF, (char FAR*)&dwInterfaceIndex, sizeof(dwInterfaceIndex)) == SOCKET_ERROR)
+    if  (setsockopt(m_Socket, IPPROTO_IPV6, IPV6_MULTICAST_IF, (char FAR*)&dwInterfaceIndex, sizeof(dwInterfaceIndex))) // == SOCKET_ERROR)
     {
         StaticError("setsockopt(for IPPROTO_IPV6, IPV6_MULTICAST_IF) failed");
     }
     int iTTL = ttl;
-    if  (setsockopt(m_Socket, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, (char FAR*)&iTTL, sizeof(int)) == SOCKET_ERROR)
+    if  (setsockopt(m_Socket, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, (char FAR*)&iTTL, sizeof(int))) // == SOCKET_ERROR)
     {
         StaticError("setsockopt(for IPPROTO_IPV6, IPV6_MULTICAST_HOPS) failed");
     }
@@ -4107,7 +4109,7 @@ int CMaaUdpSocket::Recv(void * pBuffer, int BufferSize)
     memset(&m_t.m_sin, 0, sizeof(m_t.m_sin));
     const int Ret = recvfrom(m_Socket, (char *)pBuffer, BufferSize, 0, (struct sockaddr *)&m_t.m_sin, &len);
 #ifdef TL_EPOLL
-    int e = Ret < 0 ? errno : 0;
+    const int e = Ret < 0 ? errno : 0;
 #ifndef TL_UDP_EPOLLET
     m_pFdSockets->ResetRAState(this, eRead);
 #endif
@@ -4115,7 +4117,7 @@ int CMaaUdpSocket::Recv(void * pBuffer, int BufferSize)
 #ifdef _WIN32
     m_pFdSockets->ResetRAState(this, eRead);
 #endif
-    if  (Ret == SOCKET_ERROR)
+    if  (Ret < 0) // == SOCKET_ERROR)
     {
 #ifdef TL_UDP_EPOLLET
         if  (e == EAGAIN)
@@ -4183,12 +4185,12 @@ int CMaaUdpSocket::Recv6(void * pBuffer, int BufferSize)
     memset(&m_t.m_sin6, 0, sizeof(m_t.m_sin6));
     const int Ret = recvfrom(m_Socket, (char *)pBuffer, BufferSize, 0, (struct sockaddr *)&m_t.m_sin6, &len);
 #ifdef TL_EPOLL
-    int e = Ret < 0 ? errno : 0;
+    const int e = Ret < 0 ? errno : 0;
 #ifndef TL_UDP_EPOLLET
     m_pFdSockets->ResetRAState(this, eRead);
 #endif
 #endif
-    if  (Ret == SOCKET_ERROR)
+    if  (Ret < 0) // == SOCKET_ERROR)
     {
 #ifdef TL_UDP_EPOLLET
         if  (e == EAGAIN)
@@ -4749,7 +4751,7 @@ int CMaaFdSockets::Select()
                 }
                 gpSockStartup&& gpSockStartup->m_UsrShaperMutex.UnLockM();
                 //Locker_UnLock;
-                if  (rr == 0 && wr == 0)
+                if  (!rr && !wr)
                 {
                     hh[idx] = hEv0;
                     hh[idx + 1] = t->m_SndLLShaper.m_hEv;
@@ -4759,7 +4761,7 @@ int CMaaFdSockets::Select()
                 {
                     //hh[idx + 1] = hh[idx + 2] = m_hEv0;
                 }
-                else if (rr == 0 && wr)
+                else if (!rr && wr)
                 {
                     hh[idx + 2] = t->m_RcvLLShaper.m_hEv;
                     if  ((Modes[i] & (eEventWrite | eWrite)) != eWrite)
@@ -4767,7 +4769,7 @@ int CMaaFdSockets::Select()
                         hh[idx] = hEv0;
                     }
                 }
-                else if (rr && wr == 0)
+                else if (rr && !wr)
                 {
                     hh[idx + 1] = t->m_SndLLShaper.m_hEv;
                     //if   ((Modes[i] & (eEventRead|eRead)) != eRead)
@@ -5170,9 +5172,9 @@ int CMaaFdSockets::Select()
                                     ++g_nTcp6RecvIO;
                                 }
 #endif
-                                int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
+                                const int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
 
-                                if (l == 0)
+                                if (!l)
                                 {
                                     //int ErrnoBackup = errno;
                                     WSASetLastError(CMaa_CONN_CLOSED_ERROR);
@@ -5912,7 +5914,7 @@ int CMaaFdSockets::Select()
                             {
                                 int error = Errno;
                                 socklen_t errlen = sizeof(error);
-                                if (getsockopt(s, SOL_SOCKET, SO_ERROR, (void*)&error, &errlen) == 0)
+                                if (!getsockopt(s, SOL_SOCKET, SO_ERROR, (void*)&error, &errlen))
                                 {
                                     errno = error;
                                 }
@@ -5938,18 +5940,18 @@ int CMaaFdSockets::Select()
                                         ++g_nTcp6RecvIO;
                                     }
 #endif
-                                    int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
+                                    const int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
 
-                                    if (l == 0)
+                                    if (!l)
                                     {
-                                        int ErrnoBackup = errno;
+                                        const int ErrnoBackup = errno;
                                         errno = CMaa_CONN_CLOSED_ERROR;
                                         pSock->ChangeFdMode(pSock->Notify_Error());
                                         errno = ErrnoBackup;
                                     }
                                     else if (l < 0)
                                     {
-                                        int ErrnoBackup = errno;
+                                        const int ErrnoBackup = errno;
                                         pSock->ChangeFdMode(pSock->Notify_Error());
                                         errno = ErrnoBackup;
                                     }
@@ -6296,18 +6298,18 @@ int CMaaFdSockets::Select()
                                                 ++g_nTcp6RecvIO;
                                             }
 #endif
-                                            int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
+                                            const int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
 
-                                            if (l == 0)
+                                            if (!l)
                                             {
-                                                int ErrnoBackup = errno;
+                                                const int ErrnoBackup = errno;
                                                 errno = CMaa_CONN_CLOSED_ERROR;
                                                 pSock->ChangeFdMode(pSock->Notify_Error());
                                                 errno = ErrnoBackup;
                                             }
                                             else if (l < 0)
                                             {
-                                                int ErrnoBackup = errno;
+                                                const int ErrnoBackup = errno;
                                                 pSock->ChangeFdMode(pSock->Notify_Error());
                                                 errno = ErrnoBackup;
                                             }
@@ -6470,7 +6472,7 @@ int CMaaFdSockets::Select ()
                 int Mode;
                 if  (Sockets[i] && (Sockets[i]->GetFdMode() & CMaaEnum::eHold))
                 {
-                    if  (--k == 0)
+                    if  (!--k)
                     {
                         int us;
                         {
@@ -6548,7 +6550,7 @@ int CMaaFdSockets::Select ()
                         gpSockStartup&& gpSockStartup->m_UsrShaperMutex.UnLockM();
                         //Locker_UnLock;
                     }
-                    if  (rr == 0 && wr == 0)
+                    if  (!rr && !wr)
                     {
 #ifndef __FORCED_CLOSE_NOTIFICATION
                         if  ((Mode & eRead))
@@ -6570,7 +6572,7 @@ int CMaaFdSockets::Select ()
                     {
                         //hh[2 + 3 * i + 1] = hh[2 + 3 * i + 2] = m_hEv0;
                     }
-                    else if (rr == 0 && wr)
+                    else if (!rr && wr)
                     {
                         rev[i] = t->m_RcvLLShaper.m_hEv;
                         if  ((Modes[i] & (eEventWrite|eWrite)) != eWrite)
@@ -6585,7 +6587,7 @@ int CMaaFdSockets::Select ()
                             }
                         }
                     }
-                    else if (rr && wr == 0)
+                    else if (rr && !wr)
                     {
                         wev[i] = t->m_SndLLShaper.m_hEv;
 #ifndef __FORCED_CLOSE_NOTIFICATION
@@ -6759,18 +6761,18 @@ int CMaaFdSockets::Select ()
                                     ++g_nTcp6RecvIO;
                                 }
 #endif
-                                int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
+                                const int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
 
-                                if  (l == 0)
+                                if  (!l)
                                 {
-                                    int ErrnoBackup = errno;
+                                    const int ErrnoBackup = errno;
                                     errno = CMaa_CONN_CLOSED_ERROR;
                                     Act = pSock -> Notify_Error ();
                                     errno = ErrnoBackup;
                                 }
                                 else if (l < 0)
                                 {
-                                    int ErrnoBackup = errno;
+                                    const int ErrnoBackup = errno;
                                     Act = pSock -> Notify_Error ();
                                     errno = ErrnoBackup;
                                 }
@@ -7083,18 +7085,18 @@ int CMaaFdSockets::Select ()
                                             ++g_nTcp6RecvIO;
                                         }
 #endif
-                                        int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
+                                        const int l = recv(pSock->GetSocket(), &c, 1, MSG_PEEK);
 
-                                        if  (l == 0)
+                                        if  (!l)
                                         {
-                                            int ErrnoBackup = errno;
+                                            const int ErrnoBackup = errno;
                                             errno = CMaa_CONN_CLOSED_ERROR;
                                             Act = pSock -> Notify_Error ();
                                             errno = ErrnoBackup;
                                         }
                                         else if (l < 0)
                                         {
-                                            int ErrnoBackup = errno;
+                                            const int ErrnoBackup = errno;
                                             Act = pSock -> Notify_Error ();
                                             errno = ErrnoBackup;
                                         }
@@ -7271,14 +7273,14 @@ bool CMaaFdSockets::ChangeMode(CMaaSocket* pSock, int Act1, int Act2, bool bForc
             m = 0;
         }
 
-        if  (pSock->m_LastMode == -1 || pSock->m_LastMode != a)
+        if  (pSock->m_LastMode != a)
         {
-            if  (pSock->m_LastMode == -1)
+            if  (pSock->m_LastMode < 0) // if ((pSock->m_LastMode & sNegResetMode))
             {
-                pSock->m_pm = -1;
+                pSock->m_pm = CMaaFdSocket::slNegResetFd;
                 m_bForceMode = true;
             }
-            if  ((pSock->m_LastMode ^ a) & eSensitiveEvents)
+            else if (((pSock->m_LastMode ^ a) & eSensitiveEvents))
             {
                 m_bForceMode = true;
             }
@@ -7287,6 +7289,7 @@ bool CMaaFdSockets::ChangeMode(CMaaSocket* pSock, int Act1, int Act2, bool bForc
 
         if  (m != pSock->m_pm)
         {
+            const long m0 = pSock->m_pm;// >= 0 ? pSock->m_pm : 0;
             //int lastm = pSock->m_pm != -1 ? pSock->m_pm : 0;
             pSock->m_pm = m;
 
@@ -7313,8 +7316,9 @@ bool CMaaFdSockets::ChangeMode(CMaaSocket* pSock, int Act1, int Act2, bool bForc
             }
             */
 
-            if  ((m & (FD_READ|FD_WRITE|FD_CLOSE))) //10.01.2008
-            //if (((m & (FD_READ | FD_WRITE | FD_CLOSE)) & ~ lastm)) // 29.04.2024
+            if (((m ^ m0) & m & FD_WRITE)) //28.09.2026
+            //if  ((m & (FD_READ|FD_WRITE|FD_CLOSE))) //10.01.2008
+            ////if (((m & (FD_READ | FD_WRITE | FD_CLOSE)) & ~ lastm)) // 29.04.2024
             {
 #if 0
                 if  (pSock->m_bDebug)
@@ -7637,12 +7641,13 @@ CMaaSockStartup::CMaaSockStartup(BOOL fThrow, int Flags)
 #ifndef __unix__
     WORD wVersionRequested;
     wVersionRequested = MAKEWORD(2, 2);
-    if  (WSAStartup(wVersionRequested, &m_WsaData) == SOCKET_ERROR)
+    const int dw = WSAStartup(wVersionRequested, &m_WsaData);
+    if  (dw) // not SOCKET_ERROR here
     {
         //LastWsaError = WSAGetLastError ();
         if  (fThrow)
         {
-            throw XTOOSockErr("WSAStartup failed", nullptr);
+            throw XTOOSockErr("WSAStartup failed", nullptr, nullptr, dw);
         }
         else
         {
@@ -10062,7 +10067,7 @@ int CMaaWakeUpPair::Notify_Read()
 #ifdef TOOLSLIB_IO_PROFILE
             ++g_nTcp4RecvIO;
 #endif
-            int n = recv(m_Socket, Buffer, sizeof(Buffer), 0);
+            const int n = recv(m_Socket, Buffer, sizeof(Buffer), 0);
             //__utf8_printf("CMaaWakeUpPair::Notify_Read(): m_Bytes = %d, n = %d\n", m_Bytes, n);
 #endif
             if  (n > 0)
@@ -10181,7 +10186,7 @@ void CMaaWakeUpPair::WakeUp() noexcept
         m_Bytes++;
         try
         {
-            int x = send(m_s2.m_Socket, &c, 1, 0);
+            const int x = send(m_s2.m_Socket, &c, 1, 0);
             //int x = write(m_s2.m_Socket, &c, 1);
             if  (x <= 0)
             {
@@ -10241,17 +10246,17 @@ void CMaaTcpSocket::CCloseTimer::OnTimer()
         }
 #endif
         char c = 0;
-        int l = recv(m_pSocket->GetSocket(), &c, 1, MSG_PEEK);
+        const int l = recv(m_pSocket->GetSocket(), &c, 1, MSG_PEEK);
 #ifdef _WIN32
-        DWORD e = l < 0 ? WSAGetLastError() : 0;
+        const DWORD e = l < 0 ? WSAGetLastError() : 0;
 #else
-        int e = l < 0 ? errno : 0;
+        const int e = l < 0 ? errno : 0;
 #endif
         if (GetPeriod() == 2)
         {
             Start2(2000, 0);
         }
-        if  (l == 0) // 28.04.2024
+        if  (!l) // 28.04.2024
         {
 #ifdef _WIN32
             if (m_pSocket->GetFdMode() & eRead)
@@ -10415,7 +10420,7 @@ struct sockaddr_in6_old {
     // of addrinfo structures containing response
     // information
     dwRetval = getaddrinfo(name, "HTTP", &hints, &result);
-    if  (dwRetval != 0)
+    if  (dwRetval)
     {
         return nullptr;
     }
@@ -10572,7 +10577,7 @@ int __cdecl main(int argc, char **argv)
 
     // Initialize Winsock
     iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if  (iResult != 0) {
+    if  (iResult) {
         printf("WSAStartup failed: %d\n", iResult);
         return 1;
     }
@@ -10595,7 +10600,7 @@ int __cdecl main(int argc, char **argv)
     // of addrinfo structures containing response
     // information
     dwRetval = getaddrinfo(argv[1], argv[2], &hints, &result);
-    if  ( dwRetval != 0 ) {
+    if  (dwRetval) {
         printf("getaddrinfo failed with error: %d\n", dwRetval);
         WSACleanup();
         return 1;
@@ -10743,7 +10748,7 @@ const
         Len2 = m_Vsr - m_V;
     }
     /*
-     if   (Len2 > m_Vsr - m_V && m_V == 0)
+     if   (Len2 > m_Vsr - m_V && !m_V)
      {
           Len2 = m_Vsr - m_V;
      }
@@ -11121,13 +11126,13 @@ void CMaaTcpShaper::SubLenReserved(int Len)
     {
         const _qword value = Len;
         m_pConnectionInTimeCharacteristics[0]->Accumulate(value);
-        //if   (m_pConnectionInTimeCharacteristics[0]->GetCurPos() % 60 == 0)
+        //if   (!(m_pConnectionInTimeCharacteristics[0]->GetCurPos() % 60))
         {
             m_pConnectionInTimeCharacteristics[1]->Accumulate(value);
-            //if   (m_pConnectionInTimeCharacteristics[1]->GetCurPos() % 60 == 0)
+            //if   (!(m_pConnectionInTimeCharacteristics[1]->GetCurPos() % 60))
             {
                 m_pConnectionInTimeCharacteristics[2]->Accumulate(value);
-                //if   (m_pConnectionInTimeCharacteristics[2]->GetCurPos() % 24 == 0)
+                //if   (!(m_pConnectionInTimeCharacteristics[2]->GetCurPos() % 24))
                 {
                     m_pConnectionInTimeCharacteristics[3]->Accumulate(value);
                 }
@@ -11251,17 +11256,17 @@ void CMaaTcpShaper::RecCalc_1(/*int Step,*/int& Result)
     //switch(Step)
     {
         //case -1: // Update VAve
-        if  (Result != 0 && m_pConnectionInTimeCharacteristics[0])
+        if  (Result && m_pConnectionInTimeCharacteristics[0])
         {
             const _qword value = 0;
             m_pConnectionInTimeCharacteristics[0]->Accumulate(value, true);
-            if  (m_pConnectionInTimeCharacteristics[0]->GetCurPos() % 60 == 0)
+            if  (!(m_pConnectionInTimeCharacteristics[0]->GetCurPos() % 60))
             {
                 m_pConnectionInTimeCharacteristics[1]->Accumulate(value, true);
-                if  (m_pConnectionInTimeCharacteristics[1]->GetCurPos() % 60 == 0)
+                if  (!(m_pConnectionInTimeCharacteristics[1]->GetCurPos() % 60))
                 {
                     m_pConnectionInTimeCharacteristics[2]->Accumulate(value, true);
-                    if  (m_pConnectionInTimeCharacteristics[2]->GetCurPos() % 24 == 0)
+                    if  (!(m_pConnectionInTimeCharacteristics[2]->GetCurPos() % 24))
                     {
                         m_pConnectionInTimeCharacteristics[3]->Accumulate(value, true);
                     }
@@ -11279,7 +11284,7 @@ void CMaaTcpShaper::RecCalc_1(/*int Step,*/int& Result)
         //break;
     }
 #ifdef __SHAPERS_PROFILING
-    if  ((s_depth == 0 && Step == -1) || (s_depth == 1 && Step != -1))
+    if  ((!s_depth && Step == -1) || (s_depth == 1 && Step != -1))
     {
         _qword t = m_hrt.GetTime();
         //gShaperTempInfo.Format("%SRecCalc(%d, %d) = %,D\n", &gShaperTempInfo, Step, Result, t - t0);
@@ -11307,17 +11312,17 @@ void CMaaTcpShaper::RecCalc(int Step, int &Result) noexcept
     {
 #if 0
     case -1: // Update VAve
-        if  (Result != 0 && m_pConnectionInTimeCharacteristics[0])
+        if  (Result && m_pConnectionInTimeCharacteristics[0])
         {
             const _qword value = 0;
             m_pConnectionInTimeCharacteristics[0]->Accumulate(value, true);
-            if  (m_pConnectionInTimeCharacteristics[0]->GetCurPos() % 60 == 0)
+            if  (!(m_pConnectionInTimeCharacteristics[0]->GetCurPos() % 60))
             {
                 m_pConnectionInTimeCharacteristics[1]->Accumulate(value, true);
-                if  (m_pConnectionInTimeCharacteristics[1]->GetCurPos() % 60 == 0)
+                if  (!(m_pConnectionInTimeCharacteristics[1]->GetCurPos() % 60))
                 {
                     m_pConnectionInTimeCharacteristics[2]->Accumulate(value, true);
-                    if  (m_pConnectionInTimeCharacteristics[2]->GetCurPos() % 24 == 0)
+                    if  (!(m_pConnectionInTimeCharacteristics[2]->GetCurPos() % 24))
                     {
                         m_pConnectionInTimeCharacteristics[3]->Accumulate(value, true);
                     }
@@ -11485,7 +11490,7 @@ void CMaaTcpShaper::RecCalc(int Step, int &Result) noexcept
         {
             if  (!x->m_bFullFilled)
             {
-                if  (x->m_V == 0) //< x->m_v0)
+                if  (!x->m_V) //< x->m_v0)
                 {
                     x->m_bFullFilled = true;
                     m_Reserved += x->m_v0 - x->m_V;
@@ -11538,7 +11543,7 @@ void CMaaTcpShaper::RecCalc(int Step, int &Result) noexcept
         break;
     }
 #ifdef __SHAPERS_PROFILING
-    if  ((s_depth == 0 && Step == -1) || (s_depth == 1 && Step != -1))
+    if  ((!s_depth && Step == -1) || (s_depth == 1 && Step != -1))
     {
         _qword t = m_hrt.GetTime();
         //gShaperTempInfo.Format("%SRecCalc(%d, %d) = %,D\n", &gShaperTempInfo, Step, Result, t - t0);
@@ -12093,11 +12098,11 @@ bool CMaaTcpShaper::Add(CMaaTcpShaper &s)
         bool b = true;
         if  (s.m_Type != eGeneral)
         {
-            b = m_UserShapers.Add(s.m_UserId, &s) == 0;
+            b = !m_UserShapers.Add(s.m_UserId, &s);
         }
         else
         {
-            b = m_GeneralShapers.Add(s.m_Name, &s) == 0;
+            b = !m_GeneralShapers.Add(s.m_Name, &s);
         }
         if  (!b)
         {
@@ -12159,7 +12164,7 @@ bool CMaaTcpShaper::Add(CMaaTcpLLShaper &l) noexcept
         m_ChildsLL.AddAtBack(&l);
         ++m_ConnectionsCount[0];
         /*
-          if   (++m_ConnectionsCount[0] == 1 && m_ConnectionsCount[1] == 0)
+          if   (++m_ConnectionsCount[0] == 1 && !m_ConnectionsCount[1])
           {
                if   (m_Shaper)
                {
@@ -12225,7 +12230,7 @@ void CMaaTcpShaper::AddRecursiveConnectionCounter(int val) noexcept
     {
         m_Shaper->m_ConnectionsCount[2]++;
     }
-    if  (val < 0 && m_ConnectionsCount[1] == 0 && m_Shaper)
+    if  (val < 0 && !m_ConnectionsCount[1] && m_Shaper)
     {
         m_Shaper->m_ConnectionsCount[2]--;
     }
@@ -12284,7 +12289,7 @@ int CMaaTcpShaper::DeleteUnused() noexcept
         np = m_Childs.Next(p);
         CMaaTcpShaper &s = *(p->p);
         const int n = s.DeleteUnused();
-        if  (n == 0)
+        if  (!n)
         {
             Del(s);
             delete &s;
@@ -12325,7 +12330,7 @@ void CMaaShaperThread::CleanupShapers() noexcept
     for (CMaaTcpShaper * p = m_ShaperList.LookAtFront(); p; p = n)
     {
         n = m_ShaperList.Next(p);
-        if  (p->DeleteUnused() == 0)
+        if  (!p->DeleteUnused())
         {
             m_ShaperList.Release(p);
             if  (p == m_SndSh)
