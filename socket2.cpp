@@ -288,7 +288,7 @@ int CMaaConnectionInTimeCharacteristics::GetCurPos() const noexcept
 int CMaaConnectionInTimeCharacteristics::GetCurMaxPeriod() const noexcept
 {
     const int x = GetCurPos();
-    return x < m_max_points || !x ? x : m_max_points - 1;
+    return (x < m_max_points || x == 0) ? x : m_max_points - 1;
 }
 //----------------------------------------------------------------------------------------------------------
 #endif
@@ -385,7 +385,7 @@ bool TextToMac(void* pMac, const char* p) noexcept
     int i = 0;
     for (; i < 5; i++, p += 3)
     {
-        if (!p[0] || !p[1] || !p[2])
+        if (p[0] == 0 || p[1] == 0 || p[2] == 0)
         {
             return false;
         }
@@ -398,7 +398,7 @@ bool TextToMac(void* pMac, const char* p) noexcept
         m6[i] = (_byte)((Nibble1 << 4) | Nibble2);
     }
     {
-        if (!p[0] || !p[1] || p[2])
+        if (p[0] == 0 || p[1] == 0 || p[2] != 0)
         {
             return false;
         }
@@ -925,7 +925,7 @@ int CMaaIpToLong(const char * txt, _IP * RetIp) noexcept
         {
             return -1;
         }
-        if  (txt[0] && i == 3)
+        if  (txt[0] != 0 && i == 3)
         {
             return -1;
         }
@@ -1303,7 +1303,7 @@ int _IP6::GetMaskNum() const noexcept
     }
     for (b2 = (int)sizeof(m) - 1; b2 >= 0; b2--)
     {
-        if  (m[b2])
+        if  (m[b2] != 0)
         {
             break;
         }
@@ -2229,7 +2229,10 @@ bool CMaaTcpSocket::DisableNagleAlgoritm(bool bDisable, SOCKET s) const noexcept
 #else
     BOOL x = bDisable ? TRUE : FALSE;
 #endif
-    return !setsockopt(s != INVALID_SOCKET ? s : m_Socket, IPPROTO_TCP, TCP_NODELAY, (char *)&x, sizeof(x));
+    struct linger chLinger = { 1, 5 }; // Включить linger, таймаут 5 секунд на очистку буферов
+
+    return !setsockopt(s != INVALID_SOCKET ? s : m_Socket, IPPROTO_TCP, TCP_NODELAY, (char *)&x, sizeof(x)) && 
+        !setsockopt(s != INVALID_SOCKET ? s : m_Socket, SOL_SOCKET, SO_LINGER, (const char*)&chLinger, sizeof(chLinger));
 }
 //---------------------------------------------------------------------------
 #ifdef TOOLSLIB_USE_CMaaTcpSocket_ConnectionInTimeCharacteristics
@@ -2566,12 +2569,12 @@ bool gCMaaTcpSocketsCompatibleRead = false; //only with out of shapers
 bool CMaaTcpSocket::IsClosed(int LastReceivedLen) const noexcept
 {
 #ifdef __SHAPERS
-    if  (LastReceivedLen < 0 || (!m_RcvLLShaper.m_Shaper && gCMaaTcpSocketsCompatibleRead && !LastReceivedLen))
+    if  (LastReceivedLen < 0 || (!m_RcvLLShaper.m_Shaper && gCMaaTcpSocketsCompatibleRead && LastReceivedLen == 0))
     {
         return true;
     }
 #else
-    if  (LastReceivedLen < 0 || (gCMaaTcpSocketsCompatibleRead && !LastReceivedLen))
+    if  (LastReceivedLen < 0 || (gCMaaTcpSocketsCompatibleRead && LastReceivedLen == 0))
     // or if   (LastReceivedLen <= 0)
     {
         return true;
@@ -2847,7 +2850,7 @@ int CMaaTcpSocket::RecvData(void * Buffer, int Size)
         //Total = Total > 0 ? Total : -1;// - Total;
         ////Total = -1 - Total;
         //#else
-        if  (!Total)
+        if  (Total == 0)
         {
             Total = -1;
         }
@@ -3254,7 +3257,7 @@ int CMaaTcpSocket::Bind(_Port Port, _IP Ip, bool bReuse)
 #endif
         setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, P_PARAM &On, sizeof(On));
     }
-    if  (bind(m_Socket, (struct sockaddr *)&m_s.m_sin, sizeof(m_s.m_sin))) // == SOCKET_ERROR)
+    if  (::bind(m_Socket, (struct sockaddr *)&m_s.m_sin, sizeof(m_s.m_sin))) // == SOCKET_ERROR)
     {
         Error("bind ()");
         return 2;
@@ -3301,7 +3304,7 @@ int CMaaTcpSocket::Bind6(_Port Port, const _byte * Ip6, bool bReuse)
 #endif
         setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, P_PARAM &On, sizeof(On));
     }
-    if  (bind(m_Socket, (struct sockaddr *)&m_s.m_sin6, sizeof(m_s.m_sin6))) // == SOCKET_ERROR)
+    if  (::bind(m_Socket, (struct sockaddr *)&m_s.m_sin6, sizeof(m_s.m_sin6))) // == SOCKET_ERROR)
     {
         Error("bind ()");
         return 2;
@@ -3671,7 +3674,7 @@ SOCKET CMaaTcpSocket::Accept(_IP * IpFrom, _Port * Port)
 #endif
     }
 
-    if (s == INVALID_SOCKET)
+    if (s == INVALID_SOCKET) // if (s == SOCKET_ERROR) 
     {
         //printf("accept error %d\n", errno);
         Error("accept()");
@@ -3721,7 +3724,7 @@ SOCKET CMaaTcpSocket::Accept6(_byte * Ip6From, _Port * Port)
 #endif
     }
 
-    if (s == INVALID_SOCKET)
+    if (s == INVALID_SOCKET) // if (s == SOCKET_ERROR) 
     {
         //printf("accept error %d\n", errno);
         Error("accept()");
@@ -3906,7 +3909,7 @@ CMaaUdpServer::CMaaUdpServer(CMaaFdSockets * pFdSockets, _Port Port, _IP BindIp,
         setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, P_PARAM &On, sizeof(On));
     }
 
-    if  (bind(m_Socket, (struct sockaddr *)&m_s.m_sin, sizeof(m_s.m_sin))) // == SOCKET_ERROR)
+    if  (::bind(m_Socket, (struct sockaddr *)&m_s.m_sin, sizeof(m_s.m_sin))) // == SOCKET_ERROR)
     {
         Error("bind()");
     }
@@ -3933,7 +3936,7 @@ CMaaUdpServer::CMaaUdpServer(CMaaFdSockets * pFdSockets, _Port Port, _IP6 BindIp
         setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, P_PARAM &On, sizeof(On));
     }
 
-    if  (bind(m_Socket, (struct sockaddr *)&m_s.m_sin6, sizeof(m_s.m_sin6))) // == SOCKET_ERROR)
+    if  (::bind(m_Socket, (struct sockaddr *)&m_s.m_sin6, sizeof(m_s.m_sin6))) // == SOCKET_ERROR)
     {
         Error("bind()");
     }
@@ -6472,7 +6475,7 @@ int CMaaFdSockets::Select ()
                 int Mode;
                 if  (Sockets[i] && (Sockets[i]->GetFdMode() & CMaaEnum::eHold))
                 {
-                    if  (!--k)
+                    if  (--k == 0)
                     {
                         int us;
                         {
@@ -8973,7 +8976,7 @@ bool CMaaSocketPair(CMaaSocket &s1, CMaaSocket &s2)
             sin_ls.sin_port        = htons(i);
             sin_ls.sin_addr.s_addr = htonl(0x7f000001);
             memcpy(&sin_cs, &sin_ls, sizeof(sin_ls));
-            if  (!bind(listen_sock, (struct sockaddr *) &sin_ls, sizeof(sin_ls)))
+            if  (!::bind(listen_sock, (struct sockaddr *) &sin_ls, sizeof(sin_ls)))
             {
                 if  (listen(listen_sock, 5) >= 0)
                 {
@@ -10748,7 +10751,7 @@ const
         Len2 = m_Vsr - m_V;
     }
     /*
-     if   (Len2 > m_Vsr - m_V && !m_V)
+     if   (Len2 > m_Vsr - m_V && m_V == 0)
      {
           Len2 = m_Vsr - m_V;
      }
@@ -11256,7 +11259,7 @@ void CMaaTcpShaper::RecCalc_1(/*int Step,*/int& Result)
     //switch(Step)
     {
         //case -1: // Update VAve
-        if  (Result && m_pConnectionInTimeCharacteristics[0])
+        if  (Result != 0 && m_pConnectionInTimeCharacteristics[0])
         {
             const _qword value = 0;
             m_pConnectionInTimeCharacteristics[0]->Accumulate(value, true);
@@ -11284,7 +11287,7 @@ void CMaaTcpShaper::RecCalc_1(/*int Step,*/int& Result)
         //break;
     }
 #ifdef __SHAPERS_PROFILING
-    if  ((!s_depth && Step == -1) || (s_depth == 1 && Step != -1))
+    if  ((s_depth == 0 && Step == -1) || (s_depth == 1 && Step != -1))
     {
         _qword t = m_hrt.GetTime();
         //gShaperTempInfo.Format("%SRecCalc(%d, %d) = %,D\n", &gShaperTempInfo, Step, Result, t - t0);
@@ -11312,7 +11315,7 @@ void CMaaTcpShaper::RecCalc(int Step, int &Result) noexcept
     {
 #if 0
     case -1: // Update VAve
-        if  (Result && m_pConnectionInTimeCharacteristics[0])
+        if  (Result != 0 && m_pConnectionInTimeCharacteristics[0])
         {
             const _qword value = 0;
             m_pConnectionInTimeCharacteristics[0]->Accumulate(value, true);
@@ -11490,7 +11493,7 @@ void CMaaTcpShaper::RecCalc(int Step, int &Result) noexcept
         {
             if  (!x->m_bFullFilled)
             {
-                if  (!x->m_V) //< x->m_v0)
+                if  (x->m_V == 0) //< x->m_v0)
                 {
                     x->m_bFullFilled = true;
                     m_Reserved += x->m_v0 - x->m_V;
@@ -11543,7 +11546,7 @@ void CMaaTcpShaper::RecCalc(int Step, int &Result) noexcept
         break;
     }
 #ifdef __SHAPERS_PROFILING
-    if  ((!s_depth && Step == -1) || (s_depth == 1 && Step != -1))
+    if  ((s_depth == 0 && Step == -1) || (s_depth == 1 && Step != -1))
     {
         _qword t = m_hrt.GetTime();
         //gShaperTempInfo.Format("%SRecCalc(%d, %d) = %,D\n", &gShaperTempInfo, Step, Result, t - t0);
@@ -12098,11 +12101,11 @@ bool CMaaTcpShaper::Add(CMaaTcpShaper &s)
         bool b = true;
         if  (s.m_Type != eGeneral)
         {
-            b = !m_UserShapers.Add(s.m_UserId, &s);
+            b = m_UserShapers.Add(s.m_UserId, &s) == 0;
         }
         else
         {
-            b = !m_GeneralShapers.Add(s.m_Name, &s);
+            b = m_GeneralShapers.Add(s.m_Name, &s) == 0;
         }
         if  (!b)
         {
@@ -12164,7 +12167,7 @@ bool CMaaTcpShaper::Add(CMaaTcpLLShaper &l) noexcept
         m_ChildsLL.AddAtBack(&l);
         ++m_ConnectionsCount[0];
         /*
-          if   (++m_ConnectionsCount[0] == 1 && !m_ConnectionsCount[1])
+          if   (++m_ConnectionsCount[0] == 1 && m_ConnectionsCount[1] == 0)
           {
                if   (m_Shaper)
                {
@@ -12230,7 +12233,7 @@ void CMaaTcpShaper::AddRecursiveConnectionCounter(int val) noexcept
     {
         m_Shaper->m_ConnectionsCount[2]++;
     }
-    if  (val < 0 && !m_ConnectionsCount[1] && m_Shaper)
+    if  (val < 0 && m_ConnectionsCount[1] == 0 && m_Shaper)
     {
         m_Shaper->m_ConnectionsCount[2]--;
     }

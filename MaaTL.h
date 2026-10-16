@@ -2275,6 +2275,17 @@ public:
         return m_Ptr;
     }
 
+    bool IsPtrInside(const T* p) const noexcept
+    {
+        return m_Ptr <= p && p < m_MaxIndex + m_Ptr;
+    }
+    
+    // strict
+    bool IsMyPtr(const T* p) const noexcept
+    {
+        return IsPtrInside(p) && m_Ptr + (p - m_Ptr) == p;
+    }
+
     T& operator * () const noexcept
     {
         return *m_Ptr;
@@ -3066,7 +3077,7 @@ template<class T, int AllocatorType = 1
         return sizeof(T) > sizeof(void*) ? (sizeof(T) + s7) & ~s7 : sizeof(void*);
 #endif
     }
-    static constexpr int MaxIndex = sizeof(size_t) * 8 - 1 - 3 - ln2____(ItemSize());
+    static constexpr int MaxIndex = sizeof(size_t) * 8 - 1 - ln2____(ItemSize());
     mutable char* pMem[MaxIndex];
 
 protected:

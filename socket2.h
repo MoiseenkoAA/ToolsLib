@@ -1454,7 +1454,8 @@ public:
     void ResetRAState(CMaaSocket* p, int e) noexcept
     {
         //const SOCKET s = p->m_Socket;
-        /*int x =*/ (p->m_RealState &= ~e);
+        //int x = (p->m_RealState &= ~e);
+        p->m_RealState &= ~e;
         //x &= GetMode(p) & eAll;
     }
     /*
