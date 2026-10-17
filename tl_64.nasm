@@ -156,3 +156,97 @@ MaaAsmMulDiv64_pRest_null:
 ; Необходимо сохранять RBX, RSI, RDI, RBP, R12, R13, R14, R15, XMM6..XMM15.
 ;
 ;
+
+;
+;bool my__atomic_compare_exchange_16(volatile void* ptr, void* expected, const void* desired/*, bool weak, int success_memorder, int failure_memorder*/) noexcept;
+;#ifdef _WIN64
+;extern "C"
+;{
+;    bool my__atomic_compare_exchange_16_win(volatile void* ptr, void* expected, const void* desired/*, bool weak, int success_memorder, int failure_memorder*/) noexcept;
+;}
+;#define my__atomic_compare_exchange_16 my__atomic_compare_exchange_16_win
+;#endif
+;#ifdef __linux__
+;#define my__atomic_compare_exchange_16 my__atomic_compare_exchange_16_unix
+;#endif
+;---------------------
+    global my__atomic_compare_exchange_16_unix
+my__atomic_compare_exchange_16_unix:
+; Unix:  RDI, RSI, RDX, RCX, R8, R9
+    mov r8, rbx     ; save rbx
+
+    ; 2. Load the new (desired) value into RCX:RBX
+    mov rbx, [rdx]      ; New low 64 bits
+    mov rcx, [rdx + 8]  ; New high 64 bits
+
+    ; 1. Load the expected (old) value into RDX:RAX
+    mov rax, [rsi]
+    mov rdx, [rsi + 8]
+
+    ; 3. Execute atomic compare-and-swap
+    lock cmpxchg16b [rdi]
+    mov rbx, r8     ; restore rbx
+
+    ; 4. Check ZF (Zero Flag)
+    jz my__atomic_compare_exchange_16_unix_success
+    
+my__atomic_compare_exchange_16_unix_failure:
+    ; ZF is 0: [my_128bit_var] did not match RDX:RAX.
+    ; RDX:RAX has been updated with the actual value found in memory.
+    mov [rsi], rax
+    mov [rsi + 8], rdx
+    xor rax, rax
+    ret
+
+my__atomic_compare_exchange_16_unix_success:
+    ; ZF is 1: Swap succeeded. Memory now contains RCX:RBX.
+    mov rax, 1
+    ret
+;---------------------
+    global my__atomic_compare_exchange_16_win
+my__atomic_compare_exchange_16_win:
+; Win64: RCX, RDX, R8, R9, [rsp+0x28]
+    mov r10, rbx     ; save rbx
+    mov r11, rdx
+
+    ; 2. Load the new (desired) value into RCX:RBX
+    mov rbx, [r8]      ; New low 64 bits
+    mov rcx, [r8 + 8]  ; New high 64 bits
+
+    ; 1. Load the expected (old) value into RDX:RAX
+    mov rax, [rdx]
+    mov rdx, [rdx + 8]
+
+    ; 3. Execute atomic compare-and-swap
+    lock cmpxchg16b [rcx]
+    mov rbx, r10     ; restore rbx
+
+    ; 4. Check ZF (Zero Flag)
+    jz my__atomic_compare_exchange_16_win_success
+    
+my__atomic_compare_exchange_16_win_failure:
+    ; ZF is 0: [my_128bit_var] did not match RDX:RAX.
+    ; RDX:RAX has been updated with the actual value found in memory.
+    mov [r11], rax
+    mov [r11 + 8], rdx
+    xor rax, rax
+    ret
+
+my__atomic_compare_exchange_16_win_success:
+    ; ZF is 1: Swap succeeded. Memory now contains RCX:RBX.
+    mov rax, 1
+    ret
+;---------------------
+
+
+; Args
+; Unix:  RDI, RSI, RDX, RCX, R8, R9
+; Win64: RCX, RDX, R8, R9, [rsp+0x28], [rsp+0x30]
+;
+; Unix can be used:  RDI, RSI, RDX, RCX, R8, R9, RAX, R10, R11
+; Win64 can be used:           RCX, RDX, R8, R9, RAX, R10, R11
+;
+; Universal
+; Необходимо сохранять RBX, RSI, RDI, RBP, R12, R13, R14, R15, XMM6..XMM15.
+;
+;

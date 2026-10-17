@@ -57,6 +57,39 @@
  * [including the GNU Public Licence.]
  */
 
+
+#ifdef _WIN64
+#define CRYPTLIB_USE_ASM64 // 26.11.2021: 128 bytes RSADecrypt: 7046316/3822831=1.843 times faster
+extern "C"
+{
+    _dword LongInt2_add_win(_qword sz8, _qword up8, void* dst, const void* src) noexcept;
+    _dword LongInt2_sub_win(_qword sz8, _qword up8, void* dst, const void* src) noexcept;
+    void LongInt2_mul_win(_qword Mul1SizeQw, _qword Mul2SizeQw, void* Product, const void* Mul1, const void* Mul2) noexcept;
+    _dword ConstMemcmp_win(const void* p1, const void* p2, _uqword len) noexcept;
+#define LongInt2_add LongInt2_add_win
+#define LongInt2_sub LongInt2_sub_win
+#define LongInt2_mul LongInt2_mul_win
+#define ConstMemcmp ConstMemcmp_win
+}
+#endif
+#ifdef __linux__
+#ifdef __x86_64__
+#define CRYPTLIB_USE_ASM64 // 27.11.2021: 128 bytes RSADecrypt: 23943097/5898764=4.059 times faster
+extern "C"
+{
+    _dword LongInt2_add_unix(_qword sz8, _qword up8, void* dst, const void* src) noexcept;
+    _dword LongInt2_sub_unix(_qword sz8, _qword up8, void* dst, const void* src) noexcept;
+    void LongInt2_mul_unix(_qword Mul1SizeQw, _qword Mul2SizeQw, void* Product, const void* Mul1, const void* Mul2) noexcept;
+    _dword ConstMemcmp_unix(const void* p1, const void* p2, _uqword len) noexcept;
+#define LongInt2_add LongInt2_add_unix
+#define LongInt2_sub LongInt2_sub_unix
+#define LongInt2_mul LongInt2_mul_unix
+#define ConstMemcmp ConstMemcmp_unix
+}
+#endif
+#endif
+
+
 //---------------------------------------------------------------------------
 #ifdef _WIN32
 ULONG MaaAdd128(ULARGE_INTEGER* x, const ULARGE_INTEGER* y) noexcept;

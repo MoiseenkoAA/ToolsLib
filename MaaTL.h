@@ -346,6 +346,8 @@ template < class T > struct CMaaDLink_pItemAD : public CMaaDLink_pItem < T >
     }
 };
 //---------------------------------------------------------------------------
+//#define CONTAINING_RECORD(address, type, field) ((type *)((char*)(address) - (uintptr_t)(&((type *)0)->field)))
+//---------------------------------------------------------------------------
 template < class T > class CMaaDList
 {
     CMaaDLink Head;
@@ -5345,5 +5347,446 @@ public:
     ADD_ALLOCATOR(CMaaBuffer_int<N>)
 };
 //DEF_ALLOCATOR_(CMaaBuffer_int<1024>)
+
+
+//-------------------------------------------------------------------------------------------------------------------
+#ifndef _MaaRF_INTERNAL_BUILD
+//#include <atomic>
+//#include <cstdint>
+//#include <stdint.h> // или #include <cstdint> для C++
+
+//---------------------------------------------------------------------------
+#ifndef _WIN32
+#define CONTAINING_RECORD(address, type, field) ((type *)((char*)(address) - (uintptr_t)(&((type *)0)->field)))
+#define MEMORY_ALLOCATION_ALIGNMENT 16
+#define DECLSPEC_ALIGN(x) alignas(x)
+#endif
+//---------------------------------------------------------------------------
+#ifdef _WIN64
+extern "C"
+{
+    bool my__atomic_compare_exchange_16_win(volatile void* ptr, void* expected, const void* desired/*, bool weak, int success_memorder, int failure_memorder*/) noexcept;
+}
+#define my__atomic_compare_exchange_16 my__atomic_compare_exchange_16_win
+#endif
+#ifdef __linux__
+extern "C"
+{
+    bool my__atomic_compare_exchange_16_unix(volatile void* ptr, void* expected, const void* desired/*, bool weak, int success_memorder, int failure_memorder*/) noexcept;
+}
+#define my__atomic_compare_exchange_16 my__atomic_compare_exchange_16_unix
+#endif
+//---------------------------------------------------------------------------
+#if defined(_WIN32) && !defined(_WIN64)
+
+typedef uint64_t My2Ptr;
+typedef std::atomic<My2Ptr> aMy2Ptr;
+
+#else
+//Важные нюансы реализации на разном железе
+//1. alignas(16): Выравнивание памяти(Alignment) : Адрес destination обязан быть выровнен по границе 16 байт(alignas(16)).Если этого не сделать, на x86 вы получите аппаратное исключение(#GP), а на ARM — падение из - за невыровненного доступа(Alignment Fault).
+//2. -mcx16: Флаги компиляции для GCC / Clang на x86 - 64 : Чтобы компилятор выдал именно инструкцию lock cmpxchg16b, а не тяжелый вызов библиотеки с локами, код обязательно нужно собирать с флагом -mcx16.На современных процессорах эта инструкция поддерживается везде(начиная с 2008 - 2010 годов).
+
+#if defined(_MSC_VER)
+#include <intrin.h>
+#endif
+
+// Структура для представления 128-битного значения
+struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) My2Ptr
+{
+    uint64_t low;
+    uint64_t high;
+
+    My2Ptr(uint64_t l, uint64_t h) noexcept
+    :   low(l),
+        high(h)
+    {
+    }
+    My2Ptr(const My2Ptr& That) noexcept
+    :   low(That.low),
+        high(That.high)
+    {
+    }
+    /*
+    My2Ptr(const void* l, uint64_t h) noexcept
+    :   low((uint64_t)l),
+        high(h)
+    {
+    }
+    My2Ptr(uint64_t l, const void* h) noexcept
+    :   low(l),
+        high((uint64_t)h)
+    {
+    }
+    */
+
+    bool operator==(const My2Ptr& o) const noexcept
+    {
+        return low == o.low && high == o.high;
+    }
+    /**
+     * Кроссплатформенный Lock-Free Compare-Exchange 128-бит (DWCAS)
+     * @param destination Указатель на целевую память (ОБЯЗАТЕЛЬНО выравнивание 16 байт)
+     * @param expected Значение, с которым сравниваем. Обновляется текущим значением при неудаче.
+     * @param desired Новое значение, которое хотим записать
+     * @return true, если обмен произошел成功; false, если значения не совпали
+     */
+    inline static bool CompareExchange128(volatile My2Ptr* destination, My2Ptr* expected, My2Ptr desired) noexcept
+    {
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+        // Для MSVC на Windows (x64 и ARM64)
+#if 1
+        return _InterlockedCompareExchange128(
+            reinterpret_cast<volatile __int64*>(destination),
+            static_cast<__int64>(desired.high),
+            static_cast<__int64>(desired.low),
+            reinterpret_cast<__int64*>(expected)
+        ) == 1;
+#else
+        return my__atomic_compare_exchange_16(destination, expected, &desired);
+#endif
+#elif defined(__GNUC__) || defined(__clang__)
+        // Для GCC/Clang (Linux, macOS) напрямую дергаем встроенные атомики компилятора.
+        // Они генерируют lock-free инструкции (cmpxchg16b на x86_64 или CASP на ARM64).
+#if 0
+        return __atomic_compare_exchange(
+            destination,
+            expected,
+            &desired,
+            false, // strong CAS
+            __ATOMIC_SEQ_CST,
+            __ATOMIC_SEQ_CST
+        );
+#else
+        return my__atomic_compare_exchange_16(destination, expected, &desired);
+#endif
+#else
+#error "Платформа или компилятор не поддерживаются для lock-free DWCAS"
+#endif
+    }
+    bool compare_exchange_strong(My2Ptr& expected, My2Ptr desired) noexcept
+    {
+        return CompareExchange128(this, &expected, desired);
+    }
+    bool compare_exchange_weak(My2Ptr& expected, My2Ptr desired) noexcept
+    {
+        return compare_exchange_strong(expected, desired);
+    }
+    static inline bool is_lock_free() noexcept
+    {
+        return true;
+    }
+};
+typedef My2Ptr aMy2Ptr;
+
+#endif
+
+//---------------------------------------------------------------------------
+// 1. Аналог SLIST_ENTRY
+// Элемент списка, который встраивается в пользовательскую структуру данных.
+struct MY_SLIST_ENTRY
+{
+    struct MY_SLIST_ENTRY* Next;
+};
+
+// 2. Аналог SLIST_HEADER
+// Заголовок списка. Для обеспечения атомарности на 64-битных системах 
+// структура ОБЯЗАТЕЛЬНО должна быть выровнена по 16 байт (Double-Width CAS).
+struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) MY_SLIST_HEADER_STRUCT
+{
+    MY_SLIST_ENTRY* Next;
+    //uint64_t Registration; // Счетчик генераций (версий / тег) против ABA проблемы
+    uintptr_t Registration; // Счетчик генераций (версий / тег) против ABA проблемы
+};
+
+// Обертка над заголовком для использования стандартных атомарных операций
+//using MY_SLIST_HEADER = std::atomic<MY_SLIST_HEADER_STRUCT>;
+using MY_SLIST_HEADER = MY_SLIST_HEADER_STRUCT;
+
+
+// 3. Аналог InitializeSListHead
+// Инициализирует заголовок односвязного lock-free списка.
+inline void MyInitializeSListHead(MY_SLIST_HEADER* Header) noexcept
+{
+    // Проверка на этапе компиляции, что платформа аппаратно поддерживает 128-битный Lock-Free CAS
+#ifndef _WIN32
+    // __int128
+    //static_assert(std::atomic<MY_SLIST_HEADER_STRUCT>::is_always_lock_free,
+    //    "Platform does not support 128-bit lock-free operations. Interlocked SList is unavailable.");
+#endif
+    /*
+    if constexpr (sizeof(uintptr_t) == 8)
+        static_assert(std::atomic<__int128>::is_always_lock_free,
+            "Platform does not support 128-bit lock-free operations. Interlocked SList is unavailable.");
+    else if constexpr (sizeof(uintptr_t) == 4)
+    static_assert(std::atomic<__int64>::is_always_lock_free,
+        "Platform does not support 128-bit lock-free operations. Interlocked SList is unavailable.");
+    else
+        error;
+    */
+
+    const MY_SLIST_HEADER_STRUCT init_value = { nullptr, 0 };
+    //Header->store(init_value, std::memory_order_relaxed);
+    //*Header = init_value;
+    while (!((aMy2Ptr*)Header)->compare_exchange_weak((My2Ptr&)*Header, (const My2Ptr&)init_value));
+}
+
+
+// 4. Аналог InterlockedPushEntrySList
+// Потокобезопасно вставляет элемент в начало списка.
+// Возвращает ПРЕДЫДУЩИЙ первый элемент списка (или nullptr, если список был пуст).
+inline MY_SLIST_ENTRY* MyInterlockedPushEntrySList(MY_SLIST_HEADER* Header, MY_SLIST_ENTRY* ListEntry) noexcept
+{
+    // Загружаем текущее состояние заголовка
+    MY_SLIST_HEADER_STRUCT old_header = *Header;// Header->load(std::memory_order_relaxed);
+    while (!((aMy2Ptr*)Header)->compare_exchange_weak((My2Ptr&)old_header, (const My2Ptr&)old_header));
+
+    while (true) {
+        // Указываем новому элементу на текущую голову списка
+        ListEntry->Next = old_header.Next;
+
+        // Готовим новое состояние: указатель на наш элемент + инкремент тега (версии)
+        const MY_SLIST_HEADER_STRUCT new_header = { ListEntry, old_header.Registration + 1 };
+
+        // Атомарно пытаемся подменить заголовок.
+        // memory_order_release гарантирует, что связь ListEntry->Next запишется до публикации узла.
+        //if (Header->compare_exchange_weak(old_header, new_header, std::memory_order_release, std::memory_order_relaxed)) // При неудаче old_header обновляется актуальным значением
+        if (((aMy2Ptr*)Header)->compare_exchange_weak((My2Ptr&)old_header, (const My2Ptr&)new_header))
+        {
+            // Возвращаем старую голову (предыдущий первый элемент)
+            return old_header.Next;
+        }
+    }
+}
+
+
+// 5. Аналог InterlockedPopEntrySList
+// Потокобезопасно извлекает элемент из начала списка.
+// Возвращает указатель на извлеченный элемент, или nullptr, если список пуст.
+inline MY_SLIST_ENTRY* MyInterlockedPopEntrySList(MY_SLIST_HEADER* Header) noexcept
+{
+    // Используем memory_order_acquire, чтобы безопасно прочитать old_header.Next->Next
+    MY_SLIST_HEADER_STRUCT old_header = *Header; // Header->load(std::memory_order_acquire);
+    while (!((aMy2Ptr*)Header)->compare_exchange_weak((My2Ptr&)old_header, (const My2Ptr&)old_header));
+
+    while (true)
+    {
+        // Если список пуст, возвращать нечего
+        if (!old_header.Next)
+        {
+            return nullptr;
+        }
+
+        // Считываем указатель на следующий за головой элемент.
+        // ВАЖНО: Вызов InterlockedPopEntrySList в чистом User-space БЕЗОПАСЕН только тогда, 
+        // когда память извлеченных узлов возвращается в пул свободных узлов (Free List), 
+        // а не удаляется через delete/free() немедленно параллельным потоком.
+        MY_SLIST_ENTRY* next_entry = old_header.Next->Next;
+
+        // Перемещаем голову на следующий элемент, инкрементируя тег
+        const MY_SLIST_HEADER_STRUCT new_header = { next_entry, old_header.Registration + 1 };
+
+        //if (Header->compare_exchange_weak(old_header, new_header, std::memory_order_acquire, std::memory_order_relaxed))
+        if (((aMy2Ptr*)Header)->compare_exchange_weak((My2Ptr&)old_header, (const My2Ptr&)new_header))
+        {
+            // Успех! Текущий поток монопольно забрал элемент из списка
+            return old_header.Next;
+        }
+    }
+}
+//---------------------------------------------------------------------------
+#ifndef _WIN32
+#define SLIST_ENTRY MY_SLIST_ENTRY
+#define SLIST_HEADER_STRUCT MY_SLIST_HEADER_STRUCT
+#define SLIST_HEADER MY_SLIST_HEADER
+#define InitializeSListHead MyInitializeSListHead
+#define InterlockedPushEntrySList MyInterlockedPushEntrySList
+#define InterlockedPopEntrySList MyInterlockedPopEntrySList
+typedef SLIST_ENTRY* PSLIST_ENTRY;
+#endif
+//---------------------------------------------------------------------------
+template<class T> class DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) CMaaNetBuffer
+{
+protected:
+//#ifndef TOOLSLIB_SINGLE_THREAD // noops are good optimized, #ifndef not very required
+    class Locker
+    {
+    public:
+#ifndef TOOLSLIB_SINGLE_THREAD
+        Locker() noexcept
+        {
+#ifdef TL_NO_CMaaAllocatorStaticLocker
+            __GLock__LockFn(T_NULL(T*))->Lock();
+#else
+            CLocker::LockFn(T_NULL(T*));
+#endif
+        }
+        Locker(bool b) noexcept
+        {
+#ifdef TL_NO_CMaaAllocatorStaticLocker
+            __GLock__LockFn(T_NULL(T*), b)->Lock();
+#else
+            CLocker::LockFn(T_NULL(T*));
+#endif
+        }
+        ~Locker() noexcept
+        {
+#ifdef TL_NO_CMaaAllocatorStaticLocker
+            __GLock__LockFn(T_NULL(T*))->UnLock();
+#else
+            CLocker::UnLockFn(T_NULL(T*));
+#endif
+        }
+        static constexpr void CreateMtx() noexcept
+        {
+#if 0
+#ifdef TL_NO_CMaaAllocatorStaticLocker
+            __GLock__LockFn(T_NULL(T*), true);
+#else
+            CLocker::CreateFn(T_NULL(T*));
+            //CMaaAllocatorStaticLocker<T>::CreateFn(T_NULL(T*));
+#endif
+#endif
+        }
+
+#else // TOOLSLIB_SINGLE_THREAD
+
+        constexpr Locker() noexcept {}
+        constexpr Locker(bool) noexcept {}
+        constexpr ~Locker() noexcept {}
+        static constexpr void CreateMtx() noexcept {}
+#endif
+    };
+    //#endif
+public:
+    struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) Node
+    {
+        SLIST_ENTRY Link;
+        T m_Buffer;
+    };
+    DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT)
+        SLIST_HEADER m;
+    mutable std::atomic<size_t> m_Ref, m_TotalCount;
+    mutable int m_pMemIndex;
+    static constexpr int MaxIndex = sizeof(size_t) * 8 - 1 - ln2____(sizeof(T));
+    mutable Node* pMem[MaxIndex];
+
+    CMaaNetBuffer() noexcept
+    {
+        /*
+        h = (Header*)_aligned_malloc(sizeof(Header), MEMORY_ALLOCATION_ALIGNMENT);
+        if (!h)
+        {
+            throw 1;
+        }
+        */
+        InitializeSListHead(&m);
+        m_Ref = 0;
+        m_TotalCount = 0;
+        m_pMemIndex = 0;
+        /*for (int i = 0; i < MaxIndex; i++)
+        {
+            pMem[i] = nullptr;
+        }*/
+        //if constexpr (AllocatorType >= 0)
+        {
+            //#ifndef TOOLSLIB_SINGLE_THREAD
+            Locker::CreateMtx();
+            //#endif
+        }
+    }
+    ~CMaaNetBuffer()
+    {
+        FreeAll();
+    }
+protected:
+    int Alloc() //noexcept(noexcept_new)
+    {
+        //TL_DbgAlloc;
+
+        if (m_pMemIndex < MaxIndex)
+        {
+            const int i = m_pMemIndex;
+            const size_t n = ((size_t)1) << i;
+            constexpr size_t sz = sizeof(Node);
+            pMem[i] = n < SIZE_MAX / sz ? TL_NEW Node[n] : nullptr;
+#ifdef __ALLOCATOR_FILL
+            if (pMem[i])
+            {
+                memset(pMem[i], __ALLOCATOR_FILL_INIT_CHAR, n * sz);
+            }
+#endif
+            if (pMem[i])
+            {
+                m_TotalCount += n;
+                Node* p0;
+                Node* p = (p0 = pMem[i]) + n;
+                do
+                {
+                    --p;
+                    InterlockedPushEntrySList(&m, &p->Link);
+
+                } while (p != p0);
+
+                m_pMemIndex++;
+                return i;
+            }
+        }
+        return -1;
+    }
+    void FreeAll() noexcept
+    {
+        for (int i = m_pMemIndex; i--; )
+        {
+            delete[] pMem[i];
+        }
+        InitializeSListHead(&m);
+        m_TotalCount = 0;
+        m_pMemIndex = 0;
+        //m_Ref = 0;
+    }
+public:
+    T* Get()
+    {
+        PSLIST_ENTRY item = InterlockedPopEntrySList(&m);
+        while (!item)
+        {
+            Locker lk;
+            item = InterlockedPopEntrySList(&m);
+            if (!item)
+            {
+                if (Alloc() < 0)
+                {
+                    return nullptr;
+                }
+                item = InterlockedPopEntrySList(&m);
+            }
+        }
+        ++m_Ref;
+        T* p = &((Node*)CONTAINING_RECORD(item, Node, Link))->m_Buffer;
+        p->Init(); //ZeroMemory(p, sizeof(T));
+        return p;
+    }
+    void Put(T * p) noexcept
+    {
+        if (p)
+        {
+            Node* item = (Node*)((char*)p - offsetof(Node, m_Buffer));
+            InterlockedPushEntrySList(&m, &(item->Link));
+            --m_Ref;
+        }
+    }
+    void CheckedFree() noexcept // unsafe
+    {
+        Locker lk;
+        if (!m_Ref && m_TotalCount)
+        {
+            FreeAll();
+        }
+    }
+};
+#endif
+//-------------------------------------------------------------------------------------------------------------------
+
 
 #endif // __MAARF_MAATL_H
