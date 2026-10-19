@@ -57,7 +57,6 @@
  * [including the GNU Public Licence.]
  */
 
-
 //---------------------------------------------------------------------------
 #ifdef _WIN32
 ULONG MaaAdd128(ULARGE_INTEGER* x, const ULARGE_INTEGER* y) noexcept;
