@@ -5671,7 +5671,7 @@ public:
     static constexpr int MaxIndex = sizeof(size_t) * 8 - 1 - ln2____(sizeof(T));
     mutable Node* pMem[MaxIndex];
 
-    CMaaNetBuffer() noexcept
+    CMaaNetBuffer(size_t PreAlloc = 0) noexcept
     {
         /*
         h = (Header*)_aligned_malloc(sizeof(Header), MEMORY_ALLOCATION_ALIGNMENT);
@@ -5694,6 +5694,7 @@ public:
             Locker::CreateMtx();
             //#endif
         }
+        while (m_TotalCount < PreAlloc && Alloc() >= 0);
     }
     ~CMaaNetBuffer()
     {
