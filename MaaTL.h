@@ -5694,7 +5694,15 @@ public:
             Locker::CreateMtx();
             //#endif
         }
-        while (m_TotalCount < PreAlloc && Alloc() >= 0);
+        try
+        {
+            while (m_TotalCount < PreAlloc && Alloc() >= 0);
+        }
+        catch (...)
+        {
+            FreeAll();
+            throw;
+        }
     }
     ~CMaaNetBuffer()
     {
