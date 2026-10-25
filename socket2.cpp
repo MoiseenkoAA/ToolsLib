@@ -67,11 +67,12 @@
 #else
 #include "temp.h"
 #endif
-static int DebugLevel = 0;
 #else
 #include "temp.h"
-static int DebugLevel = 0;
 #endif
+
+static int DebugLevel = 0;
+
 //#define IfDebug(x) if ( x <= DebugLevel )
 #define IfDebug(x) if ( false )
 
@@ -101,7 +102,9 @@ CMaaFile * gpm_logfile = nullptr;
 #define m_hrt (*gpShaper_hrt)
 #define m_logfile (*gpm_logfile)
 
+#ifdef __SHAPERS_PROFILING
 _qword SockThread_pt[100];
+#endif
 
 #if defined(__TOOLS_USE_WINSOCK2) || defined(__unix__)
 #ifndef TOOLSLIB_SINGLE_THREAD
@@ -3328,7 +3331,7 @@ int CMaaTcpSocket::Bind6(CMaaString strIpPort, bool bReuse)
 
     //__utf8_printf("%S %d %J\n", &strIpPort, trailer_pos, BindIp);
 
-    strIpPort = strIpPort.Mid(trailer_pos > 0 ? trailer_pos + 1: 1);
+    strIpPort = strIpPort.RefMid(trailer_pos > 0 ? trailer_pos + 1: 1);
     strIpPort.sscanfInt(&Port);
 
     //__utf8_printf("%S %d\n", &strIpPort, Port);
@@ -3343,7 +3346,7 @@ int CMaaTcpSocket::Bind(CMaaString strIpPort, bool bReuse)
     int Port = 0;
     int trailer_pos = CMaaIpToLongEx(strIpPort, &BindIp, ":");
 
-    strIpPort = strIpPort.Mid(trailer_pos > 0 ? trailer_pos + 1: 1);
+    strIpPort = strIpPort.RefMid(trailer_pos > 0 ? trailer_pos + 1: 1);
     strIpPort.sscanfInt(&Port);
     return Bind(Port, BindIp, strIpPort.LastChar() == 'r');
 }
@@ -9884,12 +9887,12 @@ bool CMaaSockThread::Process1()
             //printf("111: point\r\n");fflush(stdout);//P
         }
 
-        if  (m_ChildThreads.LookAtFront() && m_pFdSockets->GetSockCount() <= 0)
+        if  (m_ChildThreads.IsNotEmpty() && m_pFdSockets->GetSockCount() <= 0)
         {
-            //Log("if (m_ChildThreads.LookAtFront() && m_pFdSockets->GetSockCount() <= 0) { }");
+            //Log("if (m_ChildThreads.IsNotEmpty() && m_pFdSockets->GetSockCount() <= 0) { }");
         }
         Locker_Lock;
-        if  (m_Refs <= 0 && !m_ChildThreads.LookAtFront())
+        if  (m_Refs <= 0 && m_ChildThreads.IsEmpty())
         {
             Locker_UnLock;
             if  (m_bExiting)

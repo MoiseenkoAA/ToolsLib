@@ -369,6 +369,7 @@ struct ToolsExport XTOOWsaErr : public XTOOError
 };
 
 class CMaaSocket;
+class CMaaIOCPSocket;
 
 #ifdef __unix__
 /*
@@ -386,8 +387,15 @@ public:
 #endif
 struct ToolsExport XTOOSockErr : public XTOOError
 {
-    XTOOSockErr(const char * Msg, CMaaSocket * pSock, const char * pConnName = nullptr, int Err = -1, int _IsDnsError = 0);
+    XTOOSockErr(const char* Msg, CMaaSocket* pSock, const char* pConnName = nullptr, int Err = -1, int _IsDnsError = 0);
+#ifdef TOOLSLIB_IOCP
+    XTOOSockErr(int, const char* Msg, CMaaIOCPSocket* pSock, const char* pConnName, int Err = -1, int _IsDnsError = 0);
+#endif
     CMaaSocket * GetSock() const noexcept;
+#ifdef TOOLSLIB_IOCP
+    CMaaIOCPSocket* GetIOCPSock() const noexcept;
+#endif
+
     void Eat() noexcept;
 
     //     XTOOSockErr ( const XTOOSockErr & That );
@@ -399,12 +407,19 @@ struct ToolsExport XTOOSockErr : public XTOOError
 struct ToolsExport XTOOSockDnsErr : public XTOOSockErr
 {
     XTOOSockDnsErr(const char * Msg, CMaaSocket * pSock, const char * pConnName = nullptr);
+#ifdef TOOLSLIB_IOCP
+    XTOOSockDnsErr(int, const char* Msg, CMaaIOCPSocket* pSock, const char* pConnName = nullptr);
+#endif
 };
 
 struct ToolsExport XTOOSockClose : public XTOOError
 {
     XTOOSockClose(CMaaSocket * pSock);
     CMaaSocket* GetSock() const noexcept;
+#ifdef TOOLSLIB_IOCP
+    XTOOSockClose(CMaaIOCPSocket* pSock);
+    CMaaIOCPSocket* GetIOCPSock() const noexcept;
+#endif
 };
 
 struct ToolsExport XTOOLastError : public XTOOError

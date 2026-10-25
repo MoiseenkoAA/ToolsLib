@@ -67,6 +67,10 @@
 #define TOOLSLIB_IO_PROFILE
 #endif
 
+#if defined(_WIN32) && !defined(TOOLSLIB_SINGLE_THREAD)
+//#define TOOLSLIB_IOCP
+#endif
+
 #define TOOLSLIB_DELETE_UNSAFE
 //#define TOOLSLIB_SINGLE_THREAD
 #ifdef TOOLSLIB_SINGLE_THREAD
@@ -344,6 +348,7 @@ void SetProgramNameForDebugOutput(const TCHAR *txt = nullptr);
 #include "WIN32\socket.h"
 #endif
 #include "socket2.h"
+#include "iocp_sock.h"
 #include "MaaXML.h"
 //#endif
 #else

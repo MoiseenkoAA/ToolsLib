@@ -150,6 +150,7 @@ struct sDbgTmp
 
 #ifdef __TOOLS_USE_WINSOCK2
      #include <winsock2.h>
+     #include <mswsock.h>
      #include <ws2tcpip.h>
      #pragma comment(lib,"ws2_32.lib")
 #else

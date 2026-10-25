@@ -32,6 +32,7 @@ SOURCES = Comm.cpp \
 	Lib.cpp \
 	MaaEvents.cpp \
 	socket2.cpp \
+	iocp_sock.cpp \
 	sk2add.cpp \
 	MaaXml.cpp \
 	Timer.cpp \

@@ -968,6 +968,7 @@
     <ClCompile Include="Errors.cpp" />
     <ClCompile Include="File2.cpp" />
     <ClCompile Include="FileTable.cpp" />
+    <ClCompile Include="iocp_sock.cpp" />
     <ClCompile Include="Lib.cpp" />
     <ClCompile Include="MaaEvents.cpp" />
     <ClCompile Include="MaaXml.cpp" />
@@ -1334,6 +1335,7 @@
     <ClInclude Include="File2.h" />
     <ClInclude Include="FileTable.h" />
     <ClInclude Include="Hash_New2.h" />
+    <ClInclude Include="iocp_sock.h" />
     <ClInclude Include="Lib.h" />
     <ClInclude Include="MaaEvents.h" />
     <ClInclude Include="MaaHT.h" />

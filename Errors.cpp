@@ -1091,12 +1091,18 @@ struct XTOOSockErrImp : public XTOOWsaErrImp
 struct XTOOSockErrImp : public XTOOErrnoImp
 #endif
 {
-    mutable CMaaSocket * m_pSock;
+    mutable CMaaSocket* m_pSock;
+#ifdef TOOLSLIB_IOCP
+    mutable CMaaIOCPSocket* m_pIOCPSock;
+#endif
 #ifdef __unix__
     int m_IsDnsError;
 #endif
 
-    XTOOSockErrImp(const char * Msg, CMaaSocket * pSock, const char * pConnName = nullptr, int Err = -1, int _IsDnsError = 0);
+    XTOOSockErrImp(const char* Msg, CMaaSocket* pSock, const char* pConnName = nullptr, int Err = -1, int _IsDnsError = 0);
+#ifdef TOOLSLIB_IOCP
+    XTOOSockErrImp(const char* Msg, CMaaIOCPSocket* pSock, const char* pConnName = nullptr, int Err = -1, int _IsDnsError = 0);
+#endif
     ~XTOOSockErrImp();
 #ifdef TOOLSLIB_ERRORS_IMP_ALLOCATORS
     ADD_ALLOCATOR(XTOOSockErrImp)
@@ -1112,6 +1118,9 @@ XTOOSockErrImp::XTOOSockErrImp(const char * Msg, CMaaSocket * pSock, const char 
 #ifndef __unix__
     XTOOWsaErrImp(Err, _IsDnsError),
     m_pSock(pSock)
+#ifdef TOOLSLIB_IOCP
+    , m_pIOCPSock(nullptr)
+#endif
 #else
     XTOOErrnoImp(Err, 1),
     m_pSock(pSock),
@@ -1170,24 +1179,110 @@ XTOOSockErrImp::XTOOSockErrImp(const char * Msg, CMaaSocket * pSock, const char 
     }
 }
 //------------------------------------------------------------------------------
+#ifdef TOOLSLIB_IOCP
+XTOOSockErrImp::XTOOSockErrImp(const char* Msg, CMaaIOCPSocket* pSock, const char* pConnName, int Err, int _IsDnsError)
+:
+#ifndef __unix__
+    XTOOWsaErrImp(Err, _IsDnsError),
+    m_pSock(nullptr),
+    m_pIOCPSock(pSock)
+#else
+    XTOOErrnoImp(Err, 1),
+    m_pSock(pSock),
+    m_IsDnsError(_IsDnsError)
+#endif
+{
+    Msg = Msg ? Msg : "";
+    if (pConnName)
+    {
+        const int l1 = (int)strlen(pConnName);
+        const int l2 = (int)strlen(Msg);
+        if (l1 + l2 + 4 <= 512)
+        {
+            char txt[512];
+            sprintf(txt, "%s: %s ", pConnName, Msg);
+            InsertInMsg(txt);
+        }
+        else
+        {
+            char* txt = nullptr;
+            try
+            {
+                txt = TL_NEW char[l1 + l2 + 4];
+            }
+            catch (...)
+            {
+            }
+            if (txt)
+            {
+                sprintf(txt, "%s: %s ", pConnName, Msg);
+                InsertInMsg(txt);
+                delete[] txt;
+            }
+            else
+            {
+                InsertInMsg(Msg, ' ');
+            }
+        }
+    }
+    else
+    {
+        InsertInMsg(Msg, ' ');
+    }
+
+    if (pSock)
+    {
+        try
+        {
+#ifndef TOOLSLIB_SINGLE_THREAD
+            pSock->Notify_PreDeletingByException();
+#endif
+        }
+        catch (...)
+        {
+        }
+    }
+}
+#endif
+//------------------------------------------------------------------------------
 XTOOSockErrImp::~XTOOSockErrImp()
 {
-    if  (m_pSock)
+    if (m_pSock)
     {
 #ifndef TOOLSLIB_SINGLE_THREAD
         delete m_pSock;
 #endif
     }
+#ifdef TOOLSLIB_IOCP
+    if (m_pIOCPSock)
+    {
+#ifndef TOOLSLIB_SINGLE_THREAD
+        delete m_pIOCPSock;
+#endif
+    }
+#endif
 }
 //------------------------------------------------------------------------------
-XTOOSockErr::XTOOSockErr(const char * Msg, CMaaSocket * pSock, const char * pConnName, int Err, int _IsDnsError)
+XTOOSockErr::XTOOSockErr(const char* Msg, CMaaSocket* pSock, const char* pConnName, int Err, int _IsDnsError)
 :   XTOOError(TL_NEW XTOOSockErrImp(Msg, pSock, pConnName, Err, _IsDnsError))
 {
 }
-CMaaSocket * XTOOSockErr::GetSock() const noexcept
+#ifdef TOOLSLIB_IOCP
+XTOOSockErr::XTOOSockErr(int, const char* Msg, CMaaIOCPSocket* pSock, const char* pConnName, int Err, int _IsDnsError)
+:   XTOOError(TL_NEW XTOOSockErrImp(Msg, pSock, pConnName, Err, _IsDnsError))
 {
-    return ((XTOOSockErrImp *)m_pImp)->m_pSock;
 }
+#endif
+CMaaSocket* XTOOSockErr::GetSock() const noexcept
+{
+    return ((XTOOSockErrImp*)m_pImp)->m_pSock;
+}
+#ifdef TOOLSLIB_IOCP
+CMaaIOCPSocket* XTOOSockErr::GetIOCPSock() const noexcept
+{
+    return ((XTOOSockErrImp*)m_pImp)->m_pIOCPSock;
+}
+#endif
 int XTOOSockErr::IsDnsError() const noexcept
 {
     return ((XTOOSockErrImp *)m_pImp)->m_IsDnsError;
@@ -1206,6 +1301,9 @@ int XTOOSockErr::GetErrorCode() const noexcept
 void XTOOSockErr::Eat() noexcept
 {
     ((XTOOSockErrImp *)m_pImp)->m_pSock = nullptr;
+#ifdef TOOLSLIB_IOCP
+    ((XTOOSockErrImp*)m_pImp)->m_pIOCPSock = nullptr;
+#endif
 }
 //------------------------------------------------------------------------------
 
@@ -1231,14 +1329,29 @@ XTOOSockDnsErr::XTOOSockDnsErr(const char * Msg, CMaaSocket * pSock, const char 
 {
 }
 
-
+#ifdef TOOLSLIB_IOCP
+XTOOSockDnsErr::XTOOSockDnsErr(int, const char* Msg, CMaaIOCPSocket* pSock, const char* pConnName)
+#ifdef __unix__
+:   XTOOSockErr((errno = ERRNO_USE__H_ERRNO) ? Msg : Msg, pSock, pConnName, -1, 1)
+#else
+:   XTOOSockErr(-1, Msg, pSock, pConnName, -1, 1)
+#endif
+{
+}
+#endif
 
 //------------------------------------------------------------------------------
 struct XTOOSockCloseImp : public XTOOError::XTOOBaseErrorImp
 {
     CMaaSocket * m_pSock;
+#ifdef TOOLSLIB_IOCP
+    CMaaIOCPSocket* m_pIOCPSock;
+#endif
 
     XTOOSockCloseImp(CMaaSocket* pSock);
+#ifdef TOOLSLIB_IOCP
+    XTOOSockCloseImp(CMaaIOCPSocket* pSock);
+#endif
     constexpr ~XTOOSockCloseImp()
     {
         if (m_pSock)
@@ -1247,8 +1360,20 @@ struct XTOOSockCloseImp : public XTOOError::XTOOBaseErrorImp
             delete m_pSock;
 #endif
         }
+#ifdef TOOLSLIB_IOCP
+        if (m_pIOCPSock)
+        {
+#ifndef TOOLSLIB_SINGLE_THREAD
+            delete m_pIOCPSock;
+#endif
+        }
+#endif
     }
-    constexpr XTOOSockCloseImp(_eXTOONoError) : XTOOError::XTOOBaseErrorImp(eXTOONoError), m_pSock(nullptr) {}
+    constexpr XTOOSockCloseImp(_eXTOONoError) : XTOOError::XTOOBaseErrorImp(eXTOONoError), m_pSock(nullptr) 
+#ifdef TOOLSLIB_IOCP
+        , m_pIOCPSock(nullptr)
+#endif
+    {}
     XTOOError::XTOOBaseErrorImp * Clear() noexcept override;
 #ifdef TOOLSLIB_ERRORS_IMP_ALLOCATORS
     ADD_ALLOCATOR(XTOOSockCloseImp)
@@ -1263,6 +1388,9 @@ DEF_ALLOCATOR(XTOOSockCloseImp)
 //------------------------------------------------------------------------------
 XTOOSockCloseImp::XTOOSockCloseImp(CMaaSocket * pSock)
 :   m_pSock(pSock)
+#ifdef TOOLSLIB_IOCP
+    , m_pIOCPSock(nullptr)
+#endif
 {
     /*
     char txt [ 256 ];
@@ -1277,6 +1405,26 @@ XTOOSockCloseImp::XTOOSockCloseImp(CMaaSocket * pSock)
 #endif
     }
 }
+//------------------------------------------------------------------------------
+#ifdef TOOLSLIB_IOCP
+XTOOSockCloseImp::XTOOSockCloseImp(CMaaIOCPSocket* pSock)
+:   m_pSock(nullptr),
+    m_pIOCPSock(pSock)
+{
+    /*
+    char txt [ 256 ];
+    sprintf ( txt, "XTOOSockCloseImp::XTOOSockCloseImp ( CMaaSocket * pSock ), pSock=%p", pSock);
+    Log(txt);
+    */
+
+    if (pSock)
+    {
+#ifndef TOOLSLIB_SINGLE_THREAD
+        pSock->Notify_PreDeletingByException();
+#endif
+    }
+}
+#endif
 //------------------------------------------------------------------------------
 /*
 XTOOSockCloseImp::~XTOOSockCloseImp()
@@ -1314,8 +1462,8 @@ XTOOError::XTOOBaseErrorImp * XTOOSockCloseImp::Clear() noexcept
     return GetStaticNoErrorXTOOSockCloseImp();
 }
 //------------------------------------------------------------------------------
-XTOOSockClose::XTOOSockClose(CMaaSocket * pSock)
-:   XTOOError(TL_NEW XTOOSockCloseImp(pSock))
+XTOOSockClose::XTOOSockClose(CMaaSocket* pSock)
+    : XTOOError(TL_NEW XTOOSockCloseImp(pSock))
 {
 }
 //------------------------------------------------------------------------------
@@ -1323,6 +1471,18 @@ CMaaSocket* XTOOSockClose::GetSock() const noexcept
 {
     return ((XTOOSockCloseImp*)m_pImp)->m_pSock;
 }
+//------------------------------------------------------------------------------
+#ifdef TOOLSLIB_IOCP
+XTOOSockClose::XTOOSockClose(CMaaIOCPSocket* pSock)
+    : XTOOError(TL_NEW XTOOSockCloseImp(pSock))
+{
+}
+//------------------------------------------------------------------------------
+CMaaIOCPSocket* XTOOSockClose::GetIOCPSock() const noexcept
+{
+    return ((XTOOSockCloseImp*)m_pImp)->m_pIOCPSock;
+}
+#endif
 //------------------------------------------------------------------------------
 
 #ifdef __BORLANDC__

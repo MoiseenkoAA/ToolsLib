@@ -185,6 +185,9 @@
     <ClCompile Include="Lib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="iocp_sock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BTree.h">
@@ -395,6 +398,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SprintfEx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="iocp_sock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
